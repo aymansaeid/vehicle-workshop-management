@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using vehicle_workshop_management.Server.Models;
 
 namespace vehicle_workshop_management.Server.Controllers
 {
-    public class CustomerContactsController : Controller
+    [ApiController]
+    [Route("api/[controller]")]
+    public class CustomerContactsController : ControllerBase
     {
         private readonly DBCONTEXT _context;
 
@@ -18,141 +15,73 @@ namespace vehicle_workshop_management.Server.Controllers
             _context = context;
         }
 
-        // GET: CustomerContacts
-        public async Task<IActionResult> Index()
+        // GET: api/CustomerContacts
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<CustomerContact>>> GetCustomerContacts()
         {
-            var dBCONTEXT = _context.CustomerContacts.Include(c => c.Customer);
-            return View(await dBCONTEXT.ToListAsync());
+            return await _context.CustomerContacts.Include(c => c.Customer).ToListAsync();
         }
 
-        // GET: CustomerContacts/Details/5
-        public async Task<IActionResult> Details(int? id)
+        // GET: api/CustomerContacts/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<CustomerContact>> GetCustomerContact(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
             var customerContact = await _context.CustomerContacts
                 .Include(c => c.Customer)
                 .FirstOrDefaultAsync(m => m.ContactId == id);
+
             if (customerContact == null)
-            {
                 return NotFound();
-            }
 
-            return View(customerContact);
+            return customerContact;
         }
 
-        // GET: CustomerContacts/Create
-        public IActionResult Create()
-        {
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerId");
-            return View();
-        }
-
-        // POST: CustomerContacts/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: api/CustomerContacts
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ContactId,CustomerId,Name,Role,Phone,Email")] CustomerContact customerContact)
+        public async Task<ActionResult<CustomerContact>> PostCustomerContact(CustomerContact customerContact)
         {
-            if (ModelState.IsValid)
-            {
-                _context.Add(customerContact);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerId", customerContact.CustomerId);
-            return View(customerContact);
+            _context.CustomerContacts.Add(customerContact);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetCustomerContact), new { id = customerContact.ContactId }, customerContact);
         }
 
-        // GET: CustomerContacts/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var customerContact = await _context.CustomerContacts.FindAsync(id);
-            if (customerContact == null)
-            {
-                return NotFound();
-            }
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerId", customerContact.CustomerId);
-            return View(customerContact);
-        }
-
-        // POST: CustomerContacts/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ContactId,CustomerId,Name,Role,Phone,Email")] CustomerContact customerContact)
+        // PUT: api/CustomerContacts/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutCustomerContact(int id, CustomerContact customerContact)
         {
             if (id != customerContact.ContactId)
+                return BadRequest();
+
+            _context.Entry(customerContact).State = EntityState.Modified;
+
+            try
             {
-                return NotFound();
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!CustomerContactExists(id))
+                    return NotFound();
+                else
+                    throw;
             }
 
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(customerContact);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!CustomerContactExists(customerContact.ContactId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerId", customerContact.CustomerId);
-            return View(customerContact);
+            return NoContent();
         }
 
-        // GET: CustomerContacts/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var customerContact = await _context.CustomerContacts
-                .Include(c => c.Customer)
-                .FirstOrDefaultAsync(m => m.ContactId == id);
-            if (customerContact == null)
-            {
-                return NotFound();
-            }
-
-            return View(customerContact);
-        }
-
-        // POST: CustomerContacts/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        // DELETE: api/CustomerContacts/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteCustomerContact(int id)
         {
             var customerContact = await _context.CustomerContacts.FindAsync(id);
-            if (customerContact != null)
-            {
-                _context.CustomerContacts.Remove(customerContact);
-            }
+            if (customerContact == null)
+                return NotFound();
 
+            _context.CustomerContacts.Remove(customerContact);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+
+            return NoContent();
         }
 
         private bool CustomerContactExists(int id)

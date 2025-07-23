@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using vehicle_workshop_management.Server.Models;
 
 namespace vehicle_workshop_management.Server.Controllers
 {
-    public class InventoriesController : Controller
+    [ApiController]
+    [Route("api/[controller]")]
+    public class InventoriesController : ControllerBase
     {
         private readonly DBCONTEXT _context;
 
@@ -18,134 +15,71 @@ namespace vehicle_workshop_management.Server.Controllers
             _context = context;
         }
 
-        // GET: Inventories
-        public async Task<IActionResult> Index()
+        // GET: api/Inventories
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Inventory>>> GetInventories()
         {
-            return View(await _context.Inventories.ToListAsync());
+            return await _context.Inventories.ToListAsync();
         }
 
-        // GET: Inventories/Details/5
-        public async Task<IActionResult> Details(int? id)
+        // GET: api/Inventories/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Inventory>> GetInventory(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var inventory = await _context.Inventories
-                .FirstOrDefaultAsync(m => m.InventoryId == id);
-            if (inventory == null)
-            {
-                return NotFound();
-            }
-
-            return View(inventory);
-        }
-
-        // GET: Inventories/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: Inventories/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("InventoryId,Name,Description,Type,Unit,Price,Status")] Inventory inventory)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Add(inventory);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(inventory);
-        }
-
-        // GET: Inventories/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
             var inventory = await _context.Inventories.FindAsync(id);
+
             if (inventory == null)
-            {
                 return NotFound();
-            }
-            return View(inventory);
+
+            return inventory;
         }
 
-        // POST: Inventories/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: api/Inventories
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("InventoryId,Name,Description,Type,Unit,Price,Status")] Inventory inventory)
+        public async Task<ActionResult<Inventory>> PostInventory(Inventory inventory)
+        {
+            _context.Inventories.Add(inventory);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetInventory), new { id = inventory.InventoryId }, inventory);
+        }
+
+        // PUT: api/Inventories/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutInventory(int id, Inventory inventory)
         {
             if (id != inventory.InventoryId)
+                return BadRequest();
+
+            _context.Entry(inventory).State = EntityState.Modified;
+
+            try
             {
-                return NotFound();
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!InventoryExists(id))
+                    return NotFound();
+                else
+                    throw;
             }
 
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(inventory);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!InventoryExists(inventory.InventoryId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(inventory);
+            return NoContent();
         }
 
-        // GET: Inventories/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var inventory = await _context.Inventories
-                .FirstOrDefaultAsync(m => m.InventoryId == id);
-            if (inventory == null)
-            {
-                return NotFound();
-            }
-
-            return View(inventory);
-        }
-
-        // POST: Inventories/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        // DELETE: api/Inventories/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteInventory(int id)
         {
             var inventory = await _context.Inventories.FindAsync(id);
-            if (inventory != null)
-            {
-                _context.Inventories.Remove(inventory);
-            }
+            if (inventory == null)
+                return NotFound();
 
+            _context.Inventories.Remove(inventory);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+
+            return NoContent();
         }
 
         private bool InventoryExists(int id)
