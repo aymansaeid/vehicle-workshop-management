@@ -37,6 +37,7 @@ public partial class DBCONTEXT : DbContext
 
     public virtual DbSet<TaskLine> TaskLines { get; set; }
 
+    public virtual DbSet<InventoryGroupItem> InventoryGroupItems { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -153,6 +154,14 @@ public partial class DBCONTEXT : DbContext
             entity.Property(e => e.GroupId).HasColumnName("GroupID");
             entity.Property(e => e.Description).HasMaxLength(255);
             entity.Property(e => e.Name).HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<InventoryGroupItem>(entity =>
+        {
+            entity.HasKey(e => new { e.InventoryId, e.GroupId }).HasName("PK__Inventor__44B449E35B929BA1");
+
+            entity.Property(e => e.InventoryId).HasColumnName("InventoryID");
+            entity.Property(e => e.GroupId).HasColumnName("GroupID");
         });
 
         modelBuilder.Entity<Invoice>(entity =>

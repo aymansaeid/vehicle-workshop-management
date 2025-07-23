@@ -1,4 +1,6 @@
 
+using Microsoft.EntityFrameworkCore;
+using vehicle_workshop_management.Server.Models;
 namespace vehicle_workshop_management.Server
 {
     public class Program
@@ -13,6 +15,17 @@ namespace vehicle_workshop_management.Server
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            
+            builder.Services.AddDbContext<DBCONTEXT>(options =>
+               options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll",
+                    policy => policy.AllowAnyOrigin()
+                                    .AllowAnyHeader()
+                                    .AllowAnyMethod());
+            });
 
             var app = builder.Build();
 
@@ -27,6 +40,9 @@ namespace vehicle_workshop_management.Server
             }
 
             app.UseHttpsRedirection();
+
+            // Enable CORS
+            app.UseCors("AllowAll");
 
             app.UseAuthorization();
 
