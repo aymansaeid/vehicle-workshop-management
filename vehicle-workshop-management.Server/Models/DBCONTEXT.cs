@@ -127,24 +127,7 @@ public partial class DBCONTEXT : DbContext
             entity.Property(e => e.Type).HasMaxLength(20);
             entity.Property(e => e.Unit).HasMaxLength(20);
 
-            entity.HasMany(d => d.Groups).WithMany(p => p.Inventories)
-                .UsingEntity<Dictionary<string, object>>(
-                    "InventoryGroupItem",
-                    r => r.HasOne<InventoryGroup>().WithMany()
-                        .HasForeignKey("GroupId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK__Inventory__Group__5EBF139D"),
-                    l => l.HasOne<Inventory>().WithMany()
-                        .HasForeignKey("InventoryId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK__Inventory__Inven__5DCAEF64"),
-                    j =>
-                    {
-                        j.HasKey("InventoryId", "GroupId").HasName("PK__Inventor__44B449E35B929BA1");
-                        j.ToTable("InventoryGroupItems");
-                        j.IndexerProperty<int>("InventoryId").HasColumnName("InventoryID");
-                        j.IndexerProperty<int>("GroupId").HasColumnName("GroupID");
-                    });
+            
         });
 
         modelBuilder.Entity<InventoryGroup>(entity =>
@@ -158,10 +141,18 @@ public partial class DBCONTEXT : DbContext
 
         modelBuilder.Entity<InventoryGroupItem>(entity =>
         {
-            entity.HasKey(e => new { e.InventoryId, e.GroupId }).HasName("PK__Inventor__44B449E35B929BA1");
+            entity.HasKey(e => new { e.InventoryId, e.GroupId });
 
             entity.Property(e => e.InventoryId).HasColumnName("InventoryID");
             entity.Property(e => e.GroupId).HasColumnName("GroupID");
+
+            entity.HasOne(d => d.Inventory)
+                .WithMany(p => p.InventoryGroupItems)
+                .HasForeignKey(d => d.InventoryId);
+
+            entity.HasOne(d => d.Group)
+                .WithMany(p => p.InventoryGroupItems)
+                .HasForeignKey(d => d.GroupId);
         });
 
         modelBuilder.Entity<Invoice>(entity =>

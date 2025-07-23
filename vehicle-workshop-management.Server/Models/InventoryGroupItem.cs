@@ -9,6 +9,7 @@ public partial class InventoryGroupItem
 
     public int GroupId { get; set; }
 
+    public virtual Inventory Inventory { get; set; } = null!;
+    public virtual InventoryGroup Group { get; set; } = null!;
 
-  
 }

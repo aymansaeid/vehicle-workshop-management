@@ -23,5 +23,6 @@ public partial class Inventory
 
     public virtual ICollection<TaskLine> TaskLines { get; set; } = new List<TaskLine>();
 
-    public virtual ICollection<InventoryGroup> Groups { get; set; } = new List<InventoryGroup>();
+    public virtual ICollection<InventoryGroupItem> InventoryGroupItems { get; set; } = new List<InventoryGroupItem>();
+
 }

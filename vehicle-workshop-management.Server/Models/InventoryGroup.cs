@@ -11,5 +11,6 @@ public partial class InventoryGroup
 
     public string? Description { get; set; }
 
-    public virtual ICollection<Inventory> Inventories { get; set; } = new List<Inventory>();
+    public virtual ICollection<InventoryGroupItem> InventoryGroupItems { get; set; } = new List<InventoryGroupItem>();
+
 }
