@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using vehicle_workshop_management.Server.Models;
-
+using AppTask = vehicle_workshop_management.Server.Models.Task;
 namespace vehicle_workshop_management.Server.Controllers
 {
-    public class ProjectsController : Controller
+    [ApiController]
+    [Route("api/[controller]")]
+    public class ProjectsController : ControllerBase
     {
         private readonly DBCONTEXT _context;
 
@@ -18,141 +15,102 @@ namespace vehicle_workshop_management.Server.Controllers
             _context = context;
         }
 
-        // GET: Projects
-        public async Task<IActionResult> Index()
+        // GET: api/Projects
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Project>>> GetProjects()
         {
-            var dBCONTEXT = _context.Projects.Include(p => p.Customer);
-            return View(await dBCONTEXT.ToListAsync());
+            return await _context.Projects
+                .Include(p => p.Customer)
+                .ToListAsync();
         }
 
-        // GET: Projects/Details/5
-        public async Task<IActionResult> Details(int? id)
+        // GET: api/Projects/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Project>> GetProject(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
             var project = await _context.Projects
                 .Include(p => p.Customer)
-                .FirstOrDefaultAsync(m => m.ProjectId == id);
+                .FirstOrDefaultAsync(p => p.ProjectId == id);
+
             if (project == null)
             {
                 return NotFound();
             }
 
-            return View(project);
+            return project;
         }
 
-        // GET: Projects/Create
-        public IActionResult Create()
-        {
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerId");
-            return View();
-        }
-
-        // POST: Projects/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: api/Projects
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ProjectId,CustomerId,Name,Description,StartDate,EndDate,Status")] Project project)
+        public async Task<ActionResult<Project>> PostProject(Project project)
         {
-            if (ModelState.IsValid)
+            // Set default dates if not provided
+            if (project.StartDate == default)
             {
-                _context.Add(project);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                project.StartDate = DateOnly.FromDateTime(DateTime.UtcNow);
             }
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerId", project.CustomerId);
-            return View(project);
+
+            _context.Projects.Add(project);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetProject), new { id = project.ProjectId }, project);
         }
 
-        // GET: Projects/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var project = await _context.Projects.FindAsync(id);
-            if (project == null)
-            {
-                return NotFound();
-            }
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerId", project.CustomerId);
-            return View(project);
-        }
-
-        // POST: Projects/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ProjectId,CustomerId,Name,Description,StartDate,EndDate,Status")] Project project)
+        // PUT: api/Projects/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutProject(int id, Project project)
         {
             if (id != project.ProjectId)
             {
-                return NotFound();
+                return BadRequest();
             }
 
-            if (ModelState.IsValid)
+            _context.Entry(project).State = EntityState.Modified;
+
+            try
             {
-                try
-                {
-                    _context.Update(project);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ProjectExists(project.ProjectId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                await _context.SaveChangesAsync();
             }
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerId", project.CustomerId);
-            return View(project);
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ProjectExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
         }
 
-        // GET: Projects/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        // DELETE: api/Projects/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteProject(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var project = await _context.Projects
-                .Include(p => p.Customer)
-                .FirstOrDefaultAsync(m => m.ProjectId == id);
+            var project = await _context.Projects.FindAsync(id);
             if (project == null)
             {
                 return NotFound();
             }
 
-            return View(project);
+            _context.Projects.Remove(project);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
         }
 
-        // POST: Projects/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        // GET: api/Projects/5/tasks
+        [HttpGet("{id}/tasks")]
+        public async Task<ActionResult<IEnumerable<AppTask>>> GetProjectTasks(int id)
         {
-            var project = await _context.Projects.FindAsync(id);
-            if (project != null)
-            {
-                _context.Projects.Remove(project);
-            }
+            var tasks = await _context.Tasks
+                .Where(t => t.ProjectId == id)
+                .ToListAsync();
 
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return tasks;
         }
 
         private bool ProjectExists(int id)

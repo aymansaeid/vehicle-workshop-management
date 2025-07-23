@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using vehicle_workshop_management.Server.Models;
 
 namespace vehicle_workshop_management.Server.Controllers
 {
-    public class InvoicesController : Controller
+    [ApiController]
+    [Route("api/[controller]")]
+    public class InvoicesController : ControllerBase
     {
         private readonly DBCONTEXT _context;
 
@@ -18,141 +15,120 @@ namespace vehicle_workshop_management.Server.Controllers
             _context = context;
         }
 
-        // GET: Invoices
-        public async Task<IActionResult> Index()
+        // GET: api/Invoices
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Invoice>>> GetInvoices()
         {
-            var dBCONTEXT = _context.Invoices.Include(i => i.Customer);
-            return View(await dBCONTEXT.ToListAsync());
+            return await _context.Invoices
+                .Include(i => i.Customer)
+                .ToListAsync();
         }
 
-        // GET: Invoices/Details/5
-        public async Task<IActionResult> Details(int? id)
+        // GET: api/Invoices/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Invoice>> GetInvoice(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
             var invoice = await _context.Invoices
                 .Include(i => i.Customer)
-                .FirstOrDefaultAsync(m => m.InvoiceId == id);
+                .FirstOrDefaultAsync(i => i.InvoiceId == id);
+
             if (invoice == null)
             {
                 return NotFound();
             }
 
-            return View(invoice);
+            return invoice;
         }
 
-        // GET: Invoices/Create
-        public IActionResult Create()
-        {
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerId");
-            return View();
-        }
-
-        // POST: Invoices/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: api/Invoices
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("InvoiceId,DateIssued,DueDate,TotalAmount,Status,Notes,CustomerId")] Invoice invoice)
+        public async Task<ActionResult<Invoice>> PostInvoice(Invoice invoice)
         {
-            if (ModelState.IsValid)
+            // Set default dates if not provided
+            if (!invoice.DateIssued.HasValue)
             {
-                _context.Add(invoice);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                invoice.DateIssued = DateOnly.FromDateTime(DateTime.UtcNow);
             }
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerId", invoice.CustomerId);
-            return View(invoice);
+
+            if (!invoice.DueDate.HasValue)
+            {
+                invoice.DueDate = invoice.DateIssued.Value.AddDays(30); // Default 30-day payment term
+            }
+
+            // Validate dates
+            if (invoice.DueDate < invoice.DateIssued)
+            {
+                return BadRequest("Due date cannot be earlier than issue date");
+            }
+
+            _context.Invoices.Add(invoice);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetInvoice), new { id = invoice.InvoiceId }, invoice);
         }
 
-        // GET: Invoices/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var invoice = await _context.Invoices.FindAsync(id);
-            if (invoice == null)
-            {
-                return NotFound();
-            }
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerId", invoice.CustomerId);
-            return View(invoice);
-        }
-
-        // POST: Invoices/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("InvoiceId,DateIssued,DueDate,TotalAmount,Status,Notes,CustomerId")] Invoice invoice)
+        // PUT: api/Invoices/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutInvoice(int id, Invoice invoice)
         {
             if (id != invoice.InvoiceId)
             {
-                return NotFound();
+                return BadRequest();
             }
 
-            if (ModelState.IsValid)
+            _context.Entry(invoice).State = EntityState.Modified;
+
+            try
             {
-                try
-                {
-                    _context.Update(invoice);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!InvoiceExists(invoice.InvoiceId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                await _context.SaveChangesAsync();
             }
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerId", invoice.CustomerId);
-            return View(invoice);
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!InvoiceExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
         }
 
-        // GET: Invoices/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        // DELETE: api/Invoices/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteInvoice(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var invoice = await _context.Invoices
-                .Include(i => i.Customer)
-                .FirstOrDefaultAsync(m => m.InvoiceId == id);
+            var invoice = await _context.Invoices.FindAsync(id);
             if (invoice == null)
             {
                 return NotFound();
             }
 
-            return View(invoice);
+            _context.Invoices.Remove(invoice);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
         }
 
-        // POST: Invoices/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        // GET: api/Invoices/5/lines
+        [HttpGet("{id}/lines")]
+        public async Task<ActionResult<IEnumerable<InvoiceLine>>> GetInvoiceLines(int id)
         {
-            var invoice = await _context.Invoices.FindAsync(id);
-            if (invoice != null)
+            var invoiceLines = await _context.InvoiceLines
+                .Where(il => il.InvoiceId == id)
+                .Include(il => il.Inventory)
+                .Include(il => il.TaskLine)
+                .ToListAsync();
+
+            if (!invoiceLines.Any())
             {
-                _context.Invoices.Remove(invoice);
+                return NotFound();
             }
 
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return invoiceLines;
         }
 
         private bool InvoiceExists(int id)

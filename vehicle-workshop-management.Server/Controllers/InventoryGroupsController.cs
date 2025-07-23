@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using vehicle_workshop_management.Server.Models;
 
 namespace vehicle_workshop_management.Server.Controllers
 {
-    public class InventoryGroupsController : Controller
+    [ApiController]
+    [Route("api/[controller]")]
+    public class InventoryGroupsController : ControllerBase
     {
         private readonly DBCONTEXT _context;
 
@@ -18,134 +15,81 @@ namespace vehicle_workshop_management.Server.Controllers
             _context = context;
         }
 
-        // GET: InventoryGroups
-        public async Task<IActionResult> Index()
+        // GET: api/InventoryGroups
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<InventoryGroup>>> GetInventoryGroups()
         {
-            return View(await _context.InventoryGroups.ToListAsync());
+            return await _context.InventoryGroups.ToListAsync();
         }
 
-        // GET: InventoryGroups/Details/5
-        public async Task<IActionResult> Details(int? id)
+        // GET: api/InventoryGroups/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<InventoryGroup>> GetInventoryGroup(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var inventoryGroup = await _context.InventoryGroups
-                .FirstOrDefaultAsync(m => m.GroupId == id);
-            if (inventoryGroup == null)
-            {
-                return NotFound();
-            }
-
-            return View(inventoryGroup);
-        }
-
-        // GET: InventoryGroups/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: InventoryGroups/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("GroupId,Name,Description")] InventoryGroup inventoryGroup)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Add(inventoryGroup);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(inventoryGroup);
-        }
-
-        // GET: InventoryGroups/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
             var inventoryGroup = await _context.InventoryGroups.FindAsync(id);
+
             if (inventoryGroup == null)
             {
                 return NotFound();
             }
-            return View(inventoryGroup);
+
+            return inventoryGroup;
         }
 
-        // POST: InventoryGroups/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: api/InventoryGroups
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("GroupId,Name,Description")] InventoryGroup inventoryGroup)
+        public async Task<ActionResult<InventoryGroup>> PostInventoryGroup(InventoryGroup inventoryGroup)
+        {
+            _context.InventoryGroups.Add(inventoryGroup);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetInventoryGroup), new { id = inventoryGroup.GroupId }, inventoryGroup);
+        }
+
+        // PUT: api/InventoryGroups/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutInventoryGroup(int id, InventoryGroup inventoryGroup)
         {
             if (id != inventoryGroup.GroupId)
             {
-                return NotFound();
+                return BadRequest();
             }
 
-            if (ModelState.IsValid)
+            _context.Entry(inventoryGroup).State = EntityState.Modified;
+
+            try
             {
-                try
-                {
-                    _context.Update(inventoryGroup);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!InventoryGroupExists(inventoryGroup.GroupId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                await _context.SaveChangesAsync();
             }
-            return View(inventoryGroup);
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!InventoryGroupExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
         }
 
-        // GET: InventoryGroups/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        // DELETE: api/InventoryGroups/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteInventoryGroup(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var inventoryGroup = await _context.InventoryGroups
-                .FirstOrDefaultAsync(m => m.GroupId == id);
+            var inventoryGroup = await _context.InventoryGroups.FindAsync(id);
             if (inventoryGroup == null)
             {
                 return NotFound();
             }
 
-            return View(inventoryGroup);
-        }
-
-        // POST: InventoryGroups/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var inventoryGroup = await _context.InventoryGroups.FindAsync(id);
-            if (inventoryGroup != null)
-            {
-                _context.InventoryGroups.Remove(inventoryGroup);
-            }
-
+            _context.InventoryGroups.Remove(inventoryGroup);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+
+            return NoContent();
         }
 
         private bool InventoryGroupExists(int id)

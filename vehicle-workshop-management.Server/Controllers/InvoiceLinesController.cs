@@ -1,16 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using vehicle_workshop_management.Server.Models;
 
-
 namespace vehicle_workshop_management.Server.Controllers
 {
-    public class InvoiceLinesController : Controller
+    [ApiController]
+    [Route("api/[controller]")]
+    public class InvoiceLinesController : ControllerBase
     {
         private readonly DBCONTEXT _context;
 
@@ -19,153 +15,98 @@ namespace vehicle_workshop_management.Server.Controllers
             _context = context;
         }
 
-        // GET: InvoiceLines
-        public async Task<IActionResult> Index()
+        // GET: api/InvoiceLines
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<InvoiceLine>>> GetInvoiceLines()
         {
-            var dBCONTEXT = _context.InvoiceLines.Include(i => i.Inventory).Include(i => i.Invoice).Include(i => i.TaskLine);
-            return View(await dBCONTEXT.ToListAsync());
+            return await _context.InvoiceLines
+                .Include(i => i.Inventory)
+                .Include(i => i.Invoice)
+                .Include(i => i.TaskLine)
+                .ToListAsync();
         }
 
-        // GET: InvoiceLines/Details/5
-        public async Task<IActionResult> Details(int? id)
+        // GET: api/InvoiceLines/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<InvoiceLine>> GetInvoiceLine(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
             var invoiceLine = await _context.InvoiceLines
                 .Include(i => i.Inventory)
                 .Include(i => i.Invoice)
                 .Include(i => i.TaskLine)
                 .FirstOrDefaultAsync(m => m.LineId == id);
+
             if (invoiceLine == null)
             {
                 return NotFound();
             }
 
-            return View(invoiceLine);
+            return invoiceLine;
         }
 
-        // GET: InvoiceLines/Create
-        public IActionResult Create()
-        {
-            ViewData["InventoryId"] = new SelectList(_context.Inventories, "InventoryId", "InventoryId");
-            ViewData["InvoiceId"] = new SelectList(_context.Invoices, "InvoiceId", "InvoiceId");
-            ViewData["TaskLineId"] = new SelectList(_context.TaskLines, "TaskLineId", "TaskLineId");
-            return View();
-        }
-
-        // POST: InvoiceLines/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: api/InvoiceLines
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("LineId,InvoiceId,TaskLineId,InventoryId,Description,Quantity,UnitPrice,LineTotal")] InvoiceLine invoiceLine)
+        public async Task<ActionResult<InvoiceLine>> PostInvoiceLine(InvoiceLine invoiceLine)
         {
-            if (ModelState.IsValid)
+            // Calculate line total if not provided
+            if (invoiceLine.LineTotal == 0 && invoiceLine.Quantity > 0 && invoiceLine.UnitPrice > 0)
             {
-                _context.Add(invoiceLine);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                invoiceLine.LineTotal = invoiceLine.Quantity * invoiceLine.UnitPrice;
             }
-            ViewData["InventoryId"] = new SelectList(_context.Inventories, "InventoryId", "InventoryId", invoiceLine.InventoryId);
-            ViewData["InvoiceId"] = new SelectList(_context.Invoices, "InvoiceId", "InvoiceId", invoiceLine.InvoiceId);
-            ViewData["TaskLineId"] = new SelectList(_context.TaskLines, "TaskLineId", "TaskLineId", invoiceLine.TaskLineId);
-            return View(invoiceLine);
+
+            _context.InvoiceLines.Add(invoiceLine);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetInvoiceLine), new { id = invoiceLine.LineId }, invoiceLine);
         }
 
-        // GET: InvoiceLines/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var invoiceLine = await _context.InvoiceLines.FindAsync(id);
-            if (invoiceLine == null)
-            {
-                return NotFound();
-            }
-            ViewData["InventoryId"] = new SelectList(_context.Inventories, "InventoryId", "InventoryId", invoiceLine.InventoryId);
-            ViewData["InvoiceId"] = new SelectList(_context.Invoices, "InvoiceId", "InvoiceId", invoiceLine.InvoiceId);
-            ViewData["TaskLineId"] = new SelectList(_context.TaskLines, "TaskLineId", "TaskLineId", invoiceLine.TaskLineId);
-            return View(invoiceLine);
-        }
-
-        // POST: InvoiceLines/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("LineId,InvoiceId,TaskLineId,InventoryId,Description,Quantity,UnitPrice,LineTotal")] InvoiceLine invoiceLine)
+        // PUT: api/InvoiceLines/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutInvoiceLine(int id, InvoiceLine invoiceLine)
         {
             if (id != invoiceLine.LineId)
             {
-                return NotFound();
+                return BadRequest();
             }
 
-            if (ModelState.IsValid)
+            // Recalculate line total if quantity or unit price changes
+            invoiceLine.LineTotal = invoiceLine.Quantity * invoiceLine.UnitPrice;
+
+            _context.Entry(invoiceLine).State = EntityState.Modified;
+
+            try
             {
-                try
-                {
-                    _context.Update(invoiceLine);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!InvoiceLineExists(invoiceLine.LineId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                await _context.SaveChangesAsync();
             }
-            ViewData["InventoryId"] = new SelectList(_context.Inventories, "InventoryId", "InventoryId", invoiceLine.InventoryId);
-            ViewData["InvoiceId"] = new SelectList(_context.Invoices, "InvoiceId", "InvoiceId", invoiceLine.InvoiceId);
-            ViewData["TaskLineId"] = new SelectList(_context.TaskLines, "TaskLineId", "TaskLineId", invoiceLine.TaskLineId);
-            return View(invoiceLine);
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!InvoiceLineExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
         }
 
-        // GET: InvoiceLines/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        // DELETE: api/InvoiceLines/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteInvoiceLine(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var invoiceLine = await _context.InvoiceLines
-                .Include(i => i.Inventory)
-                .Include(i => i.Invoice)
-                .Include(i => i.TaskLine)
-                .FirstOrDefaultAsync(m => m.LineId == id);
+            var invoiceLine = await _context.InvoiceLines.FindAsync(id);
             if (invoiceLine == null)
             {
                 return NotFound();
             }
 
-            return View(invoiceLine);
-        }
-
-        // POST: InvoiceLines/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var invoiceLine = await _context.InvoiceLines.FindAsync(id);
-            if (invoiceLine != null)
-            {
-                _context.InvoiceLines.Remove(invoiceLine);
-            }
-
+            _context.InvoiceLines.Remove(invoiceLine);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+
+            return NoContent();
         }
 
         private bool InvoiceLineExists(int id)

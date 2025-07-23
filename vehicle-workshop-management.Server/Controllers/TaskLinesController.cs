@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using vehicle_workshop_management.Server.Models;
 
 namespace vehicle_workshop_management.Server.Controllers
 {
-    public class TaskLinesController : Controller
+    [ApiController]
+    [Route("api/[controller]")]
+    public class TaskLinesController : ControllerBase
     {
         private readonly DBCONTEXT _context;
 
@@ -18,153 +15,109 @@ namespace vehicle_workshop_management.Server.Controllers
             _context = context;
         }
 
-        // GET: TaskLines
-        public async Task<IActionResult> Index()
+        // GET: api/TaskLines
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<TaskLine>>> GetTaskLines()
         {
-            var dBCONTEXT = _context.TaskLines.Include(t => t.Employee).Include(t => t.Inventory).Include(t => t.Task);
-            return View(await dBCONTEXT.ToListAsync());
+            return await _context.TaskLines
+                .Include(t => t.Employee)
+                .Include(t => t.Inventory)
+                .Include(t => t.Task)
+                .ToListAsync();
         }
 
-        // GET: TaskLines/Details/5
-        public async Task<IActionResult> Details(int? id)
+        // GET: api/TaskLines/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<TaskLine>> GetTaskLine(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
             var taskLine = await _context.TaskLines
                 .Include(t => t.Employee)
                 .Include(t => t.Inventory)
                 .Include(t => t.Task)
-                .FirstOrDefaultAsync(m => m.TaskLineId == id);
+                .FirstOrDefaultAsync(t => t.TaskLineId == id);
+
             if (taskLine == null)
             {
                 return NotFound();
             }
 
-            return View(taskLine);
+            return taskLine;
         }
 
-        // GET: TaskLines/Create
-        public IActionResult Create()
-        {
-            ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeId", "EmployeeId");
-            ViewData["InventoryId"] = new SelectList(_context.Inventories, "InventoryId", "InventoryId");
-            ViewData["TaskId"] = new SelectList(_context.Tasks, "TaskId", "TaskId");
-            return View();
-        }
-
-        // POST: TaskLines/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: api/TaskLines
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("TaskLineId,TaskId,InventoryId,EmployeeId,Quantity,Description,UnitPrice,LineTotal")] TaskLine taskLine)
+        public async Task<ActionResult<TaskLine>> PostTaskLine(TaskLine taskLine)
         {
-            if (ModelState.IsValid)
+            // Calculate line total if not provided
+            if (taskLine.LineTotal == 0 && taskLine.Quantity > 0 && taskLine.UnitPrice > 0)
             {
-                _context.Add(taskLine);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                taskLine.LineTotal = taskLine.Quantity * taskLine.UnitPrice;
             }
-            ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeId", "EmployeeId", taskLine.EmployeeId);
-            ViewData["InventoryId"] = new SelectList(_context.Inventories, "InventoryId", "InventoryId", taskLine.InventoryId);
-            ViewData["TaskId"] = new SelectList(_context.Tasks, "TaskId", "TaskId", taskLine.TaskId);
-            return View(taskLine);
+
+            _context.TaskLines.Add(taskLine);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetTaskLine), new { id = taskLine.TaskLineId }, taskLine);
         }
 
-        // GET: TaskLines/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var taskLine = await _context.TaskLines.FindAsync(id);
-            if (taskLine == null)
-            {
-                return NotFound();
-            }
-            ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeId", "EmployeeId", taskLine.EmployeeId);
-            ViewData["InventoryId"] = new SelectList(_context.Inventories, "InventoryId", "InventoryId", taskLine.InventoryId);
-            ViewData["TaskId"] = new SelectList(_context.Tasks, "TaskId", "TaskId", taskLine.TaskId);
-            return View(taskLine);
-        }
-
-        // POST: TaskLines/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("TaskLineId,TaskId,InventoryId,EmployeeId,Quantity,Description,UnitPrice,LineTotal")] TaskLine taskLine)
+        // PUT: api/TaskLines/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutTaskLine(int id, TaskLine taskLine)
         {
             if (id != taskLine.TaskLineId)
             {
-                return NotFound();
+                return BadRequest();
             }
 
-            if (ModelState.IsValid)
+            // Recalculate line total if quantity or unit price changes
+            taskLine.LineTotal = taskLine.Quantity * taskLine.UnitPrice;
+
+            _context.Entry(taskLine).State = EntityState.Modified;
+
+            try
             {
-                try
-                {
-                    _context.Update(taskLine);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!TaskLineExists(taskLine.TaskLineId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                await _context.SaveChangesAsync();
             }
-            ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeId", "EmployeeId", taskLine.EmployeeId);
-            ViewData["InventoryId"] = new SelectList(_context.Inventories, "InventoryId", "InventoryId", taskLine.InventoryId);
-            ViewData["TaskId"] = new SelectList(_context.Tasks, "TaskId", "TaskId", taskLine.TaskId);
-            return View(taskLine);
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!TaskLineExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
         }
 
-        // GET: TaskLines/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        // DELETE: api/TaskLines/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteTaskLine(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var taskLine = await _context.TaskLines
-                .Include(t => t.Employee)
-                .Include(t => t.Inventory)
-                .Include(t => t.Task)
-                .FirstOrDefaultAsync(m => m.TaskLineId == id);
+            var taskLine = await _context.TaskLines.FindAsync(id);
             if (taskLine == null)
             {
                 return NotFound();
             }
 
-            return View(taskLine);
+            _context.TaskLines.Remove(taskLine);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
         }
 
-        // POST: TaskLines/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        // GET: api/TaskLines/ByTask/5
+        [HttpGet("ByTask/{taskId}")]
+        public async Task<ActionResult<IEnumerable<TaskLine>>> GetTaskLinesByTask(int taskId)
         {
-            var taskLine = await _context.TaskLines.FindAsync(id);
-            if (taskLine != null)
-            {
-                _context.TaskLines.Remove(taskLine);
-            }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return await _context.TaskLines
+                .Where(t => t.TaskId == taskId)
+                .Include(t => t.Employee)
+                .Include(t => t.Inventory)
+                .ToListAsync();
         }
 
         private bool TaskLineExists(int id)
