@@ -86,5 +86,39 @@ namespace vehicle_workshop_management.Server.Controllers
         {
             return _context.Employees.Any(e => e.EmployeeId == id);
         }
+
+        [HttpPost("Register")]
+        public async Task<IActionResult> Register([FromBody] Models.Register user)
+        {
+            if (string.IsNullOrEmpty(user.Name) || string.IsNullOrEmpty(user.Email) ||
+                string.IsNullOrEmpty(user.Phone) || string.IsNullOrEmpty(user.Type) ||
+                string.IsNullOrEmpty(user.Status) ||
+                string.IsNullOrEmpty(user.Username) || string.IsNullOrEmpty(user.Password))
+            {
+                return BadRequest("All fields are required");
+            }   
+            if (await _context.Employees.AnyAsync(u => u.Username == user.Username))
+                return BadRequest("User already exists");
+            if (await _context.Employees.AnyAsync(u => u.Phone == user.Phone))
+                return BadRequest("PHOne already exists");
+
+
+
+            var employee = new Employee
+            {
+                Name = user.Name,
+                Email = user.Email,
+                Phone = user.Phone,
+                Type = user.Type,
+                Status = "Active",
+                HireDate = DateOnly.FromDateTime(DateTime.UtcNow),
+                Username = user.Username,
+                Password = user.Password
+            };
+            _context.Employees.Add(employee);
+            await _context.SaveChangesAsync();
+            return CreatedAtAction(nameof(GetEmployee), new { id = employee.EmployeeId }, employee);
+
+        }
     }
 }
