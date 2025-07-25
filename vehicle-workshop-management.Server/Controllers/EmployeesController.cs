@@ -117,7 +117,16 @@ namespace vehicle_workshop_management.Server.Controllers
             };
             _context.Employees.Add(employee);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetEmployee), new { id = employee.EmployeeId }, employee);
+            var response = new
+            {
+                employee.EmployeeId,
+                employee.Name,
+                employee.Username,
+                employee.Status,
+                employee.HireDate
+            };
+
+            return CreatedAtAction(nameof(GetEmployee), new { id = employee.EmployeeId }, response);
 
         }
     }
