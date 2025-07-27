@@ -129,5 +129,28 @@ namespace vehicle_workshop_management.Server.Controllers
             return CreatedAtAction(nameof(GetEmployee), new { id = employee.EmployeeId }, response);
 
         }
+        [HttpPost("Login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
+        {
+            if (string.IsNullOrEmpty(loginRequest.Username) || string.IsNullOrEmpty(loginRequest.Password))
+            {
+                return BadRequest("Username and Password are required");
+            }
+            var employee = await _context.Employees
+                .FirstOrDefaultAsync(e => e.Username == loginRequest.Username && e.Password == loginRequest.Password && e.Status == "Active");
+            if (employee == null)
+            {
+                return Unauthorized("Invalid Username or Password");
+            }
+            var response = new
+            {
+                employee.EmployeeId,
+                employee.Name,
+                employee.Username,
+                employee.Status,
+                employee.HireDate
+            };
+            return Ok(response);
+        }
     }
 }
