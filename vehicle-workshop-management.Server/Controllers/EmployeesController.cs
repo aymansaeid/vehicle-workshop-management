@@ -96,7 +96,7 @@ namespace vehicle_workshop_management.Server.Controllers
                 string.IsNullOrEmpty(user.Username) || string.IsNullOrEmpty(user.Password))
             {
                 return BadRequest("All fields are required");
-            }   
+            }
             if (await _context.Employees.AnyAsync(u => u.Username == user.Username))
                 return BadRequest("User already exists");
             if (await _context.Employees.AnyAsync(u => u.Phone == user.Phone))
@@ -152,5 +152,77 @@ namespace vehicle_workshop_management.Server.Controllers
             };
             return Ok(response);
         }
+
+        [HttpPost("{id}/attendance")]
+        public async Task<IActionResult> MarkAttendance(int id)
+        {
+            var employee = await _context.Employees.FindAsync(id);
+
+            if (employee == null)
+                return NotFound($"Employee with ID {id} not found.");
+
+            // Update LastPresentDate
+            employee.LastPresentDate = DateOnly.FromDateTime(DateTime.UtcNow);
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                Message = $"Attendance marked for {employee.Name}.",
+                employee.EmployeeId,
+                employee.LastPresentDate
+            });
+        }
+        [HttpGet("attendance/today")]
+        public async Task<ActionResult<IEnumerable<Employee>>> GetTodayAttendance()
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var presentEmployees = await _context.Employees
+                .Where(e => e.LastPresentDate == today)
+                .ToListAsync();
+
+            return Ok(presentEmployees);
+        }
+        [HttpGet("attendance/absent")]
+        public async Task<ActionResult<IEnumerable<Employee>>> GetAbsentEmployees()
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var absentEmployees = await _context.Employees
+                .Where(e => e.LastPresentDate != today || e.LastPresentDate == null)
+                .ToListAsync();
+            return Ok(absentEmployees);
+        }
+        [HttpGet("attendance")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetAttendance([FromQuery] DateOnly? date = null)
+        {
+            var targetDate = date ?? DateOnly.FromDateTime(DateTime.UtcNow);
+
+            var data = await _context.Employees
+                .Select(e => new
+                {
+                    e.EmployeeId,
+                    e.Name,
+                    e.Type,
+                    e.Status,
+                    e.LastPresentDate,
+                    IsPresentToday = e.LastPresentDate.HasValue && e.LastPresentDate.Value == targetDate
+                })
+                .OrderByDescending(x => x.IsPresentToday)
+                .ThenBy(x => x.Name)
+                .ToListAsync();
+
+            var result = new
+            {
+                Date = targetDate,
+                Total = data.Count,
+                Present = data.Count(x => x.IsPresentToday),
+                Absent = data.Count(x => !x.IsPresentToday),
+                Employees = data
+            };
+
+            return Ok(result);
+        }
+
+
     }
 }
