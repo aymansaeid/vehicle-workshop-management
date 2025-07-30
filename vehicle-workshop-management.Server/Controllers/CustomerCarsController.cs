@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Mapster;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using vehicle_workshop_management.Server.Models;
 
@@ -17,14 +18,31 @@ namespace vehicle_workshop_management.Server.Controllers
 
         // GET: api/CustomerCars
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<CustomerCar>>> GetCustomerCars()
+        public async Task<ActionResult<IEnumerable<CustomerCarDto>>> GetCustomerCars()
         {
-            return await _context.CustomerCars.Include(c => c.Customer).ToListAsync();
+        var car = await _context.CustomerCars
+            .Include(c => c.Customer)
+            .ToListAsync();
+            return car.Adapt<List<CustomerCarDto>>();
+        }
+        [HttpGet("{customerId}/cars")]
+        public async Task<ActionResult<IEnumerable<CustomerCarDto>>> GetCustomerCarsByCustomerId(int customerId)
+        {
+            // Verify customer exists
+            if (!await _context.Customers.AnyAsync(c => c.CustomerId == customerId))
+            {
+                return NotFound("Customer not found");
+            }
+            var cars = await _context.CustomerCars
+                .Where(cc => cc.CustomerId == customerId)
+                .Include(c => c.Customer)
+                .ToListAsync();
+            return cars.Adapt<List<CustomerCarDto>>();
         }
 
         // GET: api/CustomerCars/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<CustomerCar>> GetCustomerCar(int id)
+        public async Task<ActionResult<CustomerCarDto>> GetCustomerCar(int id)
         {
             var customerCar = await _context.CustomerCars
                 .Include(c => c.Customer)
@@ -32,41 +50,44 @@ namespace vehicle_workshop_management.Server.Controllers
 
             if (customerCar == null)
                 return NotFound();
+            var result = customerCar.Adapt<CustomerCarDto>();
 
-            return customerCar;
+            return Ok(result);
         }
 
-        // POST: api/CustomerCars
-        [HttpPost]
-        public async Task<ActionResult<CustomerCar>> PostCustomerCar(CustomerCar customerCar)
+        [HttpPost("customers/{customerId}/cars")]
+        public async Task<ActionResult<CustomerCarDto>> PostCustomerCar(int customerId, UpdateCustomerCarDto createDto)
         {
-            _context.CustomerCars.Add(customerCar);
+            // Verify customer exists
+            if (!await _context.Customers.AnyAsync(c => c.CustomerId == customerId))
+            {
+                return NotFound("Customer not found");
+            }
+            // 1. Adapt DTO to Entity
+            var customerCarEntity = createDto.Adapt<CustomerCar>();
+            customerCarEntity.CustomerId = customerId;
+            // 2. Add to context and save
+            _context.CustomerCars.Add(customerCarEntity);
             await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetCustomerCar), new { id = customerCar.CarId }, customerCar);
+            // 3. Adapt Entity back to DTO for response
+            var resultDto = customerCarEntity.Adapt<CustomerCarDto>();
+            return CreatedAtAction(nameof(GetCustomerCar), new { id = customerCarEntity.CarId }, resultDto);
         }
+
+
 
         // PUT: api/CustomerCars/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutCustomerCar(int id, CustomerCar customerCar)
+        [HttpPut("/api/customers/{customerId}/cars/{carId}")]
+        public async Task<IActionResult> UpdateCustomerCar(int customerId,int carId,[FromBody] UpdateCustomerCarDto updateDto)
         {
-            if (id != customerCar.CarId)
-                return BadRequest();
+            var car = await _context.CustomerCars
+                .FirstOrDefaultAsync(c => c.CarId == carId && c.CustomerId == customerId);
 
-            _context.Entry(customerCar).State = EntityState.Modified;
+            if (car == null) return NotFound();
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CustomerCarExists(id))
-                    return NotFound();
-                else
-                    throw;
-            }
+            updateDto.Adapt(car); // Mapster will only update matching properties
 
+            await _context.SaveChangesAsync();
             return NoContent();
         }
 
