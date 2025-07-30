@@ -10,8 +10,8 @@
         public string Type { get; set; }
         public string Status { get; set; }
         public DateTime CreatedAt { get; set; }
-        public List<CustomerCarDto> Cars { get; set; }
-        public List<CustomerContactDto> Contacts { get; set; }
+        public List<CustomerCarDto> CustomerCars { get; set; }
+        public List<CustomerContactDto> CustomerContacts { get; set; }
         public List<CustomerTaskDto> Tasks { get; set; }
     }
 }

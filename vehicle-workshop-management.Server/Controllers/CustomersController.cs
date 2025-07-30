@@ -46,12 +46,22 @@ namespace vehicle_workshop_management.Server.Controllers
 
         // POST: api/Customers
         [HttpPost]
-        public async Task<ActionResult<Customer>> PostCustomer(Customer customer)
+        public async Task<ActionResult<CustomerDto>> PostCustomer(CreateCustomerDto createDto)
         {
-            _context.Customers.Add(customer);
+            // 1. Adapt DTO to Entity
+            var customerEntity = createDto.Adapt<Customer>();
+
+            // 2. Add to context and save
+            _context.Customers.Add(customerEntity);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetCustomer), new { id = customer.CustomerId }, customer);
+            // 3. Adapt Entity back to DTO for response
+            var resultDto = customerEntity.Adapt<CustomerDto>();
+
+            return CreatedAtAction(
+                nameof(GetCustomer),
+                new { id = customerEntity.CustomerId },
+                resultDto);
         }
 
         // PUT: api/Customers/5
