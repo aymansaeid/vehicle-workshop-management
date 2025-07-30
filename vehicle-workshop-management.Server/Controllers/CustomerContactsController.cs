@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Mapster;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using vehicle_workshop_management.Server.Models;
 
@@ -17,14 +18,19 @@ namespace vehicle_workshop_management.Server.Controllers
 
         // GET: api/CustomerContacts
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<CustomerContact>>> GetCustomerContacts()
+        public async Task<ActionResult<IEnumerable<CustomerContactDto>>> GetCustomerContacts()
         {
-            return await _context.CustomerContacts.Include(c => c.Customer).ToListAsync();
+            var contacts = await _context.CustomerContacts
+                .Include(c => c.Customer)
+                .ToListAsync();
+
+            return contacts.Adapt<List<CustomerContactDto>>();
         }
+
 
         // GET: api/CustomerContacts/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<CustomerContact>> GetCustomerContact(int id)
+        public async Task<ActionResult<CustomerContactDto>> GetCustomerContact(int id)
         {
             var customerContact = await _context.CustomerContacts
                 .Include(c => c.Customer)
@@ -33,27 +39,46 @@ namespace vehicle_workshop_management.Server.Controllers
             if (customerContact == null)
                 return NotFound();
 
-            return customerContact;
+            var result = customerContact.Adapt<CustomerContactDto>();
+
+            return Ok(result);
         }
 
         // POST: api/CustomerContacts
-        [HttpPost]
-        public async Task<ActionResult<CustomerContact>> PostCustomerContact(CustomerContact customerContact)
+        [HttpPost("customers/{customerId}/contacts")]
+        public async Task<ActionResult<CustomerContactDto>> PostCustomerContact(
+      int customerId,
+      [FromBody] CustomerContactDto contactDto)
         {
-            _context.CustomerContacts.Add(customerContact);
-            await _context.SaveChangesAsync();
+            // Verify customer exists
+            var customerExists = await _context.Customers.AnyAsync(c => c.CustomerId == customerId);
+            if (!customerExists)
+            {
+                return BadRequest("Invalid CustomerId");
+            }
+            var customerEntity = contactDto.Adapt<CustomerContact>();
 
-            return CreatedAtAction(nameof(GetCustomerContact), new { id = customerContact.ContactId }, customerContact);
+
+            _context.CustomerContacts.Add(customerEntity);
+            await _context.SaveChangesAsync();
+            
+            var resultDto = customerEntity.Adapt<CustomerContactDto>();
+            return CreatedAtAction(nameof(GetCustomerContact), new { id = customerEntity.ContactId }, resultDto);
         }
 
         // PUT: api/CustomerContacts/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutCustomerContact(int id, CustomerContact customerContact)
+        public async Task<IActionResult> PutCustomerContact(int id, CustomerContactDto contactDto)
         {
-            if (id != customerContact.ContactId)
+            if (id != contactDto.ContactId)
                 return BadRequest();
 
-            _context.Entry(customerContact).State = EntityState.Modified;
+            var existingContact = await _context.CustomerContacts.FindAsync(id);
+            if (existingContact == null)
+                return NotFound();
+
+            contactDto.Adapt(existingContact);
+            _context.Entry(existingContact).State = EntityState.Modified;
 
             try
             {
@@ -63,8 +88,7 @@ namespace vehicle_workshop_management.Server.Controllers
             {
                 if (!CustomerContactExists(id))
                     return NotFound();
-                else
-                    throw;
+                throw;
             }
 
             return NoContent();
@@ -89,4 +113,5 @@ namespace vehicle_workshop_management.Server.Controllers
             return _context.CustomerContacts.Any(e => e.ContactId == id);
         }
     }
+
 }
