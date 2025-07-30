@@ -26,12 +26,26 @@ namespace vehicle_workshop_management.Server.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Employee>> GetEmployee(int id)
         {
-            var employee = await _context.Employees.FindAsync(id);
+            var result = await _context.Employees
+      .Where(e => e.EmployeeId == id)
+      .Select(e => new
+      {
+          e.EmployeeId,
+          e.Name,
+          e.Email,
+          Tasks = e.TaskLines.Select(t => new
+          {
+              t.TaskLineId,
+              t.TaskId,
+              t.Description
+          }),
+      })
+      .FirstOrDefaultAsync();
 
-            if (employee == null)
+            if (result == null)
                 return NotFound();
 
-            return employee;
+            return Ok(result);
         }
 
         // POST: api/Employees

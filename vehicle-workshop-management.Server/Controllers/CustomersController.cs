@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Mapster;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using vehicle_workshop_management.Server.Models;
 
@@ -26,12 +27,21 @@ namespace vehicle_workshop_management.Server.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Customer>> GetCustomer(int id)
         {
-            var customer = await _context.Customers.FindAsync(id);
+            var customer = await _context.Customers
+       .Include(c => c.CustomerCars)
+       .Include(c => c.CustomerContacts)
+       .Include(c => c.Tasks)
+       .FirstOrDefaultAsync(c => c.CustomerId == id);
 
             if (customer == null)
+            {
                 return NotFound();
+            }
 
-            return customer;
+            var result = customer.Adapt<CustomerDto>();
+
+            return Ok(result);
+
         }
 
         // POST: api/Customers
