@@ -1,6 +1,7 @@
-
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 using vehicle_workshop_management.Server.Models;
+
 namespace vehicle_workshop_management.Server
 {
     public class Program
@@ -8,16 +9,19 @@ namespace vehicle_workshop_management.Server
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-   
-            // Add services to the container.
 
-            builder.Services.AddControllers();
+            // Add services to the container.
+            // object cycle ignore 
+            builder.Services.AddControllers()
+                .AddJsonOptions(x =>
+                    x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve);
+
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-            
+
             builder.Services.AddDbContext<DBCONTEXT>(options =>
-               options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             builder.Services.AddCors(options =>
             {
@@ -26,10 +30,6 @@ namespace vehicle_workshop_management.Server
                                     .AllowAnyHeader()
                                     .AllowAnyMethod());
             });
-            builder.Services.AddControllersWithViews()
-    .AddNewtonsoftJson(options =>
-    options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
-);
 
             var app = builder.Build();
 
@@ -49,7 +49,6 @@ namespace vehicle_workshop_management.Server
             app.UseCors("AllowAll");
 
             app.UseAuthorization();
-
 
             app.MapControllers();
 
