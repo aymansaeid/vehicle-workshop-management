@@ -43,6 +43,21 @@ namespace vehicle_workshop_management.Server.Controllers
 
             return Ok(result);
         }
+        [HttpGet("{customerId}/contacts")]
+        public async Task<ActionResult<IEnumerable<CustomerContactDto>>> GetCustomerContacts(int customerId)
+        {
+            // Verify customer exists
+            if (!await _context.Customers.AnyAsync(c => c.CustomerId == customerId))
+            {
+                return NotFound("Customer not found");
+            }
+
+            var contacts = await _context.CustomerContacts
+                .Where(cc => cc.CustomerId == customerId)
+                .ToListAsync();
+
+            return contacts.Adapt<List<CustomerContactDto>>();
+        }
 
         // POST: api/CustomerContacts
         [HttpPost("customers/{customerId}/contacts")]
