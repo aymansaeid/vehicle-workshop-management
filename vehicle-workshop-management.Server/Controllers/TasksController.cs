@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Mapster;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using vehicle_workshop_management.Server.Models;
 using AppTask = vehicle_workshop_management.Server.Models.Task;
 
 namespace vehicle_workshop_management.Server.Controllers
 {
+
     [ApiController]
     [Route("api/[controller]")]
     public class TasksController : ControllerBase
@@ -18,23 +20,32 @@ namespace vehicle_workshop_management.Server.Controllers
 
         // GET: api/Tasks
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<AppTask>>> GetTasks()
+        public async Task<ActionResult<IEnumerable<TaskDto>>> GetTasks()
         {
-            return await _context.Tasks
+            var tasks = await _context.Tasks
                 .Include(t => t.Car)
                 .Include(t => t.Customer)
                 .Include(t => t.Project)
+                .Include(t => t.TaskLines)
+                .AsNoTracking()
                 .ToListAsync();
+
+            return tasks.Adapt<List<TaskDto>>();
         }
 
         // GET: api/Tasks/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<AppTask>> GetTask(int id)
+        public async Task<ActionResult<TaskDto>> GetTask(int id)
         {
             var task = await _context.Tasks
                 .Include(t => t.Car)
                 .Include(t => t.Customer)
                 .Include(t => t.Project)
+                .Include(t => t.TaskLines)
+                    .ThenInclude(tl => tl.Employee)
+                .Include(t => t.TaskLines)
+                    .ThenInclude(tl => tl.Inventory)
+                .AsNoTracking()
                 .FirstOrDefaultAsync(t => t.TaskId == id);
 
             if (task == null)
@@ -42,46 +53,49 @@ namespace vehicle_workshop_management.Server.Controllers
                 return NotFound();
             }
 
-            return task;
+            return task.Adapt<TaskDto>();
         }
 
         // POST: api/Tasks
         [HttpPost]
-        public async Task<ActionResult<AppTask>> PostTask(AppTask task)
+        public async Task<ActionResult<TaskDto>> PostTask(CreateTaskDto taskDto)
         {
-            // Set default timestamps if not provided
-            if (task.ReceivedAt == default)
-            {
-                task.ReceivedAt = DateTime.UtcNow;
-            }
+            var task = taskDto.Adapt<AppTask>();
 
-            if (task.Status == null)
-            {
-                task.Status = "Pending"; // Default status
-            }
+            // Set default values
+            task.ReceivedAt ??= DateTime.UtcNow;
+            task.Status ??= "Pending";
 
             _context.Tasks.Add(task);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetTask), new { id = task.TaskId }, task);
+            // Reload with relationships for complete DTO
+            var createdTask = await _context.Tasks
+                .Include(t => t.Car)
+                .Include(t => t.Customer)
+                .Include(t => t.Project)
+                .FirstOrDefaultAsync(t => t.TaskId == task.TaskId);
+
+            return CreatedAtAction(nameof(GetTask), new { id = task.TaskId }, createdTask.Adapt<TaskDto>());
         }
 
         // PUT: api/Tasks/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutTask(int id, AppTask task)
+        public async Task<IActionResult> PutTask(int id, UpdateTaskDto taskDto)
         {
-            if (id != task.TaskId)
+            var task = await _context.Tasks.FindAsync(id);
+            if (task == null)
             {
-                return BadRequest();
+                return NotFound();
             }
 
             // Update completion timestamp if status changed to "Completed"
-            var existingTask = await _context.Tasks.FindAsync(id);
-            if (existingTask?.Status != "Completed" && task.Status == "Completed")
+            if (task.Status != "Completed" && taskDto.Status == "Completed")
             {
                 task.EndTime = DateTime.UtcNow;
             }
 
+            taskDto.Adapt(task);
             _context.Entry(task).State = EntityState.Modified;
 
             try
@@ -94,10 +108,7 @@ namespace vehicle_workshop_management.Server.Controllers
                 {
                     return NotFound();
                 }
-                else
-                {
-                    throw;
-                }
+                throw;
             }
 
             return NoContent();
@@ -105,7 +116,7 @@ namespace vehicle_workshop_management.Server.Controllers
 
         // PATCH: api/Tasks/5/status
         [HttpPatch("{id}/status")]
-        public async Task<IActionResult> UpdateTaskStatus(int id, [FromBody] string status)
+        public async Task<IActionResult> UpdateTaskStatus(int id, UpdateTaskStatusDto statusDto)
         {
             var task = await _context.Tasks.FindAsync(id);
             if (task == null)
@@ -113,14 +124,14 @@ namespace vehicle_workshop_management.Server.Controllers
                 return NotFound();
             }
 
-            task.Status = status;
+            task.Status = statusDto.Status;
 
             // Update timestamps based on status changes
-            if (status == "In Progress" && task.StartTime == default)
+            if (statusDto.Status == "In Progress" && task.StartTime == null)
             {
                 task.StartTime = DateTime.UtcNow;
             }
-            else if (status == "Completed")
+            else if (statusDto.Status == "Completed")
             {
                 task.EndTime = DateTime.UtcNow;
             }
@@ -148,25 +159,33 @@ namespace vehicle_workshop_management.Server.Controllers
 
         // GET: api/Tasks/byProject/5
         [HttpGet("byProject/{projectId}")]
-        public async Task<ActionResult<IEnumerable<AppTask>>> GetTasksByProject(int projectId)
+        public async Task<ActionResult<IEnumerable<TaskDto>>> GetTasksByProject(int projectId)
         {
-            return await _context.Tasks
+            var tasks = await _context.Tasks
                 .Where(t => t.ProjectId == projectId)
                 .Include(t => t.Car)
                 .Include(t => t.Customer)
+                .Include(t => t.TaskLines)
+                .AsNoTracking()
                 .ToListAsync();
+
+            return tasks.Adapt<List<TaskDto>>();
         }
 
         // GET: api/Tasks/byStatus?status=Completed
         [HttpGet("byStatus")]
-        public async Task<ActionResult<IEnumerable<AppTask>>> GetTasksByStatus([FromQuery] string status)
+        public async Task<ActionResult<IEnumerable<TaskDto>>> GetTasksByStatus([FromQuery] string status)
         {
-            return await _context.Tasks
+            var tasks = await _context.Tasks
                 .Where(t => t.Status == status)
                 .Include(t => t.Car)
                 .Include(t => t.Customer)
                 .Include(t => t.Project)
+                .Include(t => t.TaskLines)
+                .AsNoTracking()
                 .ToListAsync();
+
+            return tasks.Adapt<List<TaskDto>>();
         }
 
         private bool TaskExists(int id)
