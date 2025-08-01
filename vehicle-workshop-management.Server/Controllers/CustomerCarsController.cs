@@ -85,7 +85,7 @@ namespace vehicle_workshop_management.Server.Controllers
 
             if (car == null) return NotFound();
 
-            updateDto.Adapt(car); // Mapster will only update matching properties
+            updateDto.Adapt(car); 
 
             await _context.SaveChangesAsync();
             return NoContent();
@@ -104,7 +104,29 @@ namespace vehicle_workshop_management.Server.Controllers
 
             return NoContent();
         }
+        [HttpGet("{carId}/history")]
+        public async Task<ActionResult<CarServicesHistoryResponse>> GetServiceHistory(int carId)
+        {
+            var car = await _context.CustomerCars
+                .Include(c => c.Tasks)
+                .FirstOrDefaultAsync(c => c.CarId == carId);
 
+            if (car == null)
+            {
+                return NotFound("Vehicle not found");
+            }
+
+            return new CarServicesHistoryResponse
+            {
+                CarId = car.CarId,
+                Make = car.Make,
+                Model = car.Model,
+                LicensePlate = car.LicensePlate,
+                History = car.Tasks
+                    .OrderByDescending(t => t.StartTime)
+                    .Adapt<List<ServiceHistoryDto>>()
+            };
+        }
         private bool CustomerCarExists(int id)
         {
             return _context.CustomerCars.Any(e => e.CarId == id);
