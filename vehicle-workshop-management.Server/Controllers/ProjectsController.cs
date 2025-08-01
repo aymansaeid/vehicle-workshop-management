@@ -1,121 +1,122 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Mapster;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using vehicle_workshop_management.Server.Models;
-using AppTask = vehicle_workshop_management.Server.Models.Task;
-namespace vehicle_workshop_management.Server.Controllers
+
+[ApiController]
+[Route("api/[controller]")]
+public class ProjectsController : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class ProjectsController : ControllerBase
+    private readonly DBCONTEXT _context;
+
+    public ProjectsController(DBCONTEXT context)
     {
-        private readonly DBCONTEXT _context;
+        _context = context;
+    }
 
-        public ProjectsController(DBCONTEXT context)
+    // GET: api/Projects
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<ProjectDto>>> GetProjects()
+    {
+        var projects = await _context.Projects
+            .Include(p => p.Customer)
+            .Include(p => p.Tasks)
+            .ToListAsync();
+        var res = projects.Adapt<List<ProjectDto>>();
+        return Ok(res);
+    }
+
+    // GET: api/Projects/5
+    [HttpGet("{id}")]
+    public async Task<ActionResult<ProjectDto>> GetProject(int id)
+    {
+        var project = await _context.Projects
+            .Include(p => p.Customer)
+            .Include(p => p.Tasks)
+            .FirstOrDefaultAsync(p => p.ProjectId == id);
+
+        if (project == null)
         {
-            _context = context;
+            return NotFound();
         }
 
-        // GET: api/Projects
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Project>>> GetProjects()
+        return project.Adapt<ProjectDto>();
+    }
+
+    // POST: api/Projects
+    [HttpPost]
+    public async Task<ActionResult<ProjectDto>> PostProject(CreateProjectDto projectDto)
+    {
+        var project = projectDto.Adapt<Project>();
+
+        project.StartDate ??= DateOnly.FromDateTime(DateTime.UtcNow);
+
+        _context.Projects.Add(project);
+        await _context.SaveChangesAsync();
+
+        var resultDto = project.Adapt<ProjectDto>();
+        return CreatedAtAction(nameof(GetProject), new { id = project.ProjectId }, resultDto);
+    }
+
+    // PUT: api/Projects/5
+    [HttpPut("{id}")]
+    public async Task<IActionResult> PutProject(int id, UpdateProjectDto projectDto)
+    {
+        var project = await _context.Projects.FindAsync(id);
+        if (project == null)
         {
-            return await _context.Projects
-                .Include(p => p.Customer)
-                .ToListAsync();
+            return NotFound();
         }
 
-        // GET: api/Projects/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Project>> GetProject(int id)
-        {
-            var project = await _context.Projects
-                .Include(p => p.Customer)
-                .FirstOrDefaultAsync(p => p.ProjectId == id);
+        projectDto.Adapt(project);
+        _context.Entry(project).State = EntityState.Modified;
 
-            if (project == null)
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!ProjectExists(id))
             {
                 return NotFound();
             }
-
-            return project;
+            throw;
         }
 
-        // POST: api/Projects
-        [HttpPost]
-        public async Task<ActionResult<Project>> PostProject(Project project)
+        return NoContent();
+    }
+
+    // DELETE: api/Projects/5
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteProject(int id)
+    {
+        var project = await _context.Projects.FindAsync(id);
+        if (project == null)
         {
-            // Set default dates if not provided
-            if (project.StartDate == default)
-            {
-                project.StartDate = DateOnly.FromDateTime(DateTime.UtcNow);
-            }
-
-            _context.Projects.Add(project);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetProject), new { id = project.ProjectId }, project);
+            return NotFound();
         }
 
-        // PUT: api/Projects/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutProject(int id, Project project)
-        {
-            if (id != project.ProjectId)
-            {
-                return BadRequest();
-            }
+        _context.Projects.Remove(project);
+        await _context.SaveChangesAsync();
 
-            _context.Entry(project).State = EntityState.Modified;
+        return NoContent();
+    }
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ProjectExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+    // GET: api/Projects/5/tasks
+    [HttpGet("{id}/tasks")]
+    public async Task<ActionResult<IEnumerable<CustomerTaskDto>>> GetProjectTasks(int id)
+    {
+        var tasks = await _context.Tasks
+            .Where(t => t.ProjectId == id)
+            .ProjectToType<CustomerTaskDto>()
+            .ToListAsync();
 
-            return NoContent();
-        }
+        return tasks;
+    }
 
-        // DELETE: api/Projects/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteProject(int id)
-        {
-            var project = await _context.Projects.FindAsync(id);
-            if (project == null)
-            {
-                return NotFound();
-            }
-
-            _context.Projects.Remove(project);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        // GET: api/Projects/5/tasks
-        [HttpGet("{id}/tasks")]
-        public async Task<ActionResult<IEnumerable<AppTask>>> GetProjectTasks(int id)
-        {
-            var tasks = await _context.Tasks
-                .Where(t => t.ProjectId == id)
-                .ToListAsync();
-
-            return tasks;
-        }
-
-        private bool ProjectExists(int id)
-        {
-            return _context.Projects.Any(e => e.ProjectId == id);
-        }
+    private bool ProjectExists(int id)
+    {
+        return _context.Projects.Any(e => e.ProjectId == id);
     }
 }
