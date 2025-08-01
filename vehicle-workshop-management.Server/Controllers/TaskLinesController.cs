@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Mapster;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using vehicle_workshop_management.Server.Models;
 
@@ -17,18 +18,20 @@ namespace vehicle_workshop_management.Server.Controllers
 
         // GET: api/TaskLines
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<TaskLine>>> GetTaskLines()
+        public async Task<ActionResult<IEnumerable<TaskLineDto>>> GetTaskLines()
         {
-            return await _context.TaskLines
+            var taskLines = await _context.TaskLines
                 .Include(t => t.Employee)
                 .Include(t => t.Inventory)
                 .Include(t => t.Task)
+                .AsNoTracking()
                 .ToListAsync();
+            return taskLines.Adapt<List<TaskLineDto>>();
         }
 
         // GET: api/TaskLines/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<TaskLine>> GetTaskLine(int id)
+        public async Task<ActionResult<TaskLineDto>> GetTaskLine(int id)
         {
             var taskLine = await _context.TaskLines
                 .Include(t => t.Employee)
@@ -41,38 +44,62 @@ namespace vehicle_workshop_management.Server.Controllers
                 return NotFound();
             }
 
-            return taskLine;
+            return taskLine.Adapt<TaskLineDto>();
         }
 
-        // POST: api/TaskLines
-        [HttpPost]
-        public async Task<ActionResult<TaskLine>> PostTaskLine(TaskLine taskLine)
+        [HttpPost("tasks/{taskId}/Tasklines")]
+        public async Task<ActionResult<TaskLineDto>> AddTaskLine(int taskId,[FromBody] CreateTaskLineDto createDto)
         {
-            // Calculate line total if not provided
-            if (taskLine.LineTotal == 0 && taskLine.Quantity > 0 && taskLine.UnitPrice > 0)
+           
+            if (!await _context.Tasks.AnyAsync(t => t.TaskId == taskId))
             {
-                taskLine.LineTotal = taskLine.Quantity * taskLine.UnitPrice;
+                return NotFound("Task not found");
             }
+        
+            if (!await _context.Employees.AnyAsync(e => e.EmployeeId == createDto.EmployeeId))
+            {
+                return BadRequest("Invalid EmployeeId");
+            }
+
+            /*
+            if (!await _context.Inventory.AnyAsync(i => i.InventoryId == createDto.InventoryId))
+            {
+                return BadRequest("Invalid InventoryId");
+            }
+            */
+           
+            var taskLine = createDto.Adapt<TaskLine>();
+            taskLine.TaskId = taskId; // Ensure taskId from route is used
 
             _context.TaskLines.Add(taskLine);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetTaskLine), new { id = taskLine.TaskLineId }, taskLine);
+            // Reload with relationships
+            var createdTaskLine = await _context.TaskLines
+                .Include(tl => tl.Employee)
+                .Include(tl => tl.Inventory)
+                .FirstOrDefaultAsync(tl => tl.TaskLineId == taskLine.TaskLineId);
+
+            return CreatedAtAction(nameof(GetTaskLine),new { id = taskLine.TaskLineId },createdTaskLine.Adapt<TaskLineDto>());
         }
+
+        
 
         // PUT: api/TaskLines/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutTaskLine(int id, TaskLine taskLine)
+        public async Task<IActionResult> PutTaskLine(int id, UpdateTaskLineDto tasklineDto)
         {
-            if (id != taskLine.TaskLineId)
+            var taskline = await _context.Tasks.FindAsync(id);
+
+            if (taskline == null)
             {
                 return BadRequest();
             }
 
-            // Recalculate line total if quantity or unit price changes
-            taskLine.LineTotal = taskLine.Quantity * taskLine.UnitPrice;
-
-            _context.Entry(taskLine).State = EntityState.Modified;
+            
+            tasklineDto.LineTotal = tasklineDto.Quantity * tasklineDto.UnitPrice;
+            tasklineDto.Adapt(taskline);
+            _context.Entry(taskline).State = EntityState.Modified;
 
             try
             {
@@ -111,13 +138,14 @@ namespace vehicle_workshop_management.Server.Controllers
 
         // GET: api/TaskLines/ByTask/5
         [HttpGet("ByTask/{taskId}")]
-        public async Task<ActionResult<IEnumerable<TaskLine>>> GetTaskLinesByTask(int taskId)
+        public async Task<ActionResult<IEnumerable<TaskLineDto>>> GetTaskLinesByTask(int taskId)
         {
-            return await _context.TaskLines
+            var taskline = await _context.TaskLines
                 .Where(t => t.TaskId == taskId)
                 .Include(t => t.Employee)
                 .Include(t => t.Inventory)
                 .ToListAsync();
+            return taskline.Adapt<List<TaskLineDto>>();
         }
 
         private bool TaskLineExists(int id)
