@@ -60,16 +60,19 @@ namespace vehicle_workshop_management.Server.Controllers
         [HttpPost]
         public async Task<ActionResult<TaskDto>> PostTask(CreateTaskDto taskDto)
         {
+            if (!await _context.Customers.AnyAsync(c => c.CustomerId == taskDto.CustomerId))
+            {
+                return BadRequest("Invalid CustomerId");
+            }
             var task = taskDto.Adapt<AppTask>();
 
-            // Set default values
+            
             task.ReceivedAt ??= DateTime.UtcNow;
             task.Status ??= "Pending";
 
             _context.Tasks.Add(task);
             await _context.SaveChangesAsync();
 
-            // Reload with relationships for complete DTO
             var createdTask = await _context.Tasks
                 .Include(t => t.Car)
                 .Include(t => t.Customer)
@@ -89,7 +92,6 @@ namespace vehicle_workshop_management.Server.Controllers
                 return NotFound();
             }
 
-            // Update completion timestamp if status changed to "Completed"
             if (task.Status != "Completed" && taskDto.Status == "Completed")
             {
                 task.EndTime = DateTime.UtcNow;
@@ -126,7 +128,6 @@ namespace vehicle_workshop_management.Server.Controllers
 
             task.Status = statusDto.Status;
 
-            // Update timestamps based on status changes
             if (statusDto.Status == "In Progress" && task.StartTime == null)
             {
                 task.StartTime = DateTime.UtcNow;
