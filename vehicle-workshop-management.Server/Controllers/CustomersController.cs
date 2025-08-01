@@ -66,12 +66,17 @@ namespace vehicle_workshop_management.Server.Controllers
 
         // PUT: api/Customers/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutCustomer(int id, Customer customer)
+        public async Task<IActionResult> PutCustomer(int id, CustomerDto customerDto)
         {
-            if (id != customer.CustomerId)
+            if (id != customerDto.CustomerId)
                 return BadRequest();
 
-            _context.Entry(customer).State = EntityState.Modified;
+            var existingCustomer = await _context.CustomerContacts.FindAsync(id);
+            if (existingCustomer == null)
+                return NotFound();
+
+            customerDto.Adapt(existingCustomer);
+            _context.Entry(existingCustomer).State = EntityState.Modified;
 
             try
             {
@@ -81,8 +86,7 @@ namespace vehicle_workshop_management.Server.Controllers
             {
                 if (!CustomerExists(id))
                     return NotFound();
-                else
-                    throw;
+                throw;
             }
 
             return NoContent();
