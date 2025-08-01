@@ -197,9 +197,15 @@ namespace vehicle_workshop_management.Server.Controllers
         public async Task<ActionResult<IEnumerable<Employee>>> GetTodayAttendance()
         {
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
-            var presentEmployees = await _context.Employees
-                .Where(e => e.LastPresentDate == today)
-                .ToListAsync();
+            var presentEmployees = await _context.Employees.Where(e => e.LastPresentDate == today)
+               .Select(e => new
+               {
+                   e.EmployeeId,
+                   e.Name,
+                   e.Type,
+                   e.Status,
+                   e.LastPresentDate,
+               }).ToListAsync();
 
             return Ok(presentEmployees);
         }
