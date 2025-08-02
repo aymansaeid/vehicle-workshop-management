@@ -2,9 +2,6 @@
 {
     public class InventoryGroupItemDto
     {
-    
-
-        public int GroupId { get; set; }
-
+        public InventoryGroupDto? Group { get; set; }  // include group details
     }
 }

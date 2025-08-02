@@ -20,11 +20,12 @@ namespace vehicle_workshop_management.Server.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<InventoryDto>>> GetInventories()
         {
-            var invetory = await _context.Inventories
-            .Include(i => i.InventoryGroupItems)
-            .ToListAsync();
+            var inventory = await _context.Inventories
+        .Include(i => i.InventoryGroupItems)
+            .ThenInclude(igi => igi.Group) // Include Group info
+        .ToListAsync();
 
-            var res = invetory.Adapt<List<InventoryDto>>();
+            var res = inventory.Adapt<List<InventoryDto>>();
             return Ok(res);
 
         }

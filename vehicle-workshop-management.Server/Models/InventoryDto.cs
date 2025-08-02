@@ -15,7 +15,7 @@
         public decimal? Price { get; set; }
 
         public string? Status { get; set; }
-        public List<int>? Group { get; set; }  // For POST/PUT
 
+        public List<InventoryGroupItemDto> InventoryGroupItems { get; set; } 
     }
 }
