@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Mapster;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using vehicle_workshop_management.Server.Models;
 
@@ -17,9 +18,15 @@ namespace vehicle_workshop_management.Server.Controllers
 
         // GET: api/Inventories
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Inventory>>> GetInventories()
+        public async Task<ActionResult<IEnumerable<InventoryDto>>> GetInventories()
         {
-            return await _context.Inventories.ToListAsync();
+            var invetory = await _context.Inventories
+            .Include(i => i.InventoryGroupItems)
+            .ToListAsync();
+
+            var res = invetory.Adapt<List<InventoryDto>>();
+            return Ok(res);
+
         }
 
         // GET: api/Inventories/5
