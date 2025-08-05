@@ -44,12 +44,13 @@ namespace vehicle_workshop_management.Server.Controllers
 
         // POST: api/Inventories
         [HttpPost]
-        public async Task<ActionResult<Inventory>> PostInventory(Inventory inventory)
+        public async Task<ActionResult<InventoryDto>> CreateInventoryItem(CreateInventoryItem inventoryDto)
         {
-            _context.Inventories.Add(inventory);
+            var item = inventoryDto.Adapt<Inventory>();
+            _context.Inventories.Add(item);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetInventory), new { id = inventory.InventoryId }, inventory);
+            return CreatedAtAction(nameof(GetInventory), new { id = item.InventoryId }, item.Adapt<InventoryDto>());
         }
 
         // PUT: api/Inventories/5
@@ -75,7 +76,87 @@ namespace vehicle_workshop_management.Server.Controllers
 
             return NoContent();
         }
+        // POST: api/Inventories/AssignToGroup
+        [HttpPost("AssignToGroup")]
+        public async Task<ActionResult> AssignInventoryToGroup(AssignInventoryToGroupDto assignmentDto)
+        {
+            // Check if inventory item exists
+            var inventoryItem = await _context.Inventories
+                .FindAsync(assignmentDto.InventoryId);
 
+            if (inventoryItem == null)
+            {
+                return NotFound($"Inventory item with ID {assignmentDto.InventoryId} not found");
+            }
+
+            // Check if group exists
+            var group = await _context.InventoryGroups
+                .FindAsync(assignmentDto.GroupId);
+
+            if (group == null)
+            {
+                return NotFound($"Group with ID {assignmentDto.GroupId} not found");
+            }
+
+            // Check if the relationship already exists
+            var existingAssignment = await _context.InventoryGroupItems
+                .FirstOrDefaultAsync(igi => igi.InventoryId == assignmentDto.InventoryId
+                                        && igi.GroupId == assignmentDto.GroupId);
+
+            if (existingAssignment != null)
+            {
+                return BadRequest("This inventory item is already assigned to this group");
+            }
+
+            // Create the new relationship
+            var newAssignment = new InventoryGroupItem
+            {
+                InventoryId = assignmentDto.InventoryId,
+                GroupId = assignmentDto.GroupId
+            };
+
+            _context.InventoryGroupItems.Add(newAssignment);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+        // GET: api/Inventories/{id}/Groups
+        [HttpGet("{id}/Groups")]
+        public async Task<ActionResult<IEnumerable<InventoryGroupDto>>> GetInventoryGroups(int id)
+        {
+            var inventoryItem = await _context.Inventories
+                .Include(i => i.InventoryGroupItems)
+                .ThenInclude(igi => igi.Group)
+                .FirstOrDefaultAsync(i => i.InventoryId == id);
+
+            if (inventoryItem == null)
+            {
+                return NotFound();
+            }
+
+            var groupDtos = inventoryItem.InventoryGroupItems
+                .Select(igi => igi.Group.Adapt<InventoryGroupDto>())
+                .ToList();
+
+            return Ok(groupDtos);
+        }
+        // DELETE: api/Inventories/{inventoryId}/Groups/{groupId}
+        [HttpDelete("{inventoryId}/Groups/{groupId}")]
+        public async Task<IActionResult> RemoveInventoryFromGroup(int inventoryId, int groupId)
+        {
+            var assignment = await _context.InventoryGroupItems
+                .FirstOrDefaultAsync(igi => igi.InventoryId == inventoryId && igi.GroupId == groupId);
+
+            if (assignment == null)
+            {
+                return NotFound();
+            }
+
+            _context.InventoryGroupItems.Remove(assignment);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
         // DELETE: api/Inventories/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteInventory(int id)
