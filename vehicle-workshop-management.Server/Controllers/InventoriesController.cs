@@ -1,6 +1,7 @@
 ﻿using Mapster;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 using vehicle_workshop_management.Server.Models;
 
 namespace vehicle_workshop_management.Server.Controllers
@@ -44,7 +45,7 @@ namespace vehicle_workshop_management.Server.Controllers
 
         // POST: api/Inventories
         [HttpPost]
-        public async Task<ActionResult<InventoryDto>> CreateInventoryItem(CreateInventoryItem inventoryDto)
+        public async Task<ActionResult<InventoryDto>> CreateInventoryItem(CreateInventoryItemDto inventoryDto)
         {
             var item = inventoryDto.Adapt<Inventory>();
             _context.Inventories.Add(item);
@@ -55,12 +56,15 @@ namespace vehicle_workshop_management.Server.Controllers
 
         // PUT: api/Inventories/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutInventory(int id, Inventory inventory)
+        public async Task<IActionResult> PutInventory(int id, CreateInventoryItemDto inventory)
         {
-            if (id != inventory.InventoryId)
-                return BadRequest();
-
-            _context.Entry(inventory).State = EntityState.Modified;
+            var inventoryItem = await _context.Inventories.FindAsync(id);
+            if (inventoryItem == null)
+            {
+                return NotFound();
+            }
+            inventory.Adapt(inventoryItem);
+            _context.Entry(inventoryItem).State = EntityState.Modified;
 
             try
             {

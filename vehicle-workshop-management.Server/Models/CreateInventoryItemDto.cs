@@ -1,6 +1,6 @@
 ﻿namespace vehicle_workshop_management.Server.Models
 {
-    public class CreateInventoryItem
+    public class CreateInventoryItemDto
     {
         public string? Name { get; set; }
 

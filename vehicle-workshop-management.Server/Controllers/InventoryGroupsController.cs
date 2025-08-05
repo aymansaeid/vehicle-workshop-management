@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Mapster;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 using vehicle_workshop_management.Server.Models;
 
 namespace vehicle_workshop_management.Server.Controllers
@@ -17,23 +19,24 @@ namespace vehicle_workshop_management.Server.Controllers
 
         // GET: api/InventoryGroups
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<InventoryGroup>>> GetInventoryGroups()
+        public async Task<ActionResult<IEnumerable<InventoryGroupDto>>> GetInventoryGroups()
         {
-            return await _context.InventoryGroups.ToListAsync();
+            var group = await _context.InventoryGroups.ToListAsync();
+            return group.Adapt<List<InventoryGroupDto>>();
         }
 
         // GET: api/InventoryGroups/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<InventoryGroup>> GetInventoryGroup(int id)
+        public async Task<ActionResult<InventoryGroupDto>> GetInventoryGroup(int id)
         {
-            var inventoryGroup = await _context.InventoryGroups.FindAsync(id);
+            var inventoryGroup = await _context.InventoryGroups.Include(ig => ig.InventoryGroupItems).FirstOrDefaultAsync( ig => ig.GroupId ==  id);
 
             if (inventoryGroup == null)
             {
                 return NotFound();
             }
-
-            return inventoryGroup;
+            var res = inventoryGroup.Adapt<InventoryGroupDto>();
+            return res;
         }
 
         // POST: api/InventoryGroups
@@ -48,13 +51,14 @@ namespace vehicle_workshop_management.Server.Controllers
 
         // PUT: api/InventoryGroups/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutInventoryGroup(int id, InventoryGroup inventoryGroup)
+        public async Task<IActionResult> PutInventoryGroup(int id, UpdateInventoryGroupDto inventoryGroupDto)
         {
-            if (id != inventoryGroup.GroupId)
+            var inventoryGroup = await _context.InventoryGroups.FindAsync(id);
+            if (inventoryGroup == null)
             {
-                return BadRequest();
+                return NotFound();
             }
-
+            inventoryGroupDto.Adapt(inventoryGroup);
             _context.Entry(inventoryGroup).State = EntityState.Modified;
 
             try
