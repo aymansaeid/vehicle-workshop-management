@@ -41,12 +41,14 @@ namespace vehicle_workshop_management.Server.Controllers
 
         // POST: api/InventoryGroups
         [HttpPost]
-        public async Task<ActionResult<InventoryGroup>> PostInventoryGroup(InventoryGroup inventoryGroup)
+        public async Task<ActionResult<InventoryGroupDto>> PostInventoryGroup(UpdateInventoryGroupDto inventoryGroupDto)
         {
-            _context.InventoryGroups.Add(inventoryGroup);
+            var group = inventoryGroupDto.Adapt<InventoryGroup>();
+            _context.InventoryGroups.Add(group);
+
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetInventoryGroup), new { id = inventoryGroup.GroupId }, inventoryGroup);
+            return CreatedAtAction(nameof(GetInventoryGroup), new { id = group.GroupId }, group.Adapt<InventoryGroupDto>());
         }
 
         // PUT: api/InventoryGroups/5
