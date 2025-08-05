@@ -32,14 +32,14 @@ namespace vehicle_workshop_management.Server.Controllers
 
         // GET: api/Inventories/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Inventory>> GetInventory(int id)
+        public async Task<ActionResult<InventoryDto>> GetInventory(int id)
         {
             var inventory = await _context.Inventories.FindAsync(id);
 
             if (inventory == null)
                 return NotFound();
 
-            return inventory;
+            return inventory.Adapt<InventoryDto>();
         }
 
         // POST: api/Inventories
