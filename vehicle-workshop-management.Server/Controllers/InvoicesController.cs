@@ -133,20 +133,22 @@ namespace vehicle_workshop_management.Server.Controllers
 
         // GET: api/Invoices/5/lines
         [HttpGet("{id}/lines")]
-        public async Task<ActionResult<IEnumerable<InvoiceLine>>> GetInvoiceLines(int id)
+        public async Task<ActionResult<IEnumerable<InvoiceLineDto>>> GetInvoiceLines(int id)
         {
             var invoiceLines = await _context.InvoiceLines
                 .Where(il => il.InvoiceId == id)
                 .Include(il => il.Inventory)
                 .Include(il => il.TaskLine)
+                 .ThenInclude(tl => tl.Employee)
                 .ToListAsync();
 
             if (!invoiceLines.Any())
             {
                 return NotFound();
             }
+            var invoiceLineDtos = invoiceLines.Adapt<List<InvoiceLineDto>>();
 
-            return invoiceLines;
+            return invoiceLineDtos;
         }
 
         private bool InvoiceExists(int id)
