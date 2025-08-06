@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Mapster;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using vehicle_workshop_management.Server.Models;
 
@@ -17,50 +18,53 @@ namespace vehicle_workshop_management.Server.Controllers
 
         // GET: api/Invoices
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Invoice>>> GetInvoices()
+        public async Task<ActionResult<IEnumerable<InvoiceDto>>> GetInvoices()
         {
-            return await _context.Invoices
+            var invoice =  await _context.Invoices
                 .Include(i => i.Customer)
                 .ToListAsync();
+            var res = invoice.Adapt<List<InvoiceDto>>();
+
+            return Ok(res);
         }
 
         // GET: api/Invoices/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Invoice>> GetInvoice(int id)
+        public async Task<ActionResult<InvoiceDto>> GetInvoice(int id)
         {
             var invoice = await _context.Invoices
                 .Include(i => i.Customer)
                 .FirstOrDefaultAsync(i => i.InvoiceId == id);
-
+            
             if (invoice == null)
             {
                 return NotFound();
             }
 
-            return invoice;
+            return invoice.Adapt<InvoiceDto>();
         }
 
         // POST: api/Invoices
         [HttpPost]
-        public async Task<ActionResult<Invoice>> PostInvoice(Invoice invoice)
+        public async Task<ActionResult<InvoiceDto>> PostInvoice(UpdateInvoiceDto invoiceDto)
         {
             // Set default dates if not provided
-            if (!invoice.DateIssued.HasValue)
+            if (!invoiceDto.DateIssued.HasValue)
             {
-                invoice.DateIssued = DateOnly.FromDateTime(DateTime.UtcNow);
+                invoiceDto.DateIssued = DateOnly.FromDateTime(DateTime.UtcNow);
             }
 
-            if (!invoice.DueDate.HasValue)
+            if (!invoiceDto.DueDate.HasValue)
             {
-                invoice.DueDate = invoice.DateIssued.Value.AddDays(30); // Default 30-day payment term
+                invoiceDto.DueDate = invoiceDto.DateIssued.Value.AddDays(30); // Default 30-day payment term
             }
 
             // Validate dates
-            if (invoice.DueDate < invoice.DateIssued)
+            if (invoiceDto.DueDate < invoiceDto.DateIssued)
             {
                 return BadRequest("Due date cannot be earlier than issue date");
             }
-
+            var invoice = invoiceDto.Adapt<Invoice>();
             _context.Invoices.Add(invoice);
             await _context.SaveChangesAsync();
 
@@ -69,13 +73,15 @@ namespace vehicle_workshop_management.Server.Controllers
 
         // PUT: api/Invoices/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutInvoice(int id, Invoice invoice)
+        public async Task<IActionResult> PutInvoice(int id, UpdateInvoiceDto invoiceDto)
         {
-            if (id != invoice.InvoiceId)
+            var invoice = await _context.Invoices.FindAsync(id);
+            if (invoice == null)
             {
-                return BadRequest();
+                return NotFound();
             }
 
+            invoiceDto.Adapt(invoice);
             _context.Entry(invoice).State = EntityState.Modified;
 
             try
@@ -93,6 +99,18 @@ namespace vehicle_workshop_management.Server.Controllers
                     throw;
                 }
             }
+
+            return NoContent();
+        }
+        // PATCH: api/Invoices/5
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> PatchInvoiceStatus(int id, [FromBody] string status)
+        {
+            var invoice = await _context.Invoices.FindAsync(id);
+            if (invoice == null) return NotFound();
+
+            invoice.Status = status;
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
