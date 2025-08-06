@@ -16,7 +16,6 @@
 
         public string? Status { get; set; }
 
-        public virtual CustomerDto? Customer { get; set; }
 
         public List<CustomerTaskDto> Tasks { get; set; }
     }
