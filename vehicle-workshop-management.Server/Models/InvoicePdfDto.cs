@@ -11,5 +11,7 @@
         public decimal TotalAmount { get; set; }
         public decimal CalculatedTotal { get; set; } // For verification
         public string Notes { get; set; }
+
+
     }
 }

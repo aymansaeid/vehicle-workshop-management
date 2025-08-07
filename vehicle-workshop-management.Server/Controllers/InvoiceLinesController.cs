@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Mapster;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using vehicle_workshop_management.Server.Models;
 
@@ -17,18 +18,20 @@ namespace vehicle_workshop_management.Server.Controllers
 
         // GET: api/InvoiceLines
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<InvoiceLine>>> GetInvoiceLines()
+        public async Task<ActionResult<IEnumerable<InvoiceLineDto>>> GetInvoiceLines()
         {
-            return await _context.InvoiceLines
+            var invoicesLine = await _context.InvoiceLines
                 .Include(i => i.Inventory)
                 .Include(i => i.Invoice)
                 .Include(i => i.TaskLine)
                 .ToListAsync();
+            var res = invoicesLine.Adapt<List<InvoiceLineDto>>();
+            return Ok(res);
         }
 
         // GET: api/InvoiceLines/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<InvoiceLine>> GetInvoiceLine(int id)
+        public async Task<ActionResult<InvoiceLineDto>> GetInvoiceLine(int id)
         {
             var invoiceLine = await _context.InvoiceLines
                 .Include(i => i.Inventory)
@@ -40,24 +43,54 @@ namespace vehicle_workshop_management.Server.Controllers
             {
                 return NotFound();
             }
+            var invoiceLineDto = invoiceLine.Adapt<InvoiceLineDto>();
 
-            return invoiceLine;
+            return invoiceLineDto;
         }
 
         // POST: api/InvoiceLines
         [HttpPost]
-        public async Task<ActionResult<InvoiceLine>> PostInvoiceLine(InvoiceLine invoiceLine)
+        public async Task<ActionResult<InvoiceLineDto>> PostInvoiceLine(CreateInvoiceLineDto invoiceLineDto)
         {
-            // Calculate line total if not provided
-            if (invoiceLine.LineTotal == 0 && invoiceLine.Quantity > 0 && invoiceLine.UnitPrice > 0)
+            // Validate required fields
+            if (invoiceLineDto.InvoiceId == null || invoiceLineDto.InvoiceId <= 0)
             {
-                invoiceLine.LineTotal = invoiceLine.Quantity * invoiceLine.UnitPrice;
+                return BadRequest("Valid InvoiceId is required");
             }
 
+            // Verify the parent invoice exists
+            var invoiceExists = await _context.Invoices.AnyAsync(i => i.InvoiceId == invoiceLineDto.InvoiceId);
+            if (!invoiceExists)
+            {
+                return NotFound($"Invoice with ID {invoiceLineDto.InvoiceId} not found");
+            }
+
+       
+
+            // Map to entity
+            var invoiceLine = invoiceLineDto.Adapt<InvoiceLine>();
+
+            // Ensure proper relationship
+            invoiceLine.InvoiceId = invoiceLineDto.InvoiceId.Value;
+
             _context.InvoiceLines.Add(invoiceLine);
+            var invoice = await _context.Invoices
+       .Include(i => i.InvoiceLines)
+       .FirstOrDefaultAsync(i => i.InvoiceId == invoiceLine.InvoiceId);
+
+            if (invoice != null)
+            {
+                invoice.TotalAmount = invoice.InvoiceLines.Sum(il => il.LineTotal);
+                _context.Entry(invoice).State = EntityState.Modified;
+            }
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetInvoiceLine), new { id = invoiceLine.LineId }, invoiceLine);
+            // Return the complete DTO with relationships
+            var resultDto = invoiceLine.Adapt<InvoiceLineDto>();
+            return CreatedAtAction(
+                nameof(GetInvoiceLine),
+                new { id = invoiceLine.LineId },
+                resultDto);
         }
 
         // PUT: api/InvoiceLines/5
