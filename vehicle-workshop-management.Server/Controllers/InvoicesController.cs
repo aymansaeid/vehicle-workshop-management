@@ -22,6 +22,8 @@ namespace vehicle_workshop_management.Server.Controllers
         {
             var invoice =  await _context.Invoices
                 .Include(i => i.Customer)
+                .Include(i => i.InvoiceLines)
+                    .ThenInclude(il => il.Inventory)
                 .ToListAsync();
             var res = invoice.Adapt<List<InvoiceDto>>();
 
@@ -65,6 +67,15 @@ namespace vehicle_workshop_management.Server.Controllers
                 return BadRequest("Due date cannot be earlier than issue date");
             }
             var invoice = invoiceDto.Adapt<Invoice>();
+            // Calculate and set correct total amount
+            if (invoice.InvoiceLines != null)
+            {
+                invoice.TotalAmount = invoice.InvoiceLines.Sum(il => il.LineTotal);
+            }
+            else
+            {
+                invoice.TotalAmount = 0;
+            }
             _context.Invoices.Add(invoice);
             await _context.SaveChangesAsync();
 
@@ -82,6 +93,9 @@ namespace vehicle_workshop_management.Server.Controllers
             }
 
             invoiceDto.Adapt(invoice);
+            // Recalculate total amount when updating
+            invoice.TotalAmount = invoice.InvoiceLines?.Sum(il => il.LineTotal) ?? 0;
+
             _context.Entry(invoice).State = EntityState.Modified;
 
             try

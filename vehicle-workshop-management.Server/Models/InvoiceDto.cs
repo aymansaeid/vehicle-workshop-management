@@ -15,7 +15,10 @@
         public string? Notes { get; set; }
 
         public int? CustomerId { get; set; }
-      
+        public string? CustomerName { get; set; } // Optional for display
+        public List<InvoiceLineDto> InvoiceLines { get; set; } = new();
+
+
 
     }
 }
