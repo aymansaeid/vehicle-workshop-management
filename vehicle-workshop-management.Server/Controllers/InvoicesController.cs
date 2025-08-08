@@ -133,7 +133,7 @@ namespace vehicle_workshop_management.Server.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteInvoice(int id)
         {
-            var invoice = await _context.Invoices.FindAsync(id);
+            var invoice = await _context.Invoices.Include(i => i.InvoiceLines).FirstOrDefaultAsync(i => i.InvoiceId == id);
             if (invoice == null)
             {
                 return NotFound();
