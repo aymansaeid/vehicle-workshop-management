@@ -135,10 +135,23 @@ namespace vehicle_workshop_management.Server.Controllers
             {
                 return NotFound();
             }
+            //  store the InvoiceId before deletion (needed to update the parent)
+            var invoiceId = invoiceLine.InvoiceId;
 
+            // delete the line
             _context.InvoiceLines.Remove(invoiceLine);
             await _context.SaveChangesAsync();
 
+            // recalculate and update the parent Invoice's taotal amount
+            var invoice = await _context.Invoices
+                .Include(i => i.InvoiceLines)
+                .FirstOrDefaultAsync(i => i.InvoiceId == invoiceId);
+
+            if (invoice != null)
+            {
+                invoice.TotalAmount = invoice.InvoiceLines.Sum(il => il.LineTotal);
+                await _context.SaveChangesAsync();
+            }
             return NoContent();
         }
 
