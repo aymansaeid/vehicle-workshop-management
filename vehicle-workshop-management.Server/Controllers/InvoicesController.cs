@@ -190,7 +190,7 @@ namespace vehicle_workshop_management.Server.Controllers
                     Description = il.Description,
                     Quantity = (int)il.Quantity,
                     UnitPrice = (decimal)il.UnitPrice,
-                    LineTotal = il.LineTotal
+                  
                 }).ToList()
             };
 
