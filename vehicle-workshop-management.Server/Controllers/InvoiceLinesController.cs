@@ -95,21 +95,35 @@ namespace vehicle_workshop_management.Server.Controllers
 
         // PUT: api/InvoiceLines/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutInvoiceLine(int id, InvoiceLine invoiceLine)
+        public async Task<IActionResult> PutInvoiceLine(int id, UpdateInvoiceLineDto invoiceLineDto)
         {
-            if (id != invoiceLine.LineId)
+            var invoiceLine = await _context.InvoiceLines.FindAsync(id);
+            if (invoiceLine == null)
             {
-                return BadRequest();
+                return NotFound();
             }
+            var invoiceId = invoiceLine.InvoiceId;
+
+
+            invoiceLineDto.Adapt(invoiceLine);
 
             // Recalculate line total if quantity or unit price changes
             invoiceLine.LineTotal = invoiceLine.Quantity * invoiceLine.UnitPrice;
-
+         
             _context.Entry(invoiceLine).State = EntityState.Modified;
 
             try
             {
                 await _context.SaveChangesAsync();
+                // update the parent Invoice's total amount
+                var invoice = await _context.Invoices
+            .Include(i => i.InvoiceLines)
+            .FirstOrDefaultAsync(i => i.InvoiceId == invoiceId);
+                if (invoice != null)
+                {
+                    invoice.TotalAmount = invoice.InvoiceLines.Sum(il => il.LineTotal);
+                    await _context.SaveChangesAsync();
+                }
             }
             catch (DbUpdateConcurrencyException)
             {
