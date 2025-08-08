@@ -164,6 +164,39 @@ namespace vehicle_workshop_management.Server.Controllers
 
             return invoiceLineDtos;
         }
+        // Controllers/InvoicesController.cs
+        [HttpGet("{id}/pdf")]
+        public async Task<IActionResult> GeneratePdfInvoice(int id)
+        {
+            var invoice = await _context.Invoices
+                .Include(i => i.Customer)
+                .Include(i => i.InvoiceLines)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(i => i.InvoiceId == id);
+
+            if (invoice == null) return NotFound();
+
+            var dto = new InvoicePdfDto
+            {
+                InvoiceId = invoice.InvoiceId,
+                CustomerName = invoice.Customer?.Name ?? "N/A",
+                FormattedDate = invoice.DateIssued?.ToString("MMMM dd, yyyy") ?? "N/A", // Fixed ToString
+                FormattedDueDate = invoice.DueDate?.ToString("MMMM dd, yyyy") ?? "N/A", // Fixed ToString
+                Status = invoice.Status,
+                Notes = invoice.Notes,
+                TotalAmount = invoice.TotalAmount ?? 0m,
+                InvoiceLines = invoice.InvoiceLines.Select(il => new InvoiceLinePdfDto
+                {
+                    Description = il.Description,
+                    Quantity = (int)il.Quantity,
+                    UnitPrice = (decimal)il.UnitPrice,
+                    LineTotal = il.LineTotal
+                }).ToList()
+            };
+
+            var pdfBytes = new PdfInvoiceService().GeneratePdf(dto);
+            return File(pdfBytes, "application/pdf", $"Invoice_{id}.pdf");
+        }
 
         private bool InvoiceExists(int id)
         {
