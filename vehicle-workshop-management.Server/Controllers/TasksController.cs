@@ -76,12 +76,25 @@ namespace vehicle_workshop_management.Server.Controllers
             var createdTask = await _context.Tasks
                 .Include(t => t.Car)
                 .Include(t => t.Customer)
-                .Include(t => t.Project)
                 .FirstOrDefaultAsync(t => t.TaskId == task.TaskId);
 
             return CreatedAtAction(nameof(GetTask), new { id = task.TaskId }, createdTask.Adapt<TaskDto>());
         }
+        // PUT: api/Tasks/{taskId}/assign-to-project
+        [HttpPut("{taskId}/assign-to-project")]
+        public async Task<IActionResult> AssignTaskToProject(int taskId, [FromBody] int projectId)
+        {
+            var task = await _context.Tasks.FindAsync(taskId);
+            if (task == null) return NotFound("Task not found");
 
+            if (!await _context.Projects.AnyAsync(p => p.ProjectId == projectId))
+                return BadRequest("Invalid ProjectId");
+
+            task.ProjectId = projectId;
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
         // PUT: api/Tasks/5
         [HttpPut("{id}")]
         public async Task<IActionResult> PutTask(int id, UpdateTaskDto taskDto)
