@@ -59,5 +59,28 @@ namespace vehicle_workshop_management.Server.Controllers
 
             return overdueTasks.Adapt<List<OverdueTaskDto>>();
         }
+        // GET: /api/dashboard/Unpaid-invoices
+        [HttpGet("Unpaid-invoices")]
+        public async Task<ActionResult<IEnumerable<UnpaidInvoiceDto>>> GetPendingInvoices()
+        {
+            var pendingInvoices = await _context.Invoices
+                .AsNoTracking()
+                .Where(i => i.Status == "Unpaid")
+                .Select(i => new UnpaidInvoiceDto
+                {
+                    InvoiceID = i.InvoiceId,
+                    DateIssued = i.DateIssued.HasValue
+        ? i.DateIssued.Value.ToDateTime(TimeOnly.MinValue)
+        : DateTime.MinValue,
+                    DueDate = i.DueDate.HasValue
+        ? i.DueDate.Value.ToDateTime(TimeOnly.MinValue)
+        : DateTime.MinValue,
+                    TotalAmount = (decimal)i.TotalAmount,
+                    Status = i.Status
+                })
+                .ToListAsync();
+
+            return Ok(pendingInvoices);
+        }
     }
 }

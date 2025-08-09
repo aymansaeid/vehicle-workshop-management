@@ -2,7 +2,7 @@
 {
     public class OverdueTaskDto
     {
-        public int TaskID { get; set; }
+        public int TaskId { get; set; }
         public string Name { get; set; }
         public DateTime? EndTime { get; set; }
         public string Status { get; set; }
