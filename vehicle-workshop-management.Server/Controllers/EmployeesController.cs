@@ -1,4 +1,5 @@
 ﻿using Mapster;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using vehicle_workshop_management.Server.Models;
@@ -248,6 +249,13 @@ namespace vehicle_workshop_management.Server.Controllers
             };
 
             return Ok(result);
+        }
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            
+            await HttpContext.SignOutAsync();
+            return Ok(new { message = "Logged out successfully" });
         }
 
 
