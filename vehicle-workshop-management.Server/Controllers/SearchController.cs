@@ -59,6 +59,54 @@ namespace vehicle_workshop_management.Server.Controllers
 
             return Ok(results);
         }
+        // GET /api/lookup/customers
+        [HttpGet("lookup/customers")]
+        public async Task<ActionResult<List<LookupDto>>> CustomerLookup([FromQuery] string q = "")
+        {
+            return await _context.Customers
+                .Where(c => string.IsNullOrEmpty(q) || c.Name.Contains(q))
+                .OrderBy(c => c.Name)
+                .Select(c => new LookupDto
+                {
+                    Id = c.CustomerId,
+                    Name = c.Name,
+                    AdditionalInfo = c.Phone
+                })
+                .Take(50)
+                .ToListAsync();
+        }
+        // GET /api/lookup/employees
+        [HttpGet("lookup/employees")]
+        public async Task<ActionResult<List<LookupDto>>> EmployeeLookup([FromQuery] string q = "")
+        {
+            return await _context.Employees
+                .Where(e => string.IsNullOrEmpty(q) || e.Name.Contains(q))
+                .OrderBy(e => e.Name)
+                .Select(e => new LookupDto
+                {
+                    Id = e.EmployeeId,
+                    Name = e.Name,
+                    AdditionalInfo = e.Type
+                })
+                .Take(50)
+                .ToListAsync();
+        }
+        // GET /api/lookup/inventory
+        [HttpGet("lookup/inventory")]
+        public async Task<ActionResult<List<LookupDto>>> InventoryLookup([FromQuery] string q = "")
+        {
+            return await _context.Inventories
+                .Where(i => string.IsNullOrEmpty(q) || i.Name.Contains(q))
+                .OrderBy(i => i.Name)
+                .Select(i => new LookupDto
+                {
+                    Id = i.InventoryId,
+                    Name = i.Name,
+                    AdditionalInfo = i.Description
+                })
+                .Take(50)
+                .ToListAsync();
+        }
 
 
     }
