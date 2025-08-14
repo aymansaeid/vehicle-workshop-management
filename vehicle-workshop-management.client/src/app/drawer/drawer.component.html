@@ -1,0 +1,9 @@
+<div class="drawer">
+  <button (click)="toggleDrawer()">
+    {{ isOpen ? 'Close Menu' : 'Open Menu' }}
+  </button>
+
+  <div class="drawer-menu" *ngIf="isOpen">
+    <a *ngFor="let item of menuItems" href="#">{{ item }}</a>
+  </div>
+</div>

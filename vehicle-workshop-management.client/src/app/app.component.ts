@@ -1,15 +1,14 @@
 import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { DrawerComponent } from './drawer/drawer.component';
 
 @Component({
   selector: 'app-root',
+  standalone: true,
+  imports: [CommonModule, DrawerComponent],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  username = 'John Doe';
-  count = 0;
-
-  increaseCount() {
-    this.count++;
-  }
+  title = 'Angular Drawer Test';
 }

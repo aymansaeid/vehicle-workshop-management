@@ -1,0 +1,15 @@
+<!-- Navbar -->
+<div class="navbar">
+  <button (click)="toggleDrawer()">☰</button>
+  <span class="title">My App</span>
+</div>
+
+<!-- Drawer -->
+<div class="drawer" [class.open]="drawerOpen">
+  <ul>
+    <li *ngFor="let item of menuItems"><a href="#">{{ item }}</a></li>
+  </ul>
+</div>
+
+<!-- Overlay -->
+<div class="overlay" *ngIf="drawerOpen" (click)="toggleDrawer()"></div>

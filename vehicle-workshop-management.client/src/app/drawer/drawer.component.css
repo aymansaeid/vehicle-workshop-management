@@ -1,0 +1,22 @@
+.drawer {
+  background: #333;
+  color: white;
+  padding: 10px;
+}
+
+.drawer-menu {
+  display: flex;
+  flex-direction: column;
+  background: #444;
+  padding: 10px;
+}
+
+  .drawer-menu a {
+    color: white;
+    padding: 5px 0;
+    text-decoration: none;
+  }
+
+    .drawer-menu a:hover {
+      background: #555;
+    }
