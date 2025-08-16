@@ -1,5 +1,51 @@
-h1 {
-  text-align: center;
+body {
+  margin: 0;
   font-family: Arial, sans-serif;
-  margin-bottom: 20px;
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  background: #2c3e50;
+  color: white;
+  padding: 10px 20px;
+}
+
+.menu-btn {
+  margin-right: 20px;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  left: -220px;
+  width: 200px;
+  height: 100%;
+  background: #34495e;
+  padding-top: 60px;
+  transition: left 0.3s ease;
+}
+
+  .drawer.open {
+    left: 0;
+  }
+
+  .drawer nav a {
+    display: block;
+    padding: 10px;
+    color: white;
+    text-decoration: none;
+  }
+
+    .drawer nav a.active {
+      background: #1abc9c;
+    }
+
+.content {
+  padding: 20px;
 }

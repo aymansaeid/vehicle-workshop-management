@@ -1,2 +1,19 @@
-<h1>{{ title }}</h1>
-<app-drawer></app-drawer>
+<!-- Navbar -->
+<header class="navbar">
+  <button class="menu-btn" (click)="toggleDrawer()">☰</button>
+  <h1>Vehicle Workshop Management</h1>
+</header>
+
+<!-- Drawer -->
+<aside class="drawer" [class.open]="drawerOpen">
+  <nav>
+    <a routerLink="/" routerLinkActive="active" (click)="toggleDrawer()">🏠 Home</a>
+    <a routerLink="/customers" routerLinkActive="active" (click)="toggleDrawer()">👥 Customers</a>
+    <a routerLink="/vehicles" routerLinkActive="active" (click)="toggleDrawer()">🚗 Vehicles</a>
+  </nav>
+</aside>
+
+<!-- Main Content -->
+<main class="content">
+  <router-outlet></router-outlet>
+</main>
