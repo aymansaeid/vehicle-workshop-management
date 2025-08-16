@@ -1,9 +1,23 @@
-<div class="drawer">
-  <button (click)="toggleDrawer()">
-    {{ isOpen ? 'Close Menu' : 'Open Menu' }}
-  </button>
+<div class="flex-container">
+  <dx-toolbar [items]="toolbarContent" id="toolbar"></dx-toolbar>
 
-  <div class="drawer-menu" *ngIf="isOpen">
-    <a *ngFor="let item of menuItems" href="#">{{ item }}</a>
-  </div>
+  <dx-drawer [openedStateMode]="selectedOpenMode"
+             [position]="selectedPosition"
+             [revealMode]="selectedRevealMode"
+             template="template"
+             [(opened)]="isDrawerOpen"
+             [height]="400"
+             [closeOnOutsideClick]="true">
+    <div *dxTemplate="let data of 'template'" style="width: 200px">
+      <dx-list class="panel-list"
+               [dataSource]="navigation"></dx-list>
+    </div>
+    <div id="content" [innerHTML]="text"></div>
+  </dx-drawer>
+
+
+
+   
+
+  
 </div>
