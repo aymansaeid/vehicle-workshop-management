@@ -1,0 +1,35 @@
+<div class="login-container">
+  <h2>Login</h2>
+  <form (submit)="onSubmit()" class="login-form">
+    <dx-validation-group>
+      <dx-text-box [(value)]="credentials.email"
+                   placeholder="Email"
+                   name="email">
+        <dx-validator>
+          <dxi-validation-rule type="required"
+                               message="Email is required">
+          </dxi-validation-rule>
+          <dxi-validation-rule type="email"
+                               message="Email is invalid">
+          </dxi-validation-rule>
+        </dx-validator>
+      </dx-text-box>
+
+      <dx-text-box [(value)]="credentials.password"
+                   mode="password"
+                   placeholder="Password"
+                   name="password">
+        <dx-validator>
+          <dxi-validation-rule type="required"
+                               message="Password is required">
+          </dxi-validation-rule>
+        </dx-validator>
+      </dx-text-box>
+
+      <dx-button type="default"
+                 text="Login"
+                 (onClick)="onSubmit()"
+                 class="login-button"></dx-button>
+    </dx-validation-group>
+  </form>
+</div>
