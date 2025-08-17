@@ -8,10 +8,9 @@ export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   {
     path: '',
-    canActivate: [AuthGuard], 
-    component: HomeComponent,
+    canActivate: [AuthGuard],
+    component: HomeComponent,  // Your layout with navbar/drawer
     children: [
-
       {
         path: 'customers',
         loadComponent: () => import('./features/customers/customer-list/customer-list.component')
@@ -22,7 +21,7 @@ export const routes: Routes = [
         loadComponent: () => import('./features/vehicles/vehicle-list/vehicle-list.component')
           .then(m => m.VehicleListComponent)
       },
-      { path: '', redirectTo: 'customers', pathMatch: 'full' }
+
     ]
   },
   { path: '**', component: NotFoundComponent }
