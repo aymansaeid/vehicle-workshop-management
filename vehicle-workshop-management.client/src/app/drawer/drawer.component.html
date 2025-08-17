@@ -10,14 +10,11 @@
              [closeOnOutsideClick]="true">
     <div *dxTemplate="let data of 'template'" style="width: 200px">
       <dx-list class="panel-list"
-               [dataSource]="navigation"></dx-list>
+               [dataSource]="navigation"
+               (onItemClick)="onItemClick($event)"></dx-list>
     </div>
-    <div id="content" [innerHTML]="text"></div>
+    <div id="content">
+      <router-outlet></router-outlet> <!-- Replace innerHTML with router-outlet -->
+    </div>
   </dx-drawer>
-
-
-
-   
-
-  
 </div>
