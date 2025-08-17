@@ -1,22 +1,14 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { FormsModule } from '@angular/forms';
+import { FormsModule } from '@angular/forms'; // For [(ngModel)]
+import { HttpClientModule } from '@angular/common/http'; // Axios needs this
+
 import { AppComponent } from './app.component';
-import { DrawerComponent } from './drawer/drawer.component';
-import { ApplicationConfig } from '@angular/core';
-import { provideRouter, withEnabledBlockingInitialNavigation } from '@angular/router';
-import { routes } from './app.routes';
+import { LoginComponent } from './auth/login.component'; 
+
 @NgModule({
-  declarations: [
-    AppComponent,
-    DrawerComponent
-  ],
-  imports: [
-    BrowserModule,
-    FormsModule,
-    DrawerComponent
-  ],
-  providers: [provideRouter(routes, withEnabledBlockingInitialNavigation())],
-  bootstrap: [AppComponent]
+  declarations: [AppComponent, LoginComponent],
+  imports: [BrowserModule, FormsModule, HttpClientModule],
+  bootstrap: [AppComponent],
 })
 export class AppModule { }

@@ -1,15 +1,16 @@
+// src/app/app.routes.ts
 import { Routes } from '@angular/router';
-import { HomeComponent } from './shared/home/home.component';
-import { NotFoundComponent } from './shared/not-found/not-found.component';
-import { LoginComponent } from './auth/login.component';
-import { AuthGuard } from './auth/auth.guard';
+import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
-  { path: 'login', component: LoginComponent },
+  {
+    path: 'login',
+    loadComponent: () => import('./auth/login.component').then(m => m.LoginComponent)
+  },
   {
     path: '',
-    canActivate: [AuthGuard],
-    component: HomeComponent,  // Your layout with navbar/drawer
+    canActivate: [authGuard], // Use the proper auth guard
+    loadComponent: () => import('./shared/home/home.component').then(m => m.HomeComponent),
     children: [
       {
         path: 'customers',
@@ -21,8 +22,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/vehicles/vehicle-list/vehicle-list.component')
           .then(m => m.VehicleListComponent)
       },
-
+      // Default route
+      { path: '', pathMatch: 'full', redirectTo: 'customers' }
     ]
   },
-  { path: '**', component: NotFoundComponent }
+  {
+    path: '**',
+    loadComponent: () => import('./shared/not-found/not-found.component').then(m => m.NotFoundComponent)
+  }
 ];
