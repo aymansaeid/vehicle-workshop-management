@@ -5,11 +5,11 @@
               [showBorders]="true">
 
   <dxi-column type="buttons" caption="Actions" [width]="120">
-
-    <dxi-button icon="edit" hint="Edit" (onClick)="onEditClick($event)"></dxi-button>
-    <dxi-button icon="trash" hint="Delete" (onClick)="onDeleteClick($event)"></dxi-button>
-
+    <dxi-button icon="edit" hint="Edit" [onClick]="onEditClick.bind(this)"></dxi-button>
+    <dxi-button icon="trash" hint="Delete" [onClick]="onDeleteClick.bind(this)"></dxi-button>
   </dxi-column>
+
+
 
   <dxo-paging [pageSize]="10"></dxo-paging>
   <dxo-pager [showPageSizeSelector]="true"

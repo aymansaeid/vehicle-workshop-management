@@ -7,7 +7,8 @@ import {
   DxDropDownButtonModule,
   DxTextBoxModule,
   DxSelectBoxModule,
-  DxPopupModule
+  DxPopupModule,
+  
 } from 'devextreme-angular';
 import DataSource from 'devextreme/data/data_source';
 import { ApiService } from '../../../api/api';
@@ -98,11 +99,17 @@ export class CustomerListComponent {
   }
 
   onEditClick(e: any) {
-    this.editCustomer(e.row.data);
+    console.log("Edit clicked:", e);
+    if (e.row?.data) {
+      this.editCustomer(e.row.data);
+    }
   }
 
   onDeleteClick(e: any) {
-    this.deleteCustomer(e.row.data.customerId);
+    console.log("Delete clicked:", e);
+    if (e.row?.data) {
+      this.deleteCustomer(e.row.data.customerId);
+    }
   }
 
   onSaveEditedCustomer() {
@@ -122,7 +129,13 @@ export class CustomerListComponent {
   onCancelEdit() {
     this.isEditCustomerPopupOpened = false;
     this.isAddCustomerPopupOpened = false;
-    this.currentCustomer = null;
+    this.currentCustomer = {
+      name: '',
+      phone: '',
+      email: '',
+      type: 'Company',
+      status: 'Active'
+    };
   }
 
   refresh() {
