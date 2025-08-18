@@ -4,14 +4,14 @@ import {
   DxDataGridModule,
   DxDataGridComponent,
   DxButtonModule,
-  DxDropDownButtonModule
+  DxDropDownButtonModule,
+  DxTextBoxModule,
+  DxSelectBoxModule,
+  DxPopupModule
 } from 'devextreme-angular';
 import DataSource from 'devextreme/data/data_source';
 import { ApiService } from '../../../api/api';
 import notify from "devextreme/ui/notify";
-
-import { RowClickEvent } from 'devextreme/ui/data_grid';
-import { ItemClickEvent as DropDownButtonItemClickEvent } from 'devextreme/ui/drop_down_button';
 
 type FilterCustomerStatus = 'Active' | 'Inactive' | 'All';
 type FilterCustomerType = 'Company' | 'Individual' | 'All';
@@ -26,7 +26,9 @@ type FilterCustomerType = 'Company' | 'Individual' | 'All';
     DxDataGridModule,
     DxButtonModule,
     DxDropDownButtonModule,
-    
+    DxTextBoxModule,
+    DxSelectBoxModule,
+    DxPopupModule
   ]
 })
 export class CustomerListComponent {
@@ -34,10 +36,19 @@ export class CustomerListComponent {
 
   statusList = ['Active', 'Inactive'];
   typeList = ['Company', 'Individual'];
- 
+
   filterStatusList: FilterCustomerStatus[] = ['All', 'Active', 'Inactive'];
   filterTypeList: FilterCustomerType[] = ['All', 'Company', 'Individual'];
 
+  isEditCustomerPopupOpened = false;
+  currentCustomer: any = {
+    name: '',
+    phone: '',
+    email: '',
+    type: 'Company',
+    status: 'Active'
+  };
+  popupTitle = 'Add Customer';
   isPanelOpened = false;
   isAddCustomerPopupOpened = false;
   selectedCustomerId: number | null = null;
@@ -55,12 +66,68 @@ export class CustomerListComponent {
   constructor(private apiService: ApiService) { }
 
   addCustomer() {
+    this.currentCustomer = {
+      name: '',
+      phone: '',
+      email: '',
+      type: 'Company',
+      status: 'Active'
+    };
+    this.popupTitle = 'Add Customer';
     this.isAddCustomerPopupOpened = true;
   }
 
-  refresh = () => {
+  deleteCustomer(customerId: number) {
+    if (confirm('Are you sure you want to delete this customer?')) {
+      this.apiService.delete('Customers', customerId).subscribe({
+        next: () => {
+          notify('Customer deleted successfully', 'success', 2000);
+          this.refresh();
+        },
+        error: (error) => {
+          notify(`Error deleting customer: ${error.message}`, 'error', 2000);
+        }
+      });
+    }
+  }
+
+  editCustomer(customer: any) {
+    this.currentCustomer = { ...customer };
+    this.popupTitle = 'Edit Customer';
+    this.isEditCustomerPopupOpened = true;
+  }
+
+  onEditClick(e: any) {
+    this.editCustomer(e.row.data);
+  }
+
+  onDeleteClick(e: any) {
+    this.deleteCustomer(e.row.data.customerId);
+  }
+
+  onSaveEditedCustomer() {
+    this.apiService.put('Customers', this.currentCustomer.customerId, this.currentCustomer)
+      .subscribe({
+        next: () => {
+          notify('Customer updated successfully', 'success', 2000);
+          this.isEditCustomerPopupOpened = false;
+          this.refresh();
+        },
+        error: (error) => {
+          notify(`Error updating customer: ${error.message}`, 'error', 2000);
+        }
+      });
+  }
+
+  onCancelEdit() {
+    this.isEditCustomerPopupOpened = false;
+    this.isAddCustomerPopupOpened = false;
+    this.currentCustomer = null;
+  }
+
+  refresh() {
     this.dataGrid.instance.refresh();
-  };
+  }
 
   rowClick(e: any) {
     const data = e.data;
@@ -68,25 +135,26 @@ export class CustomerListComponent {
     this.isPanelOpened = true;
   }
 
-  onOpenedChange = (value: boolean) => {
+  onOpenedChange(value: boolean) {
     if (!value) {
       this.selectedCustomerId = null;
     }
-  };
+  }
 
-  filterByStatus = (e: DropDownButtonItemClickEvent) => {
+  filterByStatus(e: any) {
     const status = e.itemData as FilterCustomerStatus;
     status === 'All'
       ? this.dataGrid.instance.clearFilter('status')
       : this.dataGrid.instance.filter(['status', '=', status]);
-  };
+  }
 
-  filterByType = (e: DropDownButtonItemClickEvent) => {
+  filterByType(e: any) {
     const type = e.itemData as FilterCustomerType;
     type === 'All'
       ? this.dataGrid.instance.clearFilter('type')
       : this.dataGrid.instance.filter(['type', '=', type]);
-  };
+  }
+
   customizePhoneCell = ({ value }: { value: string }) => {
     if (!value) return '';
     const cleaned = value.replace(/\D/g, '');
@@ -107,22 +175,22 @@ export class CustomerListComponent {
     return type === 'Company' ? 'home' : 'user';
   };
 
-  onSaveNewCustomer = (customerData: any) => {
-    this.apiService.post('Customers', customerData).subscribe({
+  onSaveNewCustomer() {
+    this.apiService.post('Customers', this.currentCustomer).subscribe({
       next: () => {
         notify({
-          message: `New customer "${customerData.name}" saved`,
+          message: `New customer "${this.currentCustomer.name}" saved`,
           position: { at: 'bottom center', my: 'bottom center' }
         }, 'success');
         this.isAddCustomerPopupOpened = false;
         this.refresh();
       },
-      error: (error: { message: any; }) => {
+      error: (error: any) => {
         notify({
           message: `Failed to save customer: ${error.message}`,
           position: { at: 'bottom center', my: 'bottom center' }
         }, 'error');
       }
     });
-  };
+  }
 }

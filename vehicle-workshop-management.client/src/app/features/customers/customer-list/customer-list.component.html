@@ -4,6 +4,13 @@
               [columnAutoWidth]="true"
               [showBorders]="true">
 
+  <dxi-column type="buttons" caption="Actions" [width]="120">
+
+    <dxi-button icon="edit" hint="Edit" (onClick)="onEditClick($event)"></dxi-button>
+    <dxi-button icon="trash" hint="Delete" (onClick)="onDeleteClick($event)"></dxi-button>
+
+  </dxi-column>
+
   <dxo-paging [pageSize]="10"></dxo-paging>
   <dxo-pager [showPageSizeSelector]="true"
              [allowedPageSizes]="[5, 10, 20]"
@@ -54,3 +61,39 @@
     </dxi-item>
   </dxo-toolbar>
 </dx-data-grid>
+
+<dx-popup [title]="popupTitle"
+          [visible]="isAddCustomerPopupOpened || isEditCustomerPopupOpened"
+          (onHiding)="onCancelEdit()"
+          [width]="500"
+          [height]="500">
+  <div *dxTemplate="let context of 'content'">
+    <h2>{{popupTitle}}</h2>
+    <div class="form-group">
+      <label>Name</label>
+      <dx-text-box [(value)]="currentCustomer.name"></dx-text-box>
+    </div>
+    <div class="form-group">
+      <label>Phone</label>
+      <dx-text-box [(value)]="currentCustomer.phone"></dx-text-box>
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <dx-text-box [(value)]="currentCustomer.email"></dx-text-box>
+    </div>
+    <div class="form-group">
+      <label>Type</label>
+      <dx-select-box [items]="typeList" [(value)]="currentCustomer.type"></dx-select-box>
+    </div>
+    <div class="form-group">
+      <label>Status</label>
+      <dx-select-box [items]="statusList" [(value)]="currentCustomer.status"></dx-select-box>
+    </div>
+    <div class="button-group">
+      <dx-button text="Save" type="success"
+                 (onClick)="popupTitle === 'Add Customer' ? onSaveNewCustomer() : onSaveEditedCustomer()">
+      </dx-button>
+      <dx-button text="Cancel" type="normal" (onClick)="onCancelEdit()"></dx-button>
+    </div>
+  </div>
+</dx-popup>
