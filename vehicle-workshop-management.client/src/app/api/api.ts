@@ -1,13 +1,16 @@
-// src/app/api.ts
-import axios from 'axios';
-
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { inject } from '@angular/core';
+import { Observable } from 'rxjs';
+
 const API_URL = 'https://localhost:7188/api';
 
+@Injectable({
+  providedIn: 'root'
+})
+export class ApiService {
+  constructor(private http: HttpClient) { }
 
-const http = inject(HttpClient);
-
-export const login = (credentials: { username: string, password: string }) => {
-  return http.post(`${API_URL}/Employees/Login`, credentials).toPromise();
-};
+  login(username: string, password: string): Observable<any> {
+    return this.http.post(`${API_URL}/Employees/Login`, { username, password });
+  }
+}

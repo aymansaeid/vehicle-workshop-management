@@ -1,45 +1,23 @@
-<!-- src/app/auth/login.component.html -->
 <div class="login-container">
   <h2>Login</h2>
 
-  <!-- Debug info - remove after testing -->
-  <div class="debug-info">
-    <p>Username: {{username}}</p>
-    <p>Password: {{password ? '***' : '(empty)'}}</p>
-    <p>Loading: {{isLoading}}</p>
-  </div>
+  <input type="text"
+         [(ngModel)]="username"
+         placeholder="Username"
+         [disabled]="isLoading"
+         class="form-input">
 
-  <dx-text-box [(value)]="username"
-               placeholder="Username"
-               [disabled]="isLoading">
-  </dx-text-box>
+  <input type="password"
+         [(ngModel)]="password"
+         placeholder="Password"
+         [disabled]="isLoading"
+         class="form-input">
 
-  <dx-text-box [(value)]="password"
-               mode="password"
-               placeholder="Password"
-               [disabled]="isLoading">
-  </dx-text-box>
-
-  <!-- Test button to verify click events work -->
-  <dx-button text="Test Click"
-             (onClick)="onTestClick()"
-             type="normal"
-             stylingMode="outlined">
-  </dx-button>
-
-  <dx-button [text]="isLoading ? 'Logging in...' : 'Login'"
-             (onClick)="onSubmit()"
-             [disabled]="isLoading"
-             type="default"
-             stylingMode="contained">
-  </dx-button>
-
-  <!-- Alternative: Try with regular button -->
   <button type="button"
           (click)="onSubmit()"
-          [disabled]="isLoading"
-          class="regular-button">
-    {{isLoading ? 'Logging in...' : 'Login (Regular Button)'}}
+          [disabled]="isLoading || !username || !password"
+          class="regular-button login-button">
+    {{isLoading ? 'Logging in...' : 'Login'}}
   </button>
 
   <div class="error-message" *ngIf="error">
