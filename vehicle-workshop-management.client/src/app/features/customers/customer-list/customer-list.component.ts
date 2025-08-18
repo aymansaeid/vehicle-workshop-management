@@ -25,7 +25,8 @@ type FilterCustomerType = 'Company' | 'Individual' | 'All';
     CommonModule,
     DxDataGridModule,
     DxButtonModule,
-    DxDropDownButtonModule
+    DxDropDownButtonModule,
+    
   ]
 })
 export class CustomerListComponent {

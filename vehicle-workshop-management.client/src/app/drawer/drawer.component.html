@@ -6,15 +6,18 @@
              [revealMode]="selectedRevealMode"
              template="template"
              [(opened)]="isDrawerOpen"
-             [height]="400"
              [closeOnOutsideClick]="true">
+
+    <!-- Drawer Menu -->
     <div *dxTemplate="let data of 'template'" style="width: 200px">
       <dx-list class="panel-list"
                [dataSource]="navigation"
                (onItemClick)="onItemClick($event)"></dx-list>
     </div>
+
+    <!-- Main content -->
     <div id="content">
-      <router-outlet></router-outlet> <!-- Replace innerHTML with router-outlet -->
+      <router-outlet></router-outlet>
     </div>
   </dx-drawer>
 </div>
