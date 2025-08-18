@@ -1,0 +1,265 @@
+:host {
+  --side-panel-toolbar-height: 76px;
+  width: 100%;
+  display: contents;
+}
+
+.view-wrapper {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  flex-direction: row;
+}
+
+.grid {
+  /* Customer name template styling */
+  .customer-name-template
+
+{
+  .customer-info
+
+{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  .dx-icon
+
+{
+  font-size: 16px;
+  color: var(--base-accent);
+}
+
+.customer-details {
+  .customer-name
+
+{
+  font-weight: 500;
+  color: var(--base-text-color);
+}
+
+.customer-id {
+  font-size: 11px;
+  color: var(--texteditor-label-color);
+  margin-top: 2px;
+}
+
+}
+}
+}
+
+/* Type badge styling */
+.customer-type-template {
+  .type-badge
+
+{
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  &.type-company
+
+{
+  background-color: #e3f2fd;
+  color: #1976d2;
+  .dx-icon
+
+{
+  color: #1976d2;
+}
+
+}
+
+&.type-individual {
+  background-color: #f3e5f5;
+  color: #7b1fa2;
+  .dx-icon
+
+{
+  color: #7b1fa2;
+}
+
+}
+}
+}
+
+/* Status badge styling */
+.customer-status-template {
+  .status-badge
+
+{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  .status-indicator
+
+{
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+&.status-active {
+  background-color: #e8f5e8;
+  color: #2e7d32;
+  .status-indicator
+
+{
+  background-color: #4caf50;
+}
+
+}
+
+&.status-inactive {
+  background-color: #ffebee;
+  color: #c62828;
+  .status-indicator
+
+{
+  background-color: #f44336;
+}
+
+}
+}
+}
+}
+
+/* Global styles */
+::ng-deep {
+  .dx-datagrid-header-panel
+
+{
+  padding: 0 var(--content-padding, 20px);
+}
+
+.dx-toolbar {
+  margin-bottom: 0;
+  padding: var(--toolbar-margin-bottom, 16px) 0;
+  .separator
+
+{
+  width: 1px;
+  height: 20px;
+  background-color: var(--base-border-color);
+  margin: 0 8px;
+}
+
+}
+
+.dx-datagrid-content .dx-row {
+  cursor: pointer;
+  &:hover
+
+{
+  background-color: var(--base-bg);
+}
+
+}
+}
+
+.grid-header {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--base-text-color);
+}
+
+/* Edit cell styling */
+.edit-cell {
+  position: relative;
+  .status-badge
+
+{
+  position: absolute;
+  margin-top: 6px;
+  margin-left: 8px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.dx-textbox {
+  .dx-texteditor-input
+
+{
+  padding-left: 80px;
+  background: transparent;
+}
+
+}
+}
+
+/* Customer panel overlay */
+.customer-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  .panel-content
+
+{
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  min-width: 300px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  h3
+
+{
+  margin-top: 0;
+  color: var(--base-text-color);
+}
+
+.btn-close {
+  background: var(--base-accent);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 15px;
+  &:hover
+
+{
+  background: var(--base-accent-hover);
+}
+
+}
+}
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .view-wrapper .grid {
+    .customer-name-template .customer-info
+
+{
+  gap: 8px;
+  .dx-icon
+
+{
+  font-size: 14px;
+}
+
+}
+
+.customer-type-template .type-badge,
+.customer-status-template .status-badge {
+  padding: 2px 6px;
+  font-size: 10px;
+}
+
+}
+}

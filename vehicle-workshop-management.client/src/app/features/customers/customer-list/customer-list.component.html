@@ -1,1 +1,56 @@
-<p>customer-list works!</p>
+<dx-data-grid [dataSource]="dataSource"
+              (rowClick)="rowClick($event)"
+              [allowColumnResizing]="true"
+              [columnAutoWidth]="true"
+              [showBorders]="true">
+
+  <dxo-paging [pageSize]="10"></dxo-paging>
+  <dxo-pager [showPageSizeSelector]="true"
+             [allowedPageSizes]="[5, 10, 20]"
+             [showInfo]="true"></dxo-pager>
+  <dxo-filter-row [visible]="true"></dxo-filter-row>
+
+  <dxi-column dataField="name" caption="Name"></dxi-column>
+  <dxi-column dataField="phone" caption="Phone" [customizeText]="customizePhoneCell"></dxi-column>
+  <dxi-column dataField="email" caption="Email"></dxi-column>
+  <dxi-column dataField="type"
+              caption="Type"
+              [cellTemplate]="'typeCellTemplate'"></dxi-column>
+  <dxi-column dataField="status"
+              caption="Status"
+              [cellTemplate]="'statusCellTemplate'"></dxi-column>
+  <dxi-column dataField="createdAt"
+              caption="Created Date"
+              [customizeText]="formatDate"></dxi-column>
+
+  <div *dxTemplate="let cell of 'typeCellTemplate'">
+    <i [class]="'dx-icon-' + getTypeIcon(cell.value)"></i> {{ cell.value }}
+  </div>
+
+  <div *dxTemplate="let cell of 'statusCellTemplate'">
+    <span [class]="getStatusClass(cell.value)">{{ cell.value }}</span>
+  </div>
+
+  <dxo-toolbar>
+    <dxi-item location="before">
+      <dx-button icon="plus"
+                 text="Add Customer"
+                 (onClick)="addCustomer()"></dx-button>
+    </dxi-item>
+    <dxi-item location="after">
+      <dx-drop-down-button [items]="filterStatusList"
+                           text="Filter by Status"
+                           (onItemClick)="filterByStatus($event)"></dx-drop-down-button>
+    </dxi-item>
+    <dxi-item location="after">
+      <dx-drop-down-button [items]="filterTypeList"
+                           text="Filter by Type"
+                           (onItemClick)="filterByType($event)"></dx-drop-down-button>
+    </dxi-item>
+    <dxi-item location="after">
+      <dx-button icon="refresh"
+                 text="Refresh"
+                 (onClick)="refresh()"></dx-button>
+    </dxi-item>
+  </dxo-toolbar>
+</dx-data-grid>

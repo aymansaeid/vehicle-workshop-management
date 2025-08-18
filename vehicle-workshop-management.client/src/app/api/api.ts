@@ -13,4 +13,19 @@ export class ApiService {
   login(username: string, password: string): Observable<any> {
     return this.http.post(`${API_URL}/Employees/Login`, { username, password });
   }
+  get(endpoint: string): Observable<any> {
+    return this.http.get(`${API_URL}/${endpoint}`);
+  }
+
+  post(endpoint: string, data: any): Observable<any> {
+    return this.http.post(`${API_URL}/${endpoint}`, data);
+  }
+
+  put(endpoint: string, id: number, data: any): Observable<any> {
+    return this.http.put(`${API_URL}/${endpoint}/${id}`, data);
+  }
+
+  delete(endpoint: string, id: number): Observable<any> {
+    return this.http.delete(`${API_URL}/${endpoint}/${id}`);
+  }
 }
