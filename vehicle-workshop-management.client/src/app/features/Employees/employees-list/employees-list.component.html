@@ -1,1 +1,142 @@
-<p>employees-list works!</p>
+<div class="view-wrapper">
+  <dx-data-grid [dataSource]="dataSource"
+                [allowColumnResizing]="true"
+                [columnAutoWidth]="true"
+                [showBorders]="true"
+                [focusedRowEnabled]="true"
+                [selection]="{ mode: 'single' }"
+                (onSelectionChanged)="onSelectionChanged($event)">
+    <dxo-paging [pageSize]="10"></dxo-paging>
+    <dxo-pager [showPageSizeSelector]="true"
+               [allowedPageSizes]="[5, 10, 20]"
+               [showInfo]="true"></dxo-pager>
+    <dxo-filter-row [visible]="true"></dxo-filter-row>
+    <dxo-header-filter [visible]="true"></dxo-header-filter>
+    <dxo-search-panel [visible]="true" placeholder="Search employees"></dxo-search-panel>
+
+    <!-- Actions -->
+    <dxi-column type="buttons" caption="Actions" [width]="120">
+      <dxi-button icon="edit" hint="Edit" [onClick]="onEditClick.bind(this)"></dxi-button>
+      <dxi-button icon="trash" hint="Delete" [onClick]="onDeleteClick.bind(this)"></dxi-button>
+    </dxi-column>
+
+    <!-- Employee Fields -->
+    <dxi-column dataField="name" caption="Name" [sortOrder]="'asc'"></dxi-column>
+    <dxi-column dataField="email" caption="Email"></dxi-column>
+    <dxi-column dataField="phone" caption="Phone" [customizeText]="customizePhoneCell"></dxi-column>
+    <dxi-column dataField="type" caption="Role"></dxi-column>
+    <dxi-column dataField="status" caption="Status" [cellTemplate]="'statusCellTemplate'"></dxi-column>
+
+
+
+    <!-- Status cell template -->
+    <div *dxTemplate="let cell of 'statusCellTemplate'">
+      <span [class]="getStatusClass(cell.value)">{{ cell.value }}</span>
+    </div>
+
+    <!-- Toolbar -->
+    <dxo-toolbar>
+      <dxi-item location="before">
+        <div class="grid-header">Employees</div>
+      </dxi-item>
+      <dxi-item location="before">
+        <dx-drop-down-button [items]="filterStatusList"
+                             text="Filter by Status"
+                             (onItemClick)="filterByStatus($event)"></dx-drop-down-button>
+      </dxi-item>
+      <dxi-item location="before">
+        <dx-drop-down-button [items]="filterRoleList"
+                             text="Filter by Role"
+                             (onItemClick)="filterByRole($event)"></dx-drop-down-button>
+      </dxi-item>
+      <dxi-item location="after">
+        <dx-button text="Add Employee"
+                   icon="plus"
+                   type="default"
+                   stylingMode="contained"
+                   (onClick)="addEmployee()"></dx-button>
+      </dxi-item>
+      <dxi-item location="after">
+        <dx-button text="Refresh"
+                   icon="refresh"
+                   stylingMode="text"
+                   (onClick)="refresh()"></dx-button>
+      </dxi-item>
+    </dxo-toolbar>
+  </dx-data-grid>
+
+  <!-- Add/Edit Employee Popup -->
+  <dx-popup [title]="popupTitle"
+            [visible]="isAddEmployeePopupOpened"
+            (onHiding)="onCancelEdit()"
+            [width]="500"
+            [height]="500">
+    <div *dxTemplate="let content of 'content'">
+      <div class="form-group">
+        <label>Name</label>
+        <dx-text-box [(value)]="currentEmployee.name"></dx-text-box>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <dx-text-box [(value)]="currentEmployee.email"></dx-text-box>
+      </div>
+      <div class="form-group">
+        <label>Phone</label>
+        <dx-text-box [(value)]="currentEmployee.phone"></dx-text-box>
+      </div>
+      <div class="form-group">
+        <label>Role</label>
+        <dx-select-box [items]="roleList"
+                       [(value)]="currentEmployee.type"></dx-select-box>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <dx-select-box [items]="statusList"
+                       [(value)]="currentEmployee.status"></dx-select-box>
+      </div>
+      <div class="button-group">
+        <dx-button text="Save"
+                   type="success"
+                   (onClick)="onSaveEmployee()"></dx-button>
+        <dx-button text="Cancel"
+                   type="normal"
+                   (onClick)="onCancelEdit()"></dx-button>
+      </div>
+    </div>
+  </dx-popup>
+  <!-- Task Lines Popup -->
+  <!-- Task Lines Popup -->
+  <dx-popup title="Employee Task Lines"
+            [visible]="isTaskPopupOpened"
+            [showCloseButton]="true"
+            (onHiding)="closeTaskPopup()"
+            [width]="700"
+            [height]="500">
+    <dx-button icon="close"
+               stylingMode="text"
+               hint="Close"
+               (onClick)="isTaskPopupOpened = false">
+    </dx-button>
+    <div *dxTemplate="let content of 'content'">
+      <h3 class="mb-2">Task Lines</h3>
+
+      <dx-data-grid [dataSource]="taskLines"
+                    [showBorders]="true"
+                    [columnAutoWidth]="true"
+                    [rowAlternationEnabled]="true">
+        <dxi-column dataField="taskLineId" caption="ID" width="60"></dxi-column>
+        <dxi-column dataField="taskId" caption="Task ID" width="80"></dxi-column>
+        <dxi-column dataField="description" caption="Description"></dxi-column>
+        <dxi-column dataField="status" caption="Status"></dxi-column>
+        <dxi-column dataField="delayReason" caption="Delay Reason"></dxi-column>
+      </dx-data-grid>
+
+      <div *ngIf="!taskLines || taskLines.length === 0" class="mt-2">
+        <em>No tasks assigned</em>
+      </div>
+    </div>
+  </dx-popup>
+
+
+
+</div>

@@ -11,7 +11,7 @@ export const routes: Routes = [
       .then(m => m.LoginComponent)
   },
 
-  // 🔑 Drawer layout wrapper
+
   {
     path: '',
     component: DrawerComponent,
