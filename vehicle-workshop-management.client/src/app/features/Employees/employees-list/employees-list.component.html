@@ -70,40 +70,74 @@
             [visible]="isAddEmployeePopupOpened"
             (onHiding)="onCancelEdit()"
             [width]="500"
-            [height]="500">
+            [height]="550">
     <div *dxTemplate="let content of 'content'">
-      <div class="form-group">
-        <label>Name</label>
-        <dx-text-box [(value)]="currentEmployee.name"></dx-text-box>
-      </div>
-      <div class="form-group">
-        <label>Email</label>
-        <dx-text-box [(value)]="currentEmployee.email"></dx-text-box>
-      </div>
-      <div class="form-group">
-        <label>Phone</label>
-        <dx-text-box [(value)]="currentEmployee.phone"></dx-text-box>
-      </div>
-      <div class="form-group">
-        <label>Role</label>
-        <dx-select-box [items]="roleList"
-                       [(value)]="currentEmployee.type"></dx-select-box>
-      </div>
-      <div class="form-group">
-        <label>Status</label>
-        <dx-select-box [items]="statusList"
-                       [(value)]="currentEmployee.status"></dx-select-box>
-      </div>
+
+      <!-- Add Employee -->
+      <ng-container *ngIf="popupTitle === 'Add Employee'">
+        <div class="form-group">
+          <label>Name</label>
+          <dx-text-box [(value)]="CreateEmployee.name"></dx-text-box>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <dx-text-box [(value)]="CreateEmployee.email"></dx-text-box>
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <dx-text-box [(value)]="CreateEmployee.phone"></dx-text-box>
+        </div>
+        <div class="form-group">
+          <label>Role</label>
+          <dx-select-box [items]="roleList" [(value)]="CreateEmployee.type"></dx-select-box>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <dx-select-box [items]="statusList" [(value)]="CreateEmployee.status"></dx-select-box>
+        </div>
+        <div class="form-group">
+          <label>Username</label>
+          <dx-text-box [(value)]="CreateEmployee.username"></dx-text-box>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <dx-text-box [(value)]="CreateEmployee.password" mode="password"></dx-text-box>
+        </div>
+      </ng-container>
+
+      <!-- Edit Employee -->
+      <ng-container *ngIf="popupTitle === 'Edit Employee'">
+        <div class="form-group">
+          <label>Name</label>
+          <dx-text-box [(value)]="currentEmployee.name"></dx-text-box>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <dx-text-box [(value)]="currentEmployee.email"></dx-text-box>
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <dx-text-box [(value)]="currentEmployee.phone"></dx-text-box>
+        </div>
+        <div class="form-group">
+          <label>Role</label>
+          <dx-select-box [items]="roleList" [(value)]="currentEmployee.type"></dx-select-box>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <dx-select-box [items]="statusList" [(value)]="currentEmployee.status"></dx-select-box>
+        </div>
+      </ng-container>
+
+      <!-- Buttons -->
       <div class="button-group">
-        <dx-button text="Save"
-                   type="success"
-                   (onClick)="onSaveEmployee()"></dx-button>
-        <dx-button text="Cancel"
-                   type="normal"
-                   (onClick)="onCancelEdit()"></dx-button>
+        <dx-button text="Save" type="success" (onClick)="onSaveEmployee()"></dx-button>
+        <dx-button text="Cancel" type="normal" (onClick)="onCancelEdit()"></dx-button>
       </div>
+
     </div>
   </dx-popup>
+
   <!-- Task Lines Popup -->
   <!-- Task Lines Popup -->
   <dx-popup title="Employee Task Lines"

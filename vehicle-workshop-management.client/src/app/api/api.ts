@@ -28,4 +28,11 @@ export class ApiService {
   delete(endpoint: string, id: number): Observable<any> {
     return this.http.delete(`${API_URL}/${endpoint}/${id}`);
   }
+
+  register(employee: any): Observable<any> {
+    return this.http.post(`${API_URL}/Employees/Register`, employee);
+  }
+  putWithInfo(endpoint: string, id: number, string: string, data: any): Observable<any> {
+    return this.http.put(`${API_URL}/${endpoint}/${id}/${string}`, data);
+  }
 }

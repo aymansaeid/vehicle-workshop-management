@@ -44,13 +44,22 @@ export class EmployeesListComponent {
   selectedEmployeeId: number | null = null;
   isAddEmployeePopupOpened = false;
   popupTitle = 'Add Employee';
-   isPanelOpened = false;
+  isPanelOpened = false;
   currentEmployee: any = {
     name: '',
     email: '',
     phone: '',
-    role: 'Developer',
+    type: 'Developer',
     status: 'Active'
+  };
+  CreateEmployee: any = {
+    name: '',
+    email: '',
+    phone: '',
+    type: 'Developer',
+    status: 'Active',
+    username: '',
+    password: ''
   };
 
 
@@ -79,10 +88,19 @@ export class EmployeesListComponent {
   }
 
   editEmployee(employee: any) {
-    this.currentEmployee = { ...employee };
+    
+    this.CreateEmployee = {
+      employeeId: employee.employeeId,
+      name: employee.name,
+      email: employee.email,
+      phone: employee.phone,
+      type: employee.type || 'Developer',
+      status: employee.status || 'Active'
+
+    };
     this.popupTitle = 'Edit Employee';
     this.isAddEmployeePopupOpened = true;
-  }
+  } 
 
   deleteEmployee(employeeId: number) {
     if (confirm('Are you sure you want to delete this employee?')) {
@@ -99,8 +117,11 @@ export class EmployeesListComponent {
   }
 
   onEditClick(e: any) {
-    if (e.row?.data) {
-      this.editEmployee(e.row.data);
+    const employee = e?.row?.data;
+    if (employee && employee.employeeId) {
+      this.editEmployee(employee);
+    } else {
+      notify('Cannot edit this employee', 'error', 2000);
     }
   }
 
@@ -130,28 +151,29 @@ export class EmployeesListComponent {
     this.isTaskPopupOpened = false;
   }
   onSaveEmployee() {
-    const action = this.popupTitle === 'Add Employee'
-      ? this.apiService.post('Employees', this.currentEmployee)
-      : this.apiService.put('Employees', this.currentEmployee.employeeId, this.currentEmployee);
-
-    action.subscribe({
-      next: () => {
-        notify(
-          `Employee ${this.popupTitle === 'Add Employee' ? 'added' : 'updated'} successfully`,
-          'success',
-          2000
-        );
-        this.isAddEmployeePopupOpened = false;
-        this.refresh();
-      },
-      error: (error) => {
-        notify(
-          `Error ${this.popupTitle === 'Add Employee' ? 'adding' : 'updating'} employee: ${error.message}`,
-          'error',
-          2000
-        );
-      }
-    });
+    if (this.popupTitle === 'Add Employee') {
+      this.apiService.register(this.CreateEmployee).subscribe({
+        next: () => {
+          notify('Employee added successfully', 'success', 2000);
+          this.isAddEmployeePopupOpened = false;
+          this.refresh();
+        },
+        error: (error) => {
+          notify(`Error adding employee: ${error.message}`, 'error', 2000);
+        }
+      });
+    } else {
+      this.apiService.put('Employees', this.currentEmployee.employeeId, this.currentEmployee).subscribe({
+        next: () => {
+          notify('Employee updated successfully', 'success', 2000);
+          this.isAddEmployeePopupOpened = false;
+          this.refresh();
+        },
+        error: (error) => {
+          notify(`Error updating employee: ${error.message}`, 'error', 2000);
+        }
+      });
+    }
   }
 
   onCancelEdit() {
