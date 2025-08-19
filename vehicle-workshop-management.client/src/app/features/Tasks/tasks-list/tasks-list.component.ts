@@ -1,11 +1,226 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import {
+  DxDataGridModule,
+  DxDataGridComponent,
+  DxButtonModule,
+  DxDropDownButtonModule,
+  DxSelectBoxModule,
+  DxTextBoxModule,
+  DxPopupModule,
+  DxDateBoxModule
+} from 'devextreme-angular';
+import DataSource from 'devextreme/data/data_source';
+import { ApiService } from '../../../api/api';
+import notify from "devextreme/ui/notify";
+
+type TaskStatus = 'Pending' | 'In Progress' | 'Completed' | 'Delayed' | 'All';
 
 @Component({
   selector: 'app-tasks-list',
-  standalone: false,
   templateUrl: './tasks-list.component.html',
-  styleUrl: './tasks-list.component.css'
+  styleUrls: ['./tasks-list.component.css'],
+  standalone: true,
+  imports: [
+    CommonModule,
+    DxDataGridModule,
+    DxButtonModule,
+    DxDropDownButtonModule,
+    DxSelectBoxModule,
+    DxTextBoxModule,
+    DxPopupModule,
+    DxDateBoxModule
+  ]
 })
 export class TasksListComponent {
+  @ViewChild(DxDataGridComponent, { static: true }) dataGrid!: DxDataGridComponent;
 
+  statusList = ['Pending', 'In Progress', 'Completed', 'Delayed'];
+  filterStatusList: TaskStatus[] = ['All', 'Pending', 'In Progress', 'Completed', 'Delayed'];
+
+  isPanelOpened = false;
+  isAddTaskPopupOpened = false;
+  selectedTaskId: number | null = null;
+  currentTask: any = {
+    name: '',
+    description: '',
+    status: 'Pending',
+    startTime: new Date(),
+    endTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+  };
+  popupTitle = 'Add Task';
+
+  dataSource = new DataSource({
+    key: 'taskId',
+    load: () => new Promise((resolve, reject) => {
+      this.apiService.get('Tasks').subscribe({
+        next: (data: any) => resolve(data),
+        error: ({ message }) => reject(message)
+      });
+    }),
+  });
+
+  constructor(private apiService: ApiService) { }
+
+  // Click handler methods
+  onEditClick = (e: any) => {
+    const task = e.row?.data;
+    if (task) {
+      this.editTask(task);
+    }
+  }
+
+  onDeleteClick = (e: any) => {
+    const taskId = e.row?.data?.taskId;
+    if (taskId) {
+      this.deleteTask(taskId);
+    }
+  }
+
+  onStatusClick = (e: any) => {
+    const taskId = e.row?.data?.taskId;
+    if (taskId) {
+      this.updateTaskStatus(taskId, 'Completed');
+    }
+  }
+
+  isStatusButtonVisible = (e: any) => {
+    return e.row?.data?.status !== 'Completed';
+  }
+
+  // Original methods
+  addTask() {
+    this.currentTask = {
+      name: '',
+      description: '',
+      status: 'Pending',
+      startTime: new Date(),
+      endTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    };
+    this.popupTitle = 'Add Task';
+    this.isAddTaskPopupOpened = true;
+  }
+
+  editTask(task: any) {
+    this.currentTask = {
+      ...task,
+      startTime: new Date(task.startTime),
+      endTime: new Date(task.endTime)
+    };
+    this.popupTitle = 'Edit Task';
+    this.isAddTaskPopupOpened = true;
+  }
+
+  deleteTask(taskId: number) {
+    if (confirm('Are you sure you want to delete this task?')) {
+      this.apiService.delete('Tasks', taskId).subscribe({
+        next: () => {
+          notify('Task deleted successfully', 'success', 2000);
+          this.refresh();
+        },
+        error: (error) => {
+          notify(`Error deleting task: ${error.message}`, 'error', 2000);
+        }
+      });
+    }
+  }
+
+  updateTaskStatus(taskId: number, newStatus: string) {
+    // Implement status update logic here
+    console.log(`Updating task ${taskId} to status: ${newStatus}`);
+  }
+
+  onSaveTask() {
+    const action = this.popupTitle === 'Add Task'
+      ? this.apiService.post('Tasks', this.currentTask)
+      : this.apiService.put('Tasks', this.currentTask.taskId, this.currentTask);
+
+    action.subscribe({
+      next: () => {
+        notify(`Task ${this.popupTitle === 'Add Task' ? 'added' : 'updated'} successfully`, 'success', 2000);
+        this.isAddTaskPopupOpened = false;
+        this.refresh();
+      },
+      error: (error) => {
+        notify(`Error ${this.popupTitle === 'Add Task' ? 'adding' : 'updating'} task: ${error.message}`, 'error', 2000);
+      }
+    });
+  }
+
+  onCancelEdit() {
+    this.isAddTaskPopupOpened = false;
+  }
+
+  refresh() {
+    this.dataGrid.instance.refresh();
+  }
+
+  rowClick(e: any) {
+    const data = e.data;
+    this.selectedTaskId = data.taskId;
+    this.isPanelOpened = true;
+  }
+
+  onOpenedChange(value: boolean) {
+    if (!value) {
+      this.selectedTaskId = null;
+    }
+  }
+
+  filterByStatus(e: any) {
+    const status = e.itemData as TaskStatus;
+    status === 'All'
+      ? this.dataGrid.instance.clearFilter('status')
+      : this.dataGrid.instance.filter(['status', '=', status]);
+  }
+
+  formatDate = ({ value }: { value: string }) => {
+    return value ? new Date(value).toLocaleDateString('en-GB') : '';
+  };
+
+  getStatusClass = (status: string) => {
+    switch (status) {
+      case 'Completed': return 'status-completed';
+      case 'In Progress': return 'status-in-progress';
+      case 'Delayed': return 'status-delayed';
+      default: return 'status-pending';
+    }
+  };
+  getSelectedTask(): any {
+    if (!this.selectedTaskId) return null;
+    return this.dataSource.items()?.find(t => t.taskId === this.selectedTaskId);
+  }
+
+  // Additional API methods
+  getTasksByProject(projectId: number) {
+    this.apiService.get(`Tasks/byProject/${projectId}`).subscribe({
+      next: (data) => {
+        this.dataSource = new DataSource({
+          key: 'taskId',
+          load: () => Promise.resolve(data)
+        });
+      },
+      error: (error) => {
+        notify(`Error loading tasks: ${error.message}`, 'error', 2000);
+      }
+    });
+  }
+
+  getTasksByStatus(status: string) {
+    this.apiService.get(`Tasks/byStatus?status=${status}`).subscribe({
+      next: (data) => {
+        this.dataSource = new DataSource({
+          key: 'taskId',
+          load: () => Promise.resolve(data)
+        });
+      },
+      error: (error) => {
+        notify(`Error loading tasks: ${error.message}`, 'error', 2000);
+      }
+    });
+  }
+
+  assignToProject(taskId: number, projectId: number) {
+    // Implementation for assigning task to project
+  }
 }

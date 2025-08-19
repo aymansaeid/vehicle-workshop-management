@@ -1,1 +1,153 @@
-<p>tasks-list works!</p>
+<div class="view-wrapper">
+  <dx-data-grid [dataSource]="dataSource"
+                (rowClick)="rowClick($event)"
+                [allowColumnResizing]="true"
+                [columnAutoWidth]="true"
+                [showBorders]="true"
+                [focusedRowEnabled]="true"
+                [(focusedRowKey)]="selectedTaskId">
+    <dxo-paging [pageSize]="10"></dxo-paging>
+    <dxo-pager [showPageSizeSelector]="true"
+               [allowedPageSizes]="[5, 10, 20]"
+               [showInfo]="true"></dxo-pager>
+    <dxo-filter-row [visible]="true"></dxo-filter-row>
+    <dxo-header-filter [visible]="true"></dxo-header-filter>
+    <dxo-search-panel [visible]="true" placeholder="Search tasks"></dxo-search-panel>
+
+    <dxi-column type="buttons" caption="Actions" [width]="150">
+      <dxi-button icon="edit" hint="Edit" [onClick]="onEditClick.bind(this)"></dxi-button>
+      <dxi-button icon="trash" hint="Delete" [onClick]="onDeleteClick.bind(this)"></dxi-button>
+      <dxi-button icon="clock"
+                  hint="Change Status"
+                  [onClick]="onStatusClick.bind(this)"
+                  [visible]="isStatusButtonVisible"></dxi-button>
+    </dxi-column>
+
+    <dxi-column dataField="name" caption="Task Name" [sortOrder]="'asc'"></dxi-column>
+    <dxi-column dataField="description" caption="Description"></dxi-column>
+    <dxi-column dataField="status"
+                caption="Status"
+                [cellTemplate]="'statusCellTemplate'"></dxi-column>
+    <dxi-column dataField="startTime"
+                caption="Start Time"
+                dataType="date"
+                [customizeText]="formatDate"></dxi-column>
+    <dxi-column dataField="endTime"
+                caption="End Time"
+                dataType="date"
+                [customizeText]="formatDate"></dxi-column>
+    <dxi-column dataField="customer.name" caption="Customer"></dxi-column>
+    <dxi-column dataField="project.name" caption="Project"></dxi-column>
+    <dxi-column dataField="car.make" caption="Car Make"></dxi-column>
+    <dxi-column dataField="car.model" caption="Car Model"></dxi-column>
+
+    <div *dxTemplate="let cell of 'statusCellTemplate'">
+      <span [class]="getStatusClass(cell.value)">{{ cell.value }}</span>
+    </div>
+
+    <dxo-toolbar>
+      <dxi-item location="before">
+        <div class="grid-header">Tasks</div>
+      </dxi-item>
+      <dxi-item location="before">
+        <dx-drop-down-button [items]="filterStatusList"
+                             text="Filter by Status"
+                             (onItemClick)="filterByStatus($event)"></dx-drop-down-button>
+      </dxi-item>
+      <dxi-item location="after">
+        <dx-button text="Add Task"
+                   icon="plus"
+                   type="default"
+                   stylingMode="contained"
+                   (onClick)="addTask()"></dx-button>
+      </dxi-item>
+      <dxi-item location="after">
+        <dx-button text="Refresh"
+                   icon="refresh"
+                   stylingMode="text"
+                   (onClick)="refresh()"></dx-button>
+      </dxi-item>
+    </dxo-toolbar>
+  </dx-data-grid>
+
+  <!-- Task Detail Popup -->
+  <dx-popup [title]="'Task Details'"
+            [visible]="isPanelOpened"
+            (onHiding)="onOpenedChange(false)"
+            [width]="700"
+            [height]="600">
+    <div *dxTemplate="let content of 'content'">
+      <div *ngIf="selectedTaskId">
+        <h3>Task Details</h3>
+        <div class="task-details">
+          <ng-container *ngIf="getSelectedTask() as task">
+            <p><strong>Name:</strong> {{task.name}}</p>
+            <p><strong>Description:</strong> {{task.description}}</p>
+            <p><strong>Status:</strong> <span [class]="getStatusClass(task.status)">{{task.status}}</span></p>
+            <p><strong>Start Time:</strong> {{formatDate({value: task.startTime})}}</p>
+            <p><strong>End Time:</strong> {{formatDate({value: task.endTime})}}</p>
+            <p><strong>Customer:</strong> {{task.customer?.name}}</p>
+            <p><strong>Project:</strong> {{task.project?.name}}</p>
+            <p><strong>Car:</strong> {{task.car?.make}} {{task.car?.model}} ({{task.car?.year}})</p>
+
+            <h4>Task Lines</h4>
+            <div *ngIf="task.taskLines && task.taskLines.length > 0; else noTaskLines">
+              <div *ngFor="let line of task.taskLines" class="task-line">
+                <p><strong>Description:</strong> {{line.description}}</p>
+                <p><strong>Quantity:</strong> {{line.quantity}}</p>
+                <p><strong>Unit Price:</strong> ${{line.unitPrice}}</p>
+                <p><strong>Total:</strong> ${{line.lineTotal}}</p>
+                <p><strong>Employee:</strong> {{line.employee?.name}}</p>
+                <p><strong>Inventory:</strong> {{line.inventory?.name}}</p>
+                <hr>
+              </div>
+            </div>
+            <ng-template #noTaskLines>
+              <p>No task lines available</p>
+            </ng-template>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+  </dx-popup> <!-- Added missing closing tag -->
+  <!-- Add/Edit Task Popup -->
+  <dx-popup [title]="popupTitle"
+            [visible]="isAddTaskPopupOpened"
+            (onHiding)="onCancelEdit()"
+            [width]="500"
+            [height]="600">
+    <div *dxTemplate="let content of 'content'">
+      <div class="form-group">
+        <label>Task Name</label>
+        <dx-text-box [(value)]="currentTask.name"></dx-text-box>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <dx-text-box [(value)]="currentTask.description"></dx-text-box>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <dx-select-box [items]="statusList"
+                       [(value)]="currentTask.status"></dx-select-box>
+      </div>
+      <div class="form-group">
+        <label>Start Time</label>
+        <dx-date-box [(value)]="currentTask.startTime"
+                     type="datetime"></dx-date-box>
+      </div>
+      <div class="form-group">
+        <label>End Time</label>
+        <dx-date-box [(value)]="currentTask.endTime"
+                     type="datetime"></dx-date-box>
+      </div>
+      <div class="button-group">
+        <dx-button text="Save"
+                   type="success"
+                   (onClick)="onSaveTask()"></dx-button>
+        <dx-button text="Cancel"
+                   type="normal"
+                   (onClick)="onCancelEdit()"></dx-button>
+      </div>
+    </div>
+  </dx-popup>
+</div>
