@@ -31,9 +31,44 @@ export const routes: Routes = [
         path: 'vehicles',
         loadComponent: () => import('./features/vehicles/vehicle-list/vehicle-list.component')
           .then(m => m.VehicleListComponent)
-      }
-    ]
-  },
+      },
+      {
+        path: 'Customers-Cars',
+        loadComponent: () => import('./features/customers/customers-cars/customers-cars.component')
+          .then(m => m.CustomersCarsComponent)
+      },
+      {
+        path: 'Inventory',
+        loadComponent: () => import('./features/Inventory/inventore-list/inventore-list.component')
+          .then(m => m.InventoreListComponent)
+      },
+      {
+        path: 'Invoices',
+        loadComponent: () => import('./features/Invoices/invoices-list/invoices-list.component')
+          .then(m => m.InvoicesListComponent)
+      },
+      {
+        path: 'Tasks',
+        loadComponent: () => import('./features/Tasks/tasks-list/tasks-list.component')
+          .then(m => m.TasksListComponent)
+      },
+      {
+        path: 'Projects',
+        loadComponent: () => import('./features/Projects/projects-list/projects-list.component')
+          .then(m => m.ProjectsListComponent)
+      },
+      {
+        path: 'Employees',
+        loadComponent: () => import('./features/Employees/employees-list/employees-list.component')
+          .then(m => m.EmployeesListComponent)
+      },
+      {
+        path: 'Attendance',
+        loadComponent: () => import('./features/attendance/attendance.component')
+          .then(m => m.AttendanceComponent)
+      },
 
-  { path: '**', redirectTo: '/login' }
+      { path: '**', redirectTo: '/login' }
+    ]
+  }
 ];
