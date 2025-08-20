@@ -46,14 +46,14 @@ export class TasksListComponent {
   isPanelOpened = false;
   isAddTaskPopupOpened = false;
   selectedTaskId: number | null = null;
-  selectedTask: any = null; // Added missing property
+  selectedTask: any = null; 
   currentTask: any = {
     name: '',
     description: '',
     status: 'Pending',
     startTime: new Date(),
     endTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    delayReason: '' // Added missing property
+    delayReason: '' 
   };
   popupTitle = 'Add Task';
 
@@ -71,7 +71,6 @@ export class TasksListComponent {
     this.loadProjects();
   }
 
-  // Load projects for assignment
   loadProjects() {
     this.apiService.get('Projects').subscribe({
       next: (data: any) => {
@@ -83,7 +82,6 @@ export class TasksListComponent {
     });
   }
 
-  // Click handler methods
   onEditClick = (e: any) => {
     const task = e.row?.data;
     if (task) {
@@ -98,13 +96,6 @@ export class TasksListComponent {
     }
   }
 
-  onStatusClick = (e: any) => {
-    const taskId = e.row?.data?.taskId;
-    if (taskId) {
-      this.updateTaskStatus(taskId, 'Completed');
-    }
-  }
-
   onAssignProjectClick = (e: any) => {
     const task = e.row?.data;
     if (task) {
@@ -115,8 +106,7 @@ export class TasksListComponent {
   isStatusButtonVisible = (e: any) => {
     return e.row?.data?.status !== 'Completed';
   }
-
-  // Load full task details
+  
   loadTaskDetails(taskId: number) {
     this.apiService.get(`Tasks/${taskId}`).subscribe({
       next: (task: any) => {
@@ -130,7 +120,7 @@ export class TasksListComponent {
     });
   }
 
-  // Project assignment methods
+
   openAssignProjectPopup(task: any) {
     this.taskToAssign = task;
     this.selectedProjectId = task.projectId || null;
@@ -185,7 +175,7 @@ export class TasksListComponent {
     this.selectedProjectId = null;
   }
 
-  // Original methods
+
   addTask() {
     this.currentTask = {
       name: '',
@@ -193,7 +183,7 @@ export class TasksListComponent {
       status: 'Pending',
       startTime: new Date(),
       endTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      delayReason: '' // Added missing property
+      delayReason: '' 
     };
     this.popupTitle = 'Add Task';
     this.isAddTaskPopupOpened = true;
@@ -223,19 +213,6 @@ export class TasksListComponent {
     }
   }
 
-  updateTaskStatus(taskId: number, newStatus: string) {
-    /*
-    this.apiService.patch(`Tasks/${taskId}/status`, { status: newStatus }).subscribe({
-      next: () => {
-        notify('Task status updated successfully', 'success', 2000);
-        this.refresh();
-      },
-      error: (error) => {
-        notify(`Error updating task status: ${error.message}`, 'error', 2000);
-      }
-    });
-    */
-  }
 
   onSaveTask() {
     const action = this.popupTitle === 'Add Task'

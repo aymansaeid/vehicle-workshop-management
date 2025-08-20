@@ -27,6 +27,7 @@ namespace vehicle_workshop_management.Server.Controllers
                 .Include(t => t.Customer)
                 .Include(t => t.Project)
                 .Include(t => t.TaskLines)
+                 .ThenInclude(tl => tl.Employee)
                 .AsNoTracking()
                 .ToListAsync();
 
