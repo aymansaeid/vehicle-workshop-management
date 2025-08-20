@@ -1,11 +1,12 @@
 <div class="view-wrapper">
   <dx-data-grid [dataSource]="dataSource"
-                (rowClick)="rowClick($event)"
                 [allowColumnResizing]="true"
                 [columnAutoWidth]="true"
                 [showBorders]="true"
                 [focusedRowEnabled]="true"
-                [(focusedRowKey)]="selectedTaskId">
+                [selection]="{ mode: 'single' }" 
+                [(focusedRowKey)]="selectedTaskId"
+                (onSelectionChanged)="onSelectionChanged($event)">
     <dxo-paging [pageSize]="10"></dxo-paging>
     <dxo-pager [showPageSizeSelector]="true"
                [allowedPageSizes]="[5, 10, 20]"
@@ -74,42 +75,111 @@
     </dxo-toolbar>
   </dx-data-grid>
 
-  <!-- Task Detail Popup -->
-  <dx-popup [title]="'Task Details'"
+  <!-- Task Detail Popup - This is the correct one -->
+  <dx-popup [title]="'Task Details - ' + (selectedTask?.name || '')"
             [visible]="isPanelOpened"
-            (onHiding)="onOpenedChange(false)"
-            [width]="700"
-            [height]="600">
-    <div *dxTemplate="let content of 'content'">
-      <div *ngIf="selectedTaskId">
-        <h3>Task Details</h3>
-        <div class="task-details">
-          <ng-container *ngIf="getSelectedTask() as task">
-            <p><strong>Name:</strong> {{task.name}}</p>
-            <p><strong>Description:</strong> {{task.description}}</p>
-            <p><strong>Status:</strong> <span [class]="getStatusClass(task.status)">{{task.status}}</span></p>
-            <p><strong>Start Time:</strong> {{formatDate({value: task.startTime})}}</p>
-            <p><strong>End Time:</strong> {{formatDate({value: task.endTime})}}</p>
-            <p><strong>Customer:</strong> {{task.customer?.name}}</p>
-            <p><strong>Project:</strong> {{task.project?.name}}</p>
-            <p><strong>Car:</strong> {{task.car?.make}} {{task.car?.model}} ({{task.car?.year}})</p>
+                (onHiding)="onOpenedChange($event)" 
+            [width]="800"
+            [height]="700">
 
-            <h4>Task Lines</h4>
-            <div *ngIf="task.taskLines && task.taskLines.length > 0; else noTaskLines">
-              <div *ngFor="let line of task.taskLines" class="task-line">
-                <p><strong>Description:</strong> {{line.description}}</p>
-                <p><strong>Quantity:</strong> {{line.quantity}}</p>
-                <p><strong>Unit Price:</strong> ${{line.unitPrice}}</p>
-                <p><strong>Total:</strong> ${{line.lineTotal}}</p>
-                <p><strong>Employee:</strong> {{line.employee?.name}}</p>
-                <p><strong>Inventory:</strong> {{line.inventory?.name}}</p>
-                <hr>
-              </div>
+    <div *dxTemplate="let data of 'content'">
+      <div class="custom-close-button">
+        <dx-button icon="close"
+                   stylingMode="text"
+                   (onClick)="isPanelOpened = false"
+                   title="Close">
+        </dx-button>
+      </div>
+      <div *ngIf="selectedTask" class="task-details-container">
+        <!-- Basic Task Information -->
+        <div class="detail-section">
+          <h3>Basic Information</h3>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Task Name:</label>
+              <span>{{selectedTask.name}}</span>
             </div>
-            <ng-template #noTaskLines>
-              <p>No task lines available</p>
-            </ng-template>
-          </ng-container>
+            <div class="detail-item">
+              <label>Description:</label>
+              <span>{{selectedTask.description || 'No description'}}</span>
+            </div>
+            <div class="detail-item">
+              <label>Status:</label>
+              <span [class]="getStatusClass(selectedTask.status)">{{selectedTask.status}}</span>
+            </div>
+            <div class="detail-item">
+              <label>Start Time:</label>
+              <span>{{formatDate({value: selectedTask.startTime})}}</span>
+            </div>
+            <div class="detail-item">
+              <label>End Time:</label>
+              <span>{{formatDate({value: selectedTask.endTime})}}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedTask.receivedAt">
+              <label>Received At:</label>
+              <span>{{formatDate({value: selectedTask.receivedAt})}}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedTask.deliveredAt">
+              <label>Delivered At:</label>
+              <span>{{formatDate({value: selectedTask.deliveredAt})}}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedTask.delayReason">
+              <label>Delay Reason:</label>
+              <span>{{selectedTask.delayReason}}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Related Entities -->
+        <div class="detail-section">
+          <h3>Related Information</h3>
+          <div class="detail-grid">
+            <div class="detail-item" *ngIf="selectedTask.customer">
+              <label>Customer:</label>
+              <span>{{selectedTask.customer.name}} ({{selectedTask.customer.phone}}, {{selectedTask.customer.type}})</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedTask.project">
+              <label>Project:</label>
+              <span>{{selectedTask.project.name}}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedTask.car">
+              <label>Car:</label>
+              <span>{{selectedTask.car.make}} {{selectedTask.car.model}} ({{selectedTask.car.year}}, {{selectedTask.car.color}})</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Task Lines -->
+        <div class="detail-section" *ngIf="selectedTask.taskLines && selectedTask.taskLines.length > 0">
+          <h3>Task Lines</h3>
+          <div class="styled-table-container">
+            <table class="styled-table">
+              <thead>
+                <tr>
+                  <th>Description</th>
+                  <th>Qty</th>
+                  <th>Unit Price</th>
+                  <th>Total</th>
+                  <th>Employee</th>
+                  <th>Inventory</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let line of selectedTask.taskLines">
+                  <td>{{line.description}}</td>
+                  <td class="text-center">{{line.quantity}}</td>
+                  <td class="text-right">{{formatCurrency(line.unitPrice)}}</td>
+                  <td class="text-right">{{formatCurrency(line.lineTotal)}}</td>
+                  <td>{{line.employee?.name || 'N/A'}}</td>
+                  <td>{{line.inventory?.name || 'N/A'}}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="detail-section" *ngIf="!selectedTask.taskLines || selectedTask.taskLines.length === 0">
+          <p>No task lines available</p>
         </div>
       </div>
     </div>

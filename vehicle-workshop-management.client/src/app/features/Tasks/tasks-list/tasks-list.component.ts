@@ -46,12 +46,14 @@ export class TasksListComponent {
   isPanelOpened = false;
   isAddTaskPopupOpened = false;
   selectedTaskId: number | null = null;
+  selectedTask: any = null; // Added missing property
   currentTask: any = {
     name: '',
     description: '',
     status: 'Pending',
     startTime: new Date(),
-    endTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    endTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    delayReason: '' // Added missing property
   };
   popupTitle = 'Add Task';
 
@@ -114,6 +116,20 @@ export class TasksListComponent {
     return e.row?.data?.status !== 'Completed';
   }
 
+  // Load full task details
+  loadTaskDetails(taskId: number) {
+    this.apiService.get(`Tasks/${taskId}`).subscribe({
+      next: (task: any) => {
+        this.selectedTask = task;
+        this.isPanelOpened = true;
+      },
+      error: (error) => {
+        notify(`Error loading task details: ${error.message}`, 'error', 2000);
+        this.selectedTask = null;
+      }
+    });
+  }
+
   // Project assignment methods
   openAssignProjectPopup(task: any) {
     this.taskToAssign = task;
@@ -139,6 +155,30 @@ export class TasksListComponent {
     });
   }
 
+  getSelectedTask(): any {
+    if (!this.selectedTaskId) return null;
+    return this.dataSource.items()?.find(t => t.taskId === this.selectedTaskId);
+  }
+
+  onSelectionChanged(e: any) {
+    const selected = e.selectedRowsData[0];
+    if (selected) {
+      this.apiService.get(`Tasks/${selected.taskId}`).subscribe({
+        next: (result: any) => {
+          const task = Array.isArray(result) ? result[0] : result;
+          this.selectedTask = task;
+          this.isPanelOpened = true;
+        },
+        error: (err) => {
+          notify(`Error loading task details: ${err.message}`, 'error', 2000);
+        }
+      });
+    } else {
+      this.selectedTaskId = null;
+      this.selectedTask = null;
+    }
+  }
+
   cancelAssignProject() {
     this.isAssignProjectPopupOpened = false;
     this.taskToAssign = null;
@@ -152,7 +192,8 @@ export class TasksListComponent {
       description: '',
       status: 'Pending',
       startTime: new Date(),
-      endTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      endTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      delayReason: '' // Added missing property
     };
     this.popupTitle = 'Add Task';
     this.isAddTaskPopupOpened = true;
@@ -221,15 +262,13 @@ export class TasksListComponent {
     this.dataGrid.instance.refresh();
   }
 
-  rowClick(e: any) {
-    const data = e.data;
-    this.selectedTaskId = data.taskId;
-    this.isPanelOpened = true;
-  }
 
-  onOpenedChange(value: boolean) {
-    if (!value) {
+
+  onOpenedChange(e: any) {
+    // The event object has a 'value' property that indicates if the popup is open
+    if (!e.value) {
       this.selectedTaskId = null;
+      this.selectedTask = null;
     }
   }
 
@@ -253,11 +292,6 @@ export class TasksListComponent {
     }
   };
 
-  getSelectedTask(): any {
-    if (!this.selectedTaskId) return null;
-    return this.dataSource.items()?.find(t => t.taskId === this.selectedTaskId);
-  }
-
   // Additional API methods
   getTasksByProject(projectId: number) {
     this.apiService.get(`Tasks/byProject/${projectId}`).subscribe({
@@ -272,6 +306,9 @@ export class TasksListComponent {
       }
     });
   }
+  formatCurrency = (value: number) => {
+    return value ? `$${value.toFixed(2)}` : '$0.00';
+  };
 
   getTasksByStatus(status: string) {
     this.apiService.get(`Tasks/byStatus?status=${status}`).subscribe({
