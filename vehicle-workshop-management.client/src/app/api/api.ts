@@ -35,5 +35,12 @@ export class ApiService {
   register(employee: any): Observable<any> {
     return this.http.post(`${API_URL}/Employees/Register`, employee);
   }
+  assignTaskToEmployee(taskId: number, employeeId: number): Observable<any> {
+    return this.http.post(`${API_URL}/Tasks/AssignTaskToEmployee`, { taskId, employeeId });
+  }
+
+  assignTaskToProject(taskId: number, projectId: number): Observable<any> {
+    return this.http.put(`${API_URL}/Tasks/${taskId}/assign-to-project`, { projectId });
+  }
   
 }

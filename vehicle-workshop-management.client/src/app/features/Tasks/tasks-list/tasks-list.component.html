@@ -14,13 +14,16 @@
     <dxo-header-filter [visible]="true"></dxo-header-filter>
     <dxo-search-panel [visible]="true" placeholder="Search tasks"></dxo-search-panel>
 
-    <dxi-column type="buttons" caption="Actions" [width]="150">
-      <dxi-button icon="edit" hint="Edit" [onClick]="onEditClick.bind(this)"></dxi-button>
-      <dxi-button icon="trash" hint="Delete" [onClick]="onDeleteClick.bind(this)"></dxi-button>
+    <dxi-column type="buttons" caption="Actions" [width]="200">
+      <dxi-button icon="edit" hint="Edit" [onClick]="onEditClick"></dxi-button>
+      <dxi-button icon="trash" hint="Delete" [onClick]="onDeleteClick"></dxi-button>
       <dxi-button icon="clock"
-                  hint="Change Status"
-                  [onClick]="onStatusClick.bind(this)"
+                  hint="Complete"
+                  [onClick]="onStatusClick"
                   [visible]="isStatusButtonVisible"></dxi-button>
+      <dxi-button icon="link"
+                  hint="Assign to Project"
+                  [onClick]="onAssignProjectClick"></dxi-button>
     </dxi-column>
 
     <dxi-column dataField="name" caption="Task Name" [sortOrder]="'asc'"></dxi-column>
@@ -40,6 +43,7 @@
     <dxi-column dataField="project.name" caption="Project"></dxi-column>
     <dxi-column dataField="car.make" caption="Car Make"></dxi-column>
     <dxi-column dataField="car.model" caption="Car Model"></dxi-column>
+
 
     <div *dxTemplate="let cell of 'statusCellTemplate'">
       <span [class]="getStatusClass(cell.value)">{{ cell.value }}</span>
@@ -109,7 +113,8 @@
         </div>
       </div>
     </div>
-  </dx-popup> <!-- Added missing closing tag -->
+  </dx-popup>
+
   <!-- Add/Edit Task Popup -->
   <dx-popup [title]="popupTitle"
             [visible]="isAddTaskPopupOpened"
@@ -124,6 +129,10 @@
       <div class="form-group">
         <label>Description</label>
         <dx-text-box [(value)]="currentTask.description"></dx-text-box>
+      </div>
+      <div class="form-group">
+        <label>Delay Reason</label>
+        <dx-text-box [(value)]="currentTask.delayReason"></dx-text-box>
       </div>
       <div class="form-group">
         <label>Status</label>
@@ -147,6 +156,40 @@
         <dx-button text="Cancel"
                    type="normal"
                    (onClick)="onCancelEdit()"></dx-button>
+      </div>
+    </div>
+  </dx-popup>
+
+  <!-- Assign to Project Popup -->
+  <dx-popup [title]="'Assign Task to Project'"
+            [visible]="isAssignProjectPopupOpened"
+            (onHiding)="cancelAssignProject()"
+            [width]="400"
+            [height]="300">
+    <div *dxTemplate="let content of 'content'">
+      <div *ngIf="taskToAssign">
+        <div class="form-group">
+          <label>Task: {{taskToAssign.name}}</label>
+        </div>
+        <div class="form-group">
+          <label>Select Project</label>
+          <dx-select-box [items]="projects"
+                         displayExpr="name"
+                         valueExpr="projectId"
+                         [(value)]="selectedProjectId"
+                         placeholder="Choose a project">
+          </dx-select-box>
+        </div>
+        <div class="button-group">
+          <dx-button text="Assign"
+                     type="success"
+                     (onClick)="assignToProject()">
+          </dx-button>
+          <dx-button text="Cancel"
+                     type="normal"
+                     (onClick)="cancelAssignProject()">
+          </dx-button>
+        </div>
       </div>
     </div>
   </dx-popup>

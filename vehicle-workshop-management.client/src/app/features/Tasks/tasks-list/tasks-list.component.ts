@@ -38,6 +38,11 @@ export class TasksListComponent {
   statusList = ['Pending', 'In Progress', 'Completed', 'Delayed'];
   filterStatusList: TaskStatus[] = ['All', 'Pending', 'In Progress', 'Completed', 'Delayed'];
 
+  projects: any[] = [];
+  selectedProjectId: number | null = null;
+  isAssignProjectPopupOpened = false;
+  taskToAssign: any = null;
+
   isPanelOpened = false;
   isAddTaskPopupOpened = false;
   selectedTaskId: number | null = null;
@@ -60,7 +65,21 @@ export class TasksListComponent {
     }),
   });
 
-  constructor(private apiService: ApiService) { }
+  constructor(private apiService: ApiService) {
+    this.loadProjects();
+  }
+
+  // Load projects for assignment
+  loadProjects() {
+    this.apiService.get('Projects').subscribe({
+      next: (data: any) => {
+        this.projects = data;
+      },
+      error: (error) => {
+        notify(`Error loading projects: ${error.message}`, 'error', 2000);
+      }
+    });
+  }
 
   // Click handler methods
   onEditClick = (e: any) => {
@@ -84,8 +103,46 @@ export class TasksListComponent {
     }
   }
 
+  onAssignProjectClick = (e: any) => {
+    const task = e.row?.data;
+    if (task) {
+      this.openAssignProjectPopup(task);
+    }
+  }
+
   isStatusButtonVisible = (e: any) => {
     return e.row?.data?.status !== 'Completed';
+  }
+
+  // Project assignment methods
+  openAssignProjectPopup(task: any) {
+    this.taskToAssign = task;
+    this.selectedProjectId = task.projectId || null;
+    this.isAssignProjectPopupOpened = true;
+  }
+
+  assignToProject() {
+    if (!this.taskToAssign || !this.selectedProjectId) {
+      notify('Please select a project', 'error', 2000);
+      return;
+    }
+
+    this.apiService.assignTaskToProject(this.taskToAssign.taskId, this.selectedProjectId).subscribe({
+      next: () => {
+        notify('Task assigned to project successfully', 'success', 2000);
+        this.isAssignProjectPopupOpened = false;
+        this.refresh();
+      },
+      error: (error) => {
+        notify(`Error assigning task: ${error.message}`, 'error', 2000);
+      }
+    });
+  }
+
+  cancelAssignProject() {
+    this.isAssignProjectPopupOpened = false;
+    this.taskToAssign = null;
+    this.selectedProjectId = null;
   }
 
   // Original methods
@@ -126,8 +183,17 @@ export class TasksListComponent {
   }
 
   updateTaskStatus(taskId: number, newStatus: string) {
-    // Implement status update logic here
-    console.log(`Updating task ${taskId} to status: ${newStatus}`);
+    /*
+    this.apiService.patch(`Tasks/${taskId}/status`, { status: newStatus }).subscribe({
+      next: () => {
+        notify('Task status updated successfully', 'success', 2000);
+        this.refresh();
+      },
+      error: (error) => {
+        notify(`Error updating task status: ${error.message}`, 'error', 2000);
+      }
+    });
+    */
   }
 
   onSaveTask() {
@@ -186,6 +252,7 @@ export class TasksListComponent {
       default: return 'status-pending';
     }
   };
+
   getSelectedTask(): any {
     if (!this.selectedTaskId) return null;
     return this.dataSource.items()?.find(t => t.taskId === this.selectedTaskId);
@@ -218,9 +285,5 @@ export class TasksListComponent {
         notify(`Error loading tasks: ${error.message}`, 'error', 2000);
       }
     });
-  }
-
-  assignToProject(taskId: number, projectId: number) {
-    // Implementation for assigning task to project
   }
 }
