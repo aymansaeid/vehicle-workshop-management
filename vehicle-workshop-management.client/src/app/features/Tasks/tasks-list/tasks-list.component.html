@@ -18,7 +18,6 @@
     <dxi-column type="buttons" caption="Actions" [width]="200">
       <dxi-button icon="edit" hint="Edit" [onClick]="onEditClick"></dxi-button>
       <dxi-button icon="trash" hint="Delete" [onClick]="onDeleteClick"></dxi-button>
-
       <dxi-button icon="link"
                   hint="Assign to Project"
                   [onClick]="onAssignProjectClick"></dxi-button>
@@ -71,7 +70,7 @@
     </dxo-toolbar>
   </dx-data-grid>
 
-  <!-- Task Detail Popup - This is the correct one -->
+  <!-- Task Detail Popup -->
   <dx-popup [title]="'Task Details - ' + (selectedTask?.name || '')"
             [visible]="isPanelOpened"
             (onHiding)="onOpenedChange($event)"
@@ -178,7 +177,7 @@
           <p>No task lines available</p>
         </div>
 
-        <!-- Add Manage Task Lines Button -->
+        <!-- Manage Task Lines Button -->
         <div class="detail-section">
           <div class="button-group">
             <dx-button text="Manage Task Lines"
@@ -280,7 +279,7 @@
       <div class="custom-close-button">
         <dx-button icon="close"
                    stylingMode="text"
-                   (onClick)="onCancelTaskLineEdit()"
+                   (onClick)="closeTaskLinesManagement()"
                    title="Close">
         </dx-button>
       </div>
@@ -302,8 +301,8 @@
                    [showInfo]="true"></dxo-pager>
 
         <dxi-column type="buttons" caption="Actions" [width]="120">
-          <dxi-button icon="edit" hint="Edit" [onClick]="editTaskLine"></dxi-button>
-          <dxi-button icon="trash" hint="Delete" [onClick]="deleteTaskLine"></dxi-button>
+          <dxi-button icon="edit" hint="Edit" [onClick]="onEditTaskLineClick"></dxi-button>
+          <dxi-button icon="trash" hint="Delete" [onClick]="onDeleteTaskLineClick"></dxi-button>
         </dxi-column>
 
         <dxi-column dataField="description" caption="Description"></dxi-column>
