@@ -8,11 +8,13 @@ import {
   DxSelectBoxModule,
   DxTextBoxModule,
   DxPopupModule,
-  DxDateBoxModule
+  DxDateBoxModule,
+  DxNumberBoxModule
 } from 'devextreme-angular';
 import DataSource from 'devextreme/data/data_source';
 import { ApiService } from '../../../api/api';
 import notify from "devextreme/ui/notify";
+
 
 type TaskStatus = 'Pending' | 'In Progress' | 'Completed' | 'Delayed' | 'All';
 
@@ -29,7 +31,8 @@ type TaskStatus = 'Pending' | 'In Progress' | 'Completed' | 'Delayed' | 'All';
     DxSelectBoxModule,
     DxTextBoxModule,
     DxPopupModule,
-    DxDateBoxModule
+    DxDateBoxModule,
+    DxNumberBoxModule 
   ]
 })
 export class TasksListComponent {
@@ -42,6 +45,7 @@ export class TasksListComponent {
   selectedProjectId: number | null = null;
   isAssignProjectPopupOpened = false;
   taskToAssign: any = null;
+  isTaskLineEditPopupOpened = false; // Separate variable for the add/edit popup
 
   isPanelOpened = false;
   isAddTaskPopupOpened = false;
@@ -56,6 +60,20 @@ export class TasksListComponent {
     delayReason: '' 
   };
   popupTitle = 'Add Task';
+
+  taskLinesDataSource: any[] = [];
+  isTaskLinesPopupOpened = false;
+  currentTaskLine: any = {
+    description: '',
+    quantity: 1,
+    unitPrice: 0,
+    employeeId: null,
+    inventoryId: null
+  };
+  taskLinePopupTitle = 'Add Task Line';
+  selectedTaskLineId: number | null = null;
+  employees: any[] = [];
+  inventories: any[] = [];
 
   dataSource = new DataSource({
     key: 'taskId',
@@ -107,18 +125,7 @@ export class TasksListComponent {
     return e.row?.data?.status !== 'Completed';
   }
   
-  loadTaskDetails(taskId: number) {
-    this.apiService.get(`Tasks/${taskId}`).subscribe({
-      next: (task: any) => {
-        this.selectedTask = task;
-        this.isPanelOpened = true;
-      },
-      error: (error) => {
-        notify(`Error loading task details: ${error.message}`, 'error', 2000);
-        this.selectedTask = null;
-      }
-    });
-  }
+
 
 
   openAssignProjectPopup(task: any) {
@@ -300,4 +307,146 @@ export class TasksListComponent {
       }
     });
   }
+
+  loadEmployees() {
+    this.apiService.get('Employees').subscribe({
+      next: (data: any) => {
+        this.employees = data;
+      },
+      error: (error) => {
+        notify(`Error loading employees: ${error.message}`, 'error', 2000);
+      }
+    });
+  }
+
+  loadInventories() {
+    this.apiService.get('Inventory').subscribe({
+      next: (data: any) => {
+        this.inventories = data;
+      },
+      error: (error) => {
+        notify(`Error loading inventories: ${error.message}`, 'error', 2000);
+      }
+    });
+  }
+
+  // Add these methods to handle task lines CRUD operations
+  loadTaskLines(taskId: number) {
+    this.apiService.get(`TaskLines/ByTask/${taskId}`).subscribe({
+      next: (data: any) => {
+        this.taskLinesDataSource = data;
+      },
+      error: (error) => {
+        notify(`Error loading task lines: ${error.message}`, 'error', 2000);
+      }
+    });
+  }
+
+  openTaskLinesPopup(task: any) {
+    this.selectedTask = task;
+    this.loadTaskLines(task.taskId);
+    this.isTaskLinesPopupOpened = true;
+  }
+
+  addTaskLine() {
+    this.currentTaskLine = {
+      description: '',
+      quantity: 1,
+      unitPrice: 0,
+      employeeId: null,
+      inventoryId: null
+    };
+    this.taskLinePopupTitle = 'Add Task Line';
+    this.selectedTaskLineId = null;
+    this.isTaskLineEditPopupOpened = true; // Use the new variable
+  }
+
+
+  deleteTaskLine(taskLineId: number) {
+    if (confirm('Are you sure you want to delete this task line?')) {
+      this.apiService.delete('TaskLines', taskLineId).subscribe({
+        next: () => {
+          notify('Task line deleted successfully', 'success', 2000);
+          this.loadTaskLines(this.selectedTask.taskId);
+        },
+        error: (error) => {
+          notify(`Error deleting task line: ${error.message}`, 'error', 2000);
+        }
+      });
+    }
+  }
+
+  onSaveTaskLine() {
+    if (this.taskLinePopupTitle === 'Add Task Line') {
+      // Create new task line
+      this.apiService.post(`TaskLines/tasks/${this.selectedTask.taskId}/Tasklines`, this.currentTaskLine).subscribe({
+        next: () => {
+          notify('Task line added successfully', 'success', 2000);
+          this.isTaskLineEditPopupOpened = false; // Close the edit popup
+          this.loadTaskLines(this.selectedTask.taskId);
+        },
+        error: (error) => {
+          notify(`Error adding task line: ${error.message}`, 'error', 2000);
+        }
+      });
+    } else {
+      /*
+      // Update existing task line
+      this.apiService.put('TaskLines', this.selectedTaskLineId, this.currentTaskLine).subscribe({
+        next: () => {
+          notify('Task line updated successfully', 'success', 2000);
+        this.isTaskLineEditPopupOpened = false; // Close the edit popup
+          this.loadTaskLines(this.selectedTask.taskId);
+        },
+        error: (error) => {
+          notify(`Error updating task line: ${error.message}`, 'error', 2000);
+        }
+      });
+      */
+      }
+  }
+  // Add a method to close the management grid
+  closeTaskLinesManagement() {
+    this.isTaskLinesPopupOpened = false;
+  }
+  onCancelTaskLineEdit() {
+    this.isTaskLineEditPopupOpened = false;
+  }
+
+  // Update your loadTaskDetails method to also load task lines
+  loadTaskDetails(taskId: number) {
+    this.apiService.get(`Tasks/${taskId}`).subscribe({
+      next: (task: any) => {
+        this.selectedTask = task;
+        this.isPanelOpened = true;
+        this.loadTaskLines(taskId); // Load task lines when opening task details
+      },
+      error: (error) => {
+        notify(`Error loading task details: ${error.message}`, 'error', 2000);
+        this.selectedTask = null;
+      }
+    });
+  }
+
+
+  // Add these methods to your component class
+  currencyFormat = {
+    type: 'currency',
+    currency: 'USD',
+    precision: 2
+  };
+
+  calculateLineTotal(rowData: any): number {
+    return rowData.quantity * rowData.unitPrice;
+  }
+
+  // Update the grid button handler
+  editTaskLine = (e: any) => {
+    const taskLine = e.row?.data;
+    if (taskLine) {
+      this.editTaskLine(taskLine);
+    }
+  }
+
+
 }

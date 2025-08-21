@@ -4,7 +4,7 @@
                 [columnAutoWidth]="true"
                 [showBorders]="true"
                 [focusedRowEnabled]="true"
-                [selection]="{ mode: 'single' }" 
+                [selection]="{ mode: 'single' }"
                 [(focusedRowKey)]="selectedTaskId"
                 (onSelectionChanged)="onSelectionChanged($event)">
     <dxo-paging [pageSize]="10"></dxo-paging>
@@ -18,7 +18,7 @@
     <dxi-column type="buttons" caption="Actions" [width]="200">
       <dxi-button icon="edit" hint="Edit" [onClick]="onEditClick"></dxi-button>
       <dxi-button icon="trash" hint="Delete" [onClick]="onDeleteClick"></dxi-button>
-     
+
       <dxi-button icon="link"
                   hint="Assign to Project"
                   [onClick]="onAssignProjectClick"></dxi-button>
@@ -41,7 +41,6 @@
     <dxi-column dataField="project.name" caption="Project"></dxi-column>
     <dxi-column dataField="car.make" caption="Car Make"></dxi-column>
     <dxi-column dataField="car.model" caption="Car Model"></dxi-column>
-
 
     <div *dxTemplate="let cell of 'statusCellTemplate'">
       <span [class]="getStatusClass(cell.value)">{{ cell.value }}</span>
@@ -75,7 +74,7 @@
   <!-- Task Detail Popup - This is the correct one -->
   <dx-popup [title]="'Task Details - ' + (selectedTask?.name || '')"
             [visible]="isPanelOpened"
-                (onHiding)="onOpenedChange($event)" 
+            (onHiding)="onOpenedChange($event)"
             [width]="800"
             [height]="700">
 
@@ -178,6 +177,16 @@
         <div class="detail-section" *ngIf="!selectedTask.taskLines || selectedTask.taskLines.length === 0">
           <p>No task lines available</p>
         </div>
+
+        <!-- Add Manage Task Lines Button -->
+        <div class="detail-section">
+          <div class="button-group">
+            <dx-button text="Manage Task Lines"
+                       icon="edit"
+                       type="default"
+                       (onClick)="openTaskLinesPopup(selectedTask)"></dx-button>
+          </div>
+        </div>
       </div>
     </div>
   </dx-popup>
@@ -257,6 +266,100 @@
                      (onClick)="cancelAssignProject()">
           </dx-button>
         </div>
+      </div>
+    </div>
+  </dx-popup>
+
+  <!-- Task Lines Management Popup -->
+  <dx-popup [title]="'Manage Task Lines - ' + (selectedTask?.name || '')"
+            [visible]="isTaskLinesPopupOpened"
+            (onHiding)="closeTaskLinesManagement()"
+            [width]="900"
+            [height]="600">
+    <div *dxTemplate="let content of 'content'">
+      <div class="custom-close-button">
+        <dx-button icon="close"
+                   stylingMode="text"
+                   (onClick)="onCancelTaskLineEdit()"
+                   title="Close">
+        </dx-button>
+      </div>
+
+      <dx-button text="Add New Task Line"
+                 icon="plus"
+                 type="default"
+                 stylingMode="contained"
+                 (onClick)="addTaskLine()"
+                 class="add-button"></dx-button>
+
+      <dx-data-grid [dataSource]="taskLinesDataSource"
+                    [showBorders]="true"
+                    [allowColumnResizing]="true"
+                    [columnAutoWidth]="true">
+        <dxo-paging [pageSize]="10"></dxo-paging>
+        <dxo-pager [showPageSizeSelector]="true"
+                   [allowedPageSizes]="[5, 10, 20]"
+                   [showInfo]="true"></dxo-pager>
+
+        <dxi-column type="buttons" caption="Actions" [width]="120">
+          <dxi-button icon="edit" hint="Edit" [onClick]="editTaskLine"></dxi-button>
+          <dxi-button icon="trash" hint="Delete" [onClick]="deleteTaskLine"></dxi-button>
+        </dxi-column>
+
+        <dxi-column dataField="description" caption="Description"></dxi-column>
+        <dxi-column dataField="quantity" caption="Qty" dataType="number"></dxi-column>
+        <dxi-column dataField="unitPrice" caption="Unit Price" dataType="number" [format]="currencyFormat"></dxi-column>
+        <dxi-column dataField="lineTotal" caption="Total" dataType="number" [format]="currencyFormat" [calculateCellValue]="calculateLineTotal"></dxi-column>
+        <dxi-column dataField="employee.name" caption="Employee"></dxi-column>
+        <dxi-column dataField="inventory.name" caption="Inventory"></dxi-column>
+      </dx-data-grid>
+    </div>
+  </dx-popup>
+
+  <!-- Add/Edit Task Line Popup -->
+  <dx-popup [title]="taskLinePopupTitle"
+            [visible]="isTaskLineEditPopupOpened"
+            (onHiding)="onCancelTaskLineEdit()"
+            [width]="500"
+            [height]="500">
+    <div *dxTemplate="let content of 'content'">
+      <div class="form-group">
+        <label>Description</label>
+        <dx-text-box [(value)]="currentTaskLine.description"></dx-text-box>
+      </div>
+      <div class="form-group">
+        <label>Quantity</label>
+        <dx-number-box [(value)]="currentTaskLine.quantity" [min]="1"></dx-number-box>
+      </div>
+      <div class="form-group">
+        <label>Unit Price</label>
+        <dx-number-box [(value)]="currentTaskLine.unitPrice" [min]="0" [format]="'$#,##0.##'"></dx-number-box>
+      </div>
+      <div class="form-group">
+        <label>Employee</label>
+        <dx-select-box [items]="employees"
+                       displayExpr="name"
+                       valueExpr="employeeId"
+                       [(value)]="currentTaskLine.employeeId"
+                       placeholder="Select an employee">
+        </dx-select-box>
+      </div>
+      <div class="form-group">
+        <label>Inventory Item</label>
+        <dx-select-box [items]="inventories"
+                       displayExpr="name"
+                       valueExpr="inventoryId"
+                       [(value)]="currentTaskLine.inventoryId"
+                       placeholder="Select an inventory item">
+        </dx-select-box>
+      </div>
+      <div class="button-group">
+        <dx-button text="Save"
+                   type="success"
+                   (onClick)="onSaveTaskLine()"></dx-button>
+        <dx-button text="Cancel"
+                   type="normal"
+                   (onClick)="onCancelTaskLineEdit()"></dx-button>
       </div>
     </div>
   </dx-popup>
