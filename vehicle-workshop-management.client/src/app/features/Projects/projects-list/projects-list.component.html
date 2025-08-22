@@ -1,54 +1,57 @@
 <div class="view-wrapper">
-  <dx-data-grid 
-    [dataSource]="dataSource"
-    [allowColumnResizing]="true"
-    [columnAutoWidth]="true"
-    [showBorders]="true"
-    [focusedRowEnabled]="true">
-    
+  <dx-data-grid [dataSource]="dataSource"
+                [allowColumnResizing]="true"
+                [columnAutoWidth]="true"
+                [showBorders]="true"
+                [focusedRowEnabled]="true">
+
     <dxo-paging [pageSize]="10"></dxo-paging>
-    <dxo-pager 
-      [showPageSizeSelector]="true"
-      [allowedPageSizes]="[5, 10, 20]"
-      [showInfo]="true">
+    <dxo-pager [showPageSizeSelector]="true"
+               [allowedPageSizes]="[5, 10, 20]"
+               [showInfo]="true">
     </dxo-pager>
-    
+
     <dxo-filter-row [visible]="true"></dxo-filter-row>
     <dxo-header-filter [visible]="true"></dxo-header-filter>
     <dxo-search-panel [visible]="true" placeholder="Search projects"></dxo-search-panel>
 
-    <!-- Actions Column -->
-    <dxi-column type="buttons" caption="Actions" [width]="220">
+    <!-- Data Columns -->
+
+    <dxi-column dataField="customerId" caption="Customer" [minWidth]="150" [cellTemplate]="'customerCellTemplate'"></dxi-column>
+    <dxi-column dataField="name" caption="Project Name" [sortOrder]="'asc'" [minWidth]="200"></dxi-column>
+    <dxi-column dataField="description" caption="Description" [minWidth]="250"></dxi-column>
+    <dxi-column dataField="status"
+                caption="Status"
+                [cellTemplate]="'statusCellTemplate'"
+                [width]="120">
+    </dxi-column>
+    <dxi-column dataField="startDate"
+                caption="Start Date"
+                dataType="date"
+                [customizeText]="formatDate"
+                [width]="120">
+    </dxi-column>
+    <dxi-column dataField="endDate"
+                caption="End Date"
+                dataType="date"
+                [customizeText]="formatDate"
+                [width]="120">
+    </dxi-column>
+
+    <!-- Actions Column - Moved to the end -->
+    <dxi-column type="buttons" caption="Actions" [width]="220" >
       <dxi-button icon="edit" hint="Edit" [onClick]="onEditClick"></dxi-button>
       <dxi-button icon="trash" hint="Delete" [onClick]="onDeleteClick"></dxi-button>
-      <dxi-button 
-        icon="detailslayout" 
-        hint="View Tasks" 
-        [onClick]="onViewTasksClick">
+      <dxi-button icon="detailslayout"
+                  hint="View Tasks"
+                  [onClick]="onViewTasksClick">
       </dxi-button>
     </dxi-column>
 
-    <!-- Data Columns -->
-    <dxi-column dataField="name" caption="Project Name" [sortOrder]="'asc'"></dxi-column>
-    <dxi-column dataField="description" caption="Description"></dxi-column>
-    <dxi-column 
-      dataField="status"
-      caption="Status"
-      [cellTemplate]="'statusCellTemplate'">
-    </dxi-column>
-    <dxi-column 
-      dataField="startDate"
-      caption="Start Date"
-      dataType="date"
-      [customizeText]="formatDate">
-    </dxi-column>
-    <dxi-column 
-      dataField="endDate"
-      caption="End Date"
-      dataType="date"
-      [customizeText]="formatDate">
-    </dxi-column>
-
+    <!-- Customer Template -->
+    <div *dxTemplate="let cell of 'customerCellTemplate'">
+      <span>{{ getCustomerName(cell.value) }}</span>
+    </div>
 
     <!-- Status Template -->
     <div *dxTemplate="let cell of 'statusCellTemplate'">
@@ -61,90 +64,110 @@
         <div class="grid-header">Projects</div>
       </dxi-item>
       <dxi-item location="after">
-        <dx-button 
-          text="Add Project"
-          icon="plus"
-          type="default"
-          stylingMode="contained"
-          (onClick)="addProject()">
+        <dx-button text="Add Project"
+                   icon="plus"
+                   type="default"
+                   stylingMode="contained"
+                   (onClick)="addProject()">
         </dx-button>
       </dxi-item>
       <dxi-item location="after">
-        <dx-button 
-          text="Refresh"
-          icon="refresh"
-          stylingMode="text"
-          (onClick)="refresh()">
+        <dx-button text="Refresh"
+                   icon="refresh"
+                   stylingMode="text"
+                   (onClick)="refresh()">
         </dx-button>
       </dxi-item>
     </dxo-toolbar>
   </dx-data-grid>
 
   <!-- Add/Edit Project Popup -->
-  <dx-popup 
-    [title]="popupTitle"
-    [visible]="isProjectPopupOpened"
-    (onHiding)="onCancelEdit()"
-    [width]="600"
-    [height]="500">
-    
+  <dx-popup [title]="popupTitle"
+            [visible]="isProjectPopupOpened"
+            (onHiding)="onCancelEdit()"
+            [width]="600"
+            [height]="550">
+
     <div *dxTemplate="let content of 'content'">
       <div class="form-container">
         <div class="form-group">
-          <label>Project Name</label>
-          <dx-text-box 
-            [(value)]="currentProject.name"
-            placeholder="Enter project name">
-          </dx-text-box>
-        </div>
-        
-        <div class="form-group">
-          <label>Description</label>
-          <dx-text-area 
-            [(value)]="currentProject.description"
-            placeholder="Enter project description"
-            [height]="80">
-          </dx-text-area>
-        </div>
-        
-        <div class="form-group">
-          <label>Status</label>
-          <dx-select-box 
-            [items]="statusList"
-            [(value)]="currentProject.status">
+          <label>Customer *</label>
+          <dx-select-box [dataSource]="customersDataSource"
+                         [(value)]="selectedCustomer"
+                         displayExpr="name"
+                         valueExpr="this"
+                         placeholder="Select a customer"
+                         [searchEnabled]="true"
+                         searchExpr="name">
+            <dx-validator>
+              <dxi-validation-rule type="required"
+                                   message="Please select a customer">
+              </dxi-validation-rule>
+            </dx-validator>
           </dx-select-box>
         </div>
-        
+
+        <div class="form-group">
+          <label>Project Name *</label>
+          <dx-text-box [(value)]="currentProject.name"
+                       placeholder="Enter project name">
+            <dx-validator>
+              <dxi-validation-rule type="required"
+                                   message="Project name is required">
+              </dxi-validation-rule>
+              <dxi-validation-rule type="stringLength"
+                                   [min]="3"
+                                   message="Project name must be at least 3 characters">
+              </dxi-validation-rule>
+            </dx-validator>
+          </dx-text-box>
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <dx-text-area [(value)]="currentProject.description"
+                        placeholder="Enter project description (optional)"
+                        [height]="80">
+          </dx-text-area>
+        </div>
+
+        <div class="form-group">
+          <label>Status</label>
+          <dx-select-box [items]="statusList"
+                         [(value)]="currentProject.status">
+          </dx-select-box>
+        </div>
+
         <div class="form-row">
           <div class="form-group">
             <label>Start Date</label>
-            <dx-date-box 
-              [(value)]="currentProject.startDate"
-              type="date">
+            <dx-date-box [(value)]="currentProject.startDate"
+                         type="date"
+                         placeholder="Select start date (optional)">
             </dx-date-box>
           </div>
-          
+
           <div class="form-group">
             <label>End Date</label>
-            <dx-date-box 
-              [(value)]="currentProject.endDate"
-              type="date">
+            <dx-date-box [(value)]="currentProject.endDate"
+                         type="date"
+                         placeholder="Select end date (optional)">
             </dx-date-box>
           </div>
         </div>
-        
-     
-        
+
+        <div class="form-note">
+          <small>* Required fields</small>
+        </div>
+
         <div class="button-group">
-          <dx-button 
-            text="Save"
-            type="success"
-            (onClick)="onSaveProject()">
+          <dx-button text="Save"
+                     type="success"
+                     (onClick)="onSaveProject()">
           </dx-button>
-          <dx-button 
-            text="Cancel"
-            type="normal"
-            (onClick)="onCancelEdit()">
+          <dx-button text="Cancel"
+                     type="normal"
+                     (onClick)="onCancelEdit()">
           </dx-button>
         </div>
       </div>
@@ -152,67 +175,78 @@
   </dx-popup>
 
   <!-- Project Tasks Popup -->
-  <dx-popup 
-    [title]="'Tasks - ' + (selectedProject?.name || '')"
-    [visible]="isTasksPopupOpened"
-    (onHiding)="closeTasksPopup()"
-    [width]="1200"
-    [height]="600">
-    
+  <dx-popup [title]="'Tasks - ' + (selectedProject?.name || '')"
+            [visible]="isTasksPopupOpened"
+            (onHiding)="closeTasksPopup()"
+            [width]="1400"
+            [height]="700">
+
     <div *dxTemplate="let content of 'content'">
       <div class="custom-close-button">
-        <dx-button 
-          icon="close"
-          stylingMode="text"
-          (onClick)="closeTasksPopup()"
-          title="Close">
+        <dx-button icon="close"
+                   stylingMode="text"
+                   (onClick)="closeTasksPopup()"
+                   title="Close">
         </dx-button>
       </div>
-      
+
       <div *ngIf="projectTasksDataSource.length > 0; else noTasks">
         <dx-data-grid [dataSource]="projectTasksDataSource"
                       [showBorders]="true"
-                      [allowColumnResizing]="true">
+                      [allowColumnResizing]="true"
+                      [columnAutoWidth]="true">
 
           <dxo-paging [pageSize]="10"></dxo-paging>
+          <dxo-pager [showPageSizeSelector]="true"
+                     [allowedPageSizes]="[5, 10, 20]"
+                     [showInfo]="true">
+          </dxo-pager>
 
-          <dxi-column dataField="name" caption="Task Name"></dxi-column>
-          <dxi-column dataField="description" caption="Description"></dxi-column>
+          <dxi-column dataField="taskId" caption="Task ID" [width]="80"></dxi-column>
+          <dxi-column dataField="name" caption="Task Name" [minWidth]="150"></dxi-column>
+          <dxi-column dataField="description" caption="Description" [minWidth]="200"></dxi-column>
           <dxi-column dataField="status"
                       caption="Status"
-                      [cellTemplate]="'taskStatusCellTemplate'">
+                      [cellTemplate]="'taskStatusCellTemplate'"
+                      [width]="120">
           </dxi-column>
           <dxi-column dataField="startTime"
                       caption="Start Time"
-                      dataType="date"
-                      [customizeText]="formatDate">
+                      dataType="datetime"
+                      [customizeText]="formatDate"
+                      [width]="140">
           </dxi-column>
           <dxi-column dataField="endTime"
                       caption="End Time"
-                      dataType="date"
-                      [customizeText]="formatDate">
+                      dataType="datetime"
+                      [customizeText]="formatDate"
+                      [width]="140">
           </dxi-column>
           <dxi-column dataField="receivedAt"
                       caption="Received At"
-                      dataType="date"
-                      [customizeText]="formatDate">
-          </dxi-column>  <dxi-column dataField="deliveredAt"
-                                     caption="Delivered At"
-                                     dataType="date"
-                                     [customizeText]="formatDate">
+                      dataType="datetime"
+                      [customizeText]="formatDate"
+                      [width]="140">
           </dxi-column>
-          <dxi-column dataField="delayReason" caption="Delay Reason"></dxi-column>
-
+          <dxi-column dataField="deliveredAt"
+                      caption="Delivered At"
+                      dataType="datetime"
+                      [customizeText]="formatDate"
+                      [width]="140">
+          </dxi-column>
+          <dxi-column dataField="delayReason" caption="Delay Reason" [minWidth]="150"></dxi-column>
 
           <div *dxTemplate="let cell of 'taskStatusCellTemplate'">
             <span [class]="getStatusClass(cell.value)">{{ cell.value }}</span>
           </div>
         </dx-data-grid>
       </div>
-      
+
       <ng-template #noTasks>
         <div class="no-data-message">
+          <div class="no-data-icon">📋</div>
           <p>No tasks found for this project.</p>
+          <small>Tasks will appear here once they are added to the project.</small>
         </div>
       </ng-template>
     </div>

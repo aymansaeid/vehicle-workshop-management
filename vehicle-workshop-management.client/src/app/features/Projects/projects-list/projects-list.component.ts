@@ -52,46 +52,74 @@ export class ProjectsListComponent {
 
   // Project tasks data
   projectTasksDataSource: any[] = [];
-  
+
+  // Customers data for dropdown
+  customersDataSource: any[] = [];
+  selectedCustomer: any = null;
+
   // Popup controls
   isProjectPopupOpened = false;
   isTasksPopupOpened = false;
   selectedProjectId: number | null = null;
   selectedProject: any = null;
-  
+
   // Current project for editing/adding
   currentProject: any = {
+    customerId: 0,
     name: '',
     description: '',
-    startDate: new Date(),
-    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-    status: 'Planning',
-    budget: 0
+    startDate: null,
+    endDate: null,
+    status: 'Planning'
   };
-  
-  popupTitle = 'Add Project';
-  
-  // Status options
-  statusList = ['Planning', 'In Progress', 'On Hold', 'Completed', 'Cancelled'];
 
-  constructor(private apiService: ApiService) {}
+  popupTitle = 'Add Project';
+
+  // Status options - updated to match API responses
+  statusList = ['Planning', 'In Progress', 'Ongoing', 'On Hold', 'Completed', 'Cancelled'];
+
+  constructor(private apiService: ApiService) {
+    this.loadCustomers();
+  }
 
   // CRUD Operations
+  loadCustomers() {
+    this.apiService.get('Customers').subscribe({
+      next: (data: any) => {
+        this.customersDataSource = data || [];
+      },
+      error: (error) => {
+        notify(`Error loading customers: ${error.message}`, 'error', 2000);
+        this.customersDataSource = [];
+      }
+    });
+  }
+
   addProject() {
     this.currentProject = {
+      customerId: 0,
       name: '',
       description: '',
-      startDate: new Date(),
-      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      status: 'Planning',
-      budget: 0
+      startDate: null,
+      endDate: null,
+      status: 'Planning'
     };
+    this.selectedCustomer = null;
     this.popupTitle = 'Add Project';
     this.isProjectPopupOpened = true;
   }
 
   editProject(project: any) {
-    this.currentProject = { ...project };
+    this.currentProject = {
+      ...project,
+      // Convert date strings to Date objects for the form, handle nulls
+      startDate: project.startDate ? new Date(project.startDate) : null,
+      endDate: project.endDate ? new Date(project.endDate) : null
+    };
+
+    // Find and set the selected customer - use the customer object, not just ID
+    this.selectedCustomer = this.customersDataSource.find(c => c.customerId === project.customerId) || null;
+
     this.popupTitle = 'Edit Project';
     this.isProjectPopupOpened = true;
   }
@@ -122,9 +150,38 @@ export class ProjectsListComponent {
   }
 
   onSaveProject() {
+    // Validate required fields
+    if (!this.currentProject.name?.trim()) {
+      notify('Project name is required', 'error', 2000);
+      return;
+    }
+
+    if (!this.selectedCustomer) {
+      notify('Please select a customer', 'error', 2000);
+      return;
+    }
+
+    // Set customer ID from selected customer
+    this.currentProject.customerId = this.selectedCustomer.customerId;
+
+    // Prepare project data for API
+    const projectData = {
+      ...this.currentProject,
+      // Convert dates to proper format for API, handle nulls
+      startDate: this.currentProject.startDate ? this.formatDateForApi(this.currentProject.startDate) : null,
+      endDate: this.currentProject.endDate ? this.formatDateForApi(this.currentProject.endDate) : null
+    };
+
     const action = this.popupTitle === 'Add Project'
-      ? this.apiService.post('Projects', this.currentProject)
-      : this.apiService.put('Projects', this.currentProject.projectId, this.currentProject);
+      ? this.apiService.post('Projects', projectData)
+      : this.apiService.put('Projects', this.currentProject.projectId, {
+        customerId: projectData.customerId, // Include customerId in edit
+        name: projectData.name,
+        description: projectData.description,
+        startDate: projectData.startDate,
+        endDate: projectData.endDate,
+        status: projectData.status
+      });
 
     action.subscribe({
       next: () => {
@@ -152,7 +209,7 @@ export class ProjectsListComponent {
   loadProjectTasks(projectId: number) {
     this.apiService.get(`Projects/${projectId}/tasks`).subscribe({
       next: (data: any) => {
-        this.projectTasksDataSource = data;
+        this.projectTasksDataSource = data || [];
       },
       error: (error) => {
         notify(`Error loading project tasks: ${error.message}`, 'error', 2000);
@@ -172,18 +229,26 @@ export class ProjectsListComponent {
     this.dataGrid.instance.refresh();
   }
 
-  formatDate = ({ value }: { value: string }) => {
-    return value ? new Date(value).toLocaleDateString('en-GB') : '';
+  formatDate = ({ value }: { value: string | null }) => {
+    if (!value) return 'Not set';
+    return new Date(value).toLocaleDateString('en-GB');
   };
 
-  formatCurrency = (value: number) => {
-    return value ? `$${value.toFixed(2)}` : '$0.00';
+  formatDateForApi = (date: Date): string => {
+    return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD format
+  };
+
+  getCustomerName = (customerId: number): string => {
+    if (!customerId) return 'Unknown Customer';
+    const customer = this.customersDataSource.find(c => c.customerId === customerId);
+    return customer ? customer.name : `Customer #${customerId}`;
   };
 
   getStatusClass = (status: string) => {
     switch (status) {
       case 'Completed': return 'status-completed';
       case 'In Progress': return 'status-in-progress';
+      case 'Ongoing': return 'status-ongoing';
       case 'On Hold': return 'status-on-hold';
       case 'Cancelled': return 'status-cancelled';
       default: return 'status-planning';

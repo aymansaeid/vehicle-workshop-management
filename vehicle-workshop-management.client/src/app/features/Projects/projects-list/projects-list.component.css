@@ -18,19 +18,24 @@
   margin-bottom: 15px;
 }
 
-.form-group label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: 500;
-}
+  .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+  }
 
 .form-row {
   display: flex;
   gap: 15px;
 }
 
-.form-row .form-group {
-  flex: 1;
+  .form-row .form-group {
+    flex: 1;
+  }
+
+.form-note {
+  margin: 10px 0;
+  color: #666;
 }
 
 .button-group {
@@ -47,6 +52,8 @@
   padding: 4px 8px;
   border-radius: 12px;
   display: inline-block;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .status-in-progress {
@@ -55,6 +62,18 @@
   padding: 4px 8px;
   border-radius: 12px;
   display: inline-block;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-ongoing {
+  color: #1976d2;
+  background-color: #e3f2fd;
+  padding: 4px 8px;
+  border-radius: 12px;
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .status-planning {
@@ -63,6 +82,8 @@
   padding: 4px 8px;
   border-radius: 12px;
   display: inline-block;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .status-on-hold {
@@ -71,6 +92,8 @@
   padding: 4px 8px;
   border-radius: 12px;
   display: inline-block;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .status-cancelled {
@@ -79,6 +102,8 @@
   padding: 4px 8px;
   border-radius: 12px;
   display: inline-block;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .custom-close-button {
@@ -90,16 +115,83 @@
 
 .no-data-message {
   text-align: center;
-  padding: 40px;
+  padding: 60px 40px;
   color: #757575;
 }
 
+.no-data-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
 .no-data-message p {
-  font-size: 16px;
-  margin: 0;
+  font-size: 18px;
+  margin: 0 0 8px 0;
+  font-weight: 500;
+}
+
+.no-data-message small {
+  font-size: 14px;
+  color: #999;
 }
 
 /* Form elements styling */
-dx-text-box, dx-text-area, dx-select-box, dx-date-box {
+dx-text-box, dx-text-area, dx-select-box, dx-date-box, dx-number-box {
   width: 100%;
+}
+
+/* Data grid improvements */
+.dx-datagrid {
+  font-size: 14px;
+}
+
+.dx-datagrid-headers {
+  font-weight: 600;
+}
+
+.dx-datagrid-rowsview .dx-row {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+  .dx-datagrid-rowsview .dx-row:hover {
+    background-color: #f8f9fa;
+  }
+
+/* Popup improvements */
+.dx-popup-content {
+  padding: 0;
+}
+
+.dx-popup-title {
+  font-weight: 600;
+  font-size: 18px;
+}
+
+/* Button improvements */
+.dx-button.dx-button-success {
+  background-color: #28a745;
+  border-color: #28a745;
+}
+
+  .dx-button.dx-button-success:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+  }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .view-wrapper {
+    padding: 10px;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .dx-popup {
+    width: 95% !important;
+    height: 90% !important;
+  }
 }
