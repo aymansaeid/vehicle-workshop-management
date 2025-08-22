@@ -1,0 +1,180 @@
+.attendance-container {
+  padding: 20px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+.attendance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+  .attendance-header h1 {
+    margin: 0;
+    color: #2a2a2a;
+    font-size: 28px;
+  }
+
+.view-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.attendance-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+  .stat-card.present {
+    border-left: 4px solid #2e7d32;
+  }
+
+  .stat-card.absent {
+    border-left: 4px solid #c62828;
+  }
+
+  .stat-card h3 {
+    margin: 0 0 10px 0;
+    color: #666;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+.stat-number {
+  font-size: 24px;
+  font-weight: 600;
+  color: #2a2a2a;
+}
+
+.absent-section {
+  margin-top: 20px;
+  padding: 15px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+  .absent-section h3 {
+    margin: 0 0 15px 0;
+    color: #2a2a2a;
+  }
+
+.absent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.absent-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+}
+
+.form-container {
+  padding: 15px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+  .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #2a2a2a;
+  }
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+/* Status Styles */
+.status-present {
+  color: #2e7d32;
+  background-color: #e8f5e8;
+  padding: 4px 8px;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+.status-absent {
+  color: #c62828;
+  background-color: #ffebee;
+  padding: 4px 8px;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+.status-unknown {
+  color: #757575;
+  background-color: #f5f5f5;
+  padding: 4px 8px;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .attendance-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+  }
+
+  .view-controls {
+    flex-wrap: wrap;
+  }
+
+  .attendance-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .absent-item {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+}
+/* Add to your existing CSS */
+.absent-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* Make the Mark Absent button red */
+::ng-deep .dx-button[aria-label="Mark as Absent"] {
+  color: #c62828;
+}
+
+  ::ng-deep .dx-button[aria-label="Mark as Absent"]:hover {
+    background-color: #ffebee;
+    color: #b71c1c;
+  }

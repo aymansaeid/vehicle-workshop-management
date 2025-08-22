@@ -1,1 +1,146 @@
-<p>attendance works!</p>
+<div class="attendance-container">
+  <!-- Header -->
+  <div class="attendance-header">
+    <h1>Attendance Management</h1>
+    <div class="header-actions">
+      <dx-button text="Mark Attendance"
+                 icon="check"
+                 type="default"
+                 stylingMode="contained"
+                 (onClick)="markAttendance()">
+      </dx-button>
+    </div>
+  </div>
+
+  <!-- View Controls -->
+  <div class="view-controls">
+    <dx-button text="Today's Attendance"
+               [stylingMode]="viewMode === 'today' ? 'contained' : 'outlined'"
+               (onClick)="loadTodayAttendance()">
+    </dx-button>
+    <dx-button text="All Records"
+               [stylingMode]="viewMode === 'all' ? 'contained' : 'outlined'"
+               (onClick)="loadAllAttendance()">
+    </dx-button>
+    <dx-button text="Absent Today"
+               [stylingMode]="viewMode === 'absent' ? 'contained' : 'outlined'"
+               (onClick)="loadAbsentEmployees()">
+    </dx-button>
+  </div>
+
+  <!-- Statistics for All View -->
+  <div class="attendance-stats" *ngIf="viewMode === 'all' && allAttendanceData">
+    <div class="stat-card">
+      <h3>Total Employees</h3>
+      <span class="stat-number">{{allAttendanceData.total}}</span>
+    </div>
+    <div class="stat-card present">
+      <h3>Present Today</h3>
+      <span class="stat-number">{{allAttendanceData.present}}</span>
+    </div>
+    <div class="stat-card absent">
+      <h3>Absent Today</h3>
+      <span class="stat-number">{{allAttendanceData.absent}}</span>
+    </div>
+    <div class="stat-card">
+      <h3>Date</h3>
+      <span class="stat-number">{{allAttendanceData.date}}</span>
+    </div>
+  </div>
+
+  <!-- Attendance Grid -->
+  <dx-data-grid [dataSource]="attendanceData"
+                [showBorders]="true"
+                [allowColumnResizing]="true"
+                [columnAutoWidth]="true">
+
+    <dxo-paging [pageSize]="10"></dxo-paging>
+    <dxo-pager [showPageSizeSelector]="true"
+               [allowedPageSizes]="[5, 10, 20]"
+               [showInfo]="true">
+    </dxo-pager>
+
+    <dxo-filter-row [visible]="true"></dxo-filter-row>
+    <dxo-search-panel [visible]="true" placeholder="Search attendance records"></dxo-search-panel>
+
+    <!-- Columns -->
+    <dxi-column dataField="employeeName" caption="Employee Name"></dxi-column>
+    <dxi-column dataField="type" caption="Type"></dxi-column>
+    <dxi-column dataField="status" caption="Status" [cellTemplate]="'statusCellTemplate'"></dxi-column>
+
+    <dxi-column dataField="formattedDate"
+                caption="Last Present Date">
+    </dxi-column>
+
+    <!-- Actions Column -->
+    <dxi-column type="buttons" caption="Actions" [width]="200">
+      <dxi-button *ngIf="viewMode === 'absent' || viewMode === 'all'"
+                  icon="check"
+                  hint="Mark as Present"
+                  [onClick]="markAsPresent">
+      </dxi-button>
+
+      <dxi-button *ngIf="viewMode === 'today' || viewMode === 'all'"
+                  icon="close"
+                  hint="Mark as Absent"
+                  [onClick]="markAsAbsent">
+      </dxi-button>
+    </dxi-column>
+
+    <!-- Status Template -->
+    <div *dxTemplate="let cell of 'statusCellTemplate'">
+      <span [class]="getStatusClass(cell.value)">{{ cell.value }}</span>
+    </div>
+  </dx-data-grid>
+
+  <!-- Employees not present today -->
+  <div class="absent-section" *ngIf="viewMode === 'today'">
+    <h3>Employees Not Present Today</h3>
+    <div class="absent-list">
+      <div *ngFor="let employee of getEmployeesNotPresentToday()" class="absent-item">
+        <span>{{ employee.name }} ({{ employee.type }})</span>
+        <div class="absent-actions">
+          <dx-button icon="check"
+                     text="Mark Present"
+                     stylingMode="outlined"
+                     type="success"
+                     (onClick)="markAsPresent(employee)">
+          </dx-button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mark Attendance Popup -->
+  <dx-popup title="Mark Attendance"
+            [visible]="isAttendancePopupOpened"
+            (onHiding)="onCancelAttendance()"
+            [width]="400"
+            [height]="300">
+
+    <div *dxTemplate="let content of 'content'">
+      <div class="form-container">
+        <div class="form-group">
+          <label>Employee *</label>
+          <dx-select-box [items]="employees"
+                         displayExpr="name"
+                         valueExpr="employeeId"
+                         [(value)]="currentAttendance.employeeId"
+                         placeholder="Select an employee">
+          </dx-select-box>
+        </div>
+
+        <div class="button-group">
+          <dx-button text="Mark Present"
+                     type="success"
+                     (onClick)="onSaveAttendance()">
+          </dx-button>
+          <dx-button text="Cancel"
+                     type="normal"
+                     (onClick)="onCancelAttendance()">
+          </dx-button>
+        </div>
+      </div>
+    </div>
+  </dx-popup>
+</div>
