@@ -33,25 +33,21 @@ import notify from "devextreme/ui/notify";
   ]
 })
 export class AttendanceComponent implements OnInit {
-  // Employees data
+
   employees: any[] = [];
 
-  // Attendance data
   attendanceData: any[] = [];
   todayAttendance: any[] = [];
   absentEmployees: any[] = [];
   allAttendanceData: any = {};
 
-  // Popup controls
   isAttendancePopupOpened = false;
   selectedDate: Date = new Date();
 
-  // Current attendance record
   currentAttendance: any = {
     employeeId: null
   };
 
-  // View mode
   viewMode: 'today' | 'all' | 'absent' = 'today';
 
   constructor(private apiService: ApiService) { }
@@ -61,7 +57,6 @@ export class AttendanceComponent implements OnInit {
     this.loadTodayAttendance();
   }
 
-  // Load all employees
   loadEmployees() {
     this.apiService.get('Employees').subscribe({
       next: (data: any) => {
@@ -73,12 +68,12 @@ export class AttendanceComponent implements OnInit {
     });
   }
 
-  // Load today's attendance
   loadTodayAttendance() {
     this.apiService.get('Employees/attendance/today').subscribe({
       next: (data: any) => {
         this.todayAttendance = data.map((emp: any) => ({
           ...emp,
+          employeeId: emp.employeeId, 
           employeeName: emp.name,
           status: 'Present',
           date: emp.lastPresentDate,
@@ -93,13 +88,13 @@ export class AttendanceComponent implements OnInit {
     });
   }
 
-  // Load all attendance records
   loadAllAttendance() {
     this.apiService.get('Employees/attendance').subscribe({
       next: (data: any) => {
         this.allAttendanceData = data;
         this.attendanceData = data.employees.map((emp: any) => ({
           ...emp,
+          employeeId: emp.employeeId,
           employeeName: emp.name,
           status: emp.isPresentToday ? 'Present' : 'Absent',
           date: emp.lastPresentDate,
@@ -113,12 +108,12 @@ export class AttendanceComponent implements OnInit {
     });
   }
 
-  // Load absent employees
   loadAbsentEmployees() {
     this.apiService.get('Employees/attendance/absent').subscribe({
       next: (data: any) => {
         this.absentEmployees = data.map((emp: any) => ({
           ...emp,
+          employeeId: emp.employeeId, 
           employeeName: emp.name,
           status: 'Absent',
           date: emp.lastPresentDate,
@@ -133,7 +128,7 @@ export class AttendanceComponent implements OnInit {
     });
   }
 
-  // Mark attendance for employee
+
   markAttendance() {
     this.currentAttendance = {
       employeeId: null
@@ -141,56 +136,73 @@ export class AttendanceComponent implements OnInit {
     this.isAttendancePopupOpened = true;
   }
 
-  // Mark employee as present
-  markAsPresent(employee: any) {
-    if (confirm(`Mark ${employee.name} as present?`)) {
-      this.apiService.post(`Employees/${employee.employeeId}/attendance`, {}).subscribe({
+
+  markAsPresent = (e: any) => {
+    const employee = e.row?.data || e; 
+    console.log('Mark as present - employee object:', employee);
+
+    const employeeName = employee.employeeName || employee.name || 'Unknown';
+    const employeeId = employee.employeeId;
+
+    if (!employeeId) {
+      notify('Employee ID is missing', 'error', 2000);
+      return;
+    }
+
+    if (confirm(`Mark ${employeeName} as present?`)) {
+      this.apiService.post(`Employees/${employeeId}/attendance`, {}).subscribe({
         next: (response: any) => {
-          notify(response.message || `${employee.name} marked as present`, 'success', 2000);
-          this.loadTodayAttendance();
-          this.loadAbsentEmployees();
+          notify(response.message || `${employeeName} marked as present`, 'success', 2000);
+          this.refreshCurrentView();
         },
         error: (error) => {
-          notify(`Error marking as present: ${error.message}`, 'error', 2000);
+          console.error('Error marking as present:', error);
+          notify(`Error marking as present: ${error.message || error}`, 'error', 2000);
         }
       });
     }
   }
 
-  // Mark employee as absent (set LastPresentDate to null)
-  markAsAbsent(employee: any) {
-    /*
-    if (confirm(`Mark ${employee.name} as absent? This will clear their last present date.`)) {
-      // First get the current employee data
-      this.apiService.get(`Employees/${employee.employeeId}`).subscribe({
-        next: (employeeData: any) => {
-          // Update the employee with null LastPresentDate
-          const updateData = {
-            ...employeeData,
-            lastPresentDate: null
-          };
+  markAsAbsent = (e: any) => {
+    const employee = e.row?.data || e; 
+    console.log('Mark as absent - employee object:', employee);
 
-          this.apiService.put(`Employees/${employeeData.employeeId}`, updateData).subscribe({
-            next: () => {
-              notify(`${employee.name} marked as absent`, 'success', 2000);
-              this.loadTodayAttendance();
-              this.loadAbsentEmployees();
-              this.loadAllAttendance();
-            },
-            error: (error) => {
-              notify(`Error marking as absent: ${error.message}`, 'error', 2000);
-            }
-          });
+    const employeeName = employee.employeeName || employee.name || 'Unknown';
+    const employeeId = employee.employeeId;
+
+    if (!employeeId) {
+      notify('Employee ID is missing', 'error', 2000);
+      return;
+    }
+
+    if (confirm(`Mark ${employeeName} as absent?`)) {
+      this.apiService.post(`Employees/${employeeId}/attendance/absent`, {}).subscribe({
+        next: (response: any) => {
+          notify(response.message || `${employeeName} marked as absent`, 'success', 2000);
+          this.refreshCurrentView();
         },
         error: (error) => {
-          notify(`Error loading employee data: ${error.message}`, 'error', 2000);
+          console.error('Error marking as absent:', error);
+          notify(`Error marking as absent: ${error.message || error}`, 'error', 2000);
         }
       });
     }
-    */
   }
 
-  // Save attendance record
+  private refreshCurrentView() {
+    switch (this.viewMode) {
+      case 'today':
+        this.loadTodayAttendance();
+        break;
+      case 'all':
+        this.loadAllAttendance();
+        break;
+      case 'absent':
+        this.loadAbsentEmployees();
+        break;
+    }
+  }
+
   onSaveAttendance() {
     if (!this.currentAttendance.employeeId) {
       notify('Please select an employee', 'error', 2000);
@@ -201,8 +213,7 @@ export class AttendanceComponent implements OnInit {
       next: (response: any) => {
         notify(response.message || 'Attendance marked successfully', 'success', 2000);
         this.isAttendancePopupOpened = false;
-        this.loadTodayAttendance();
-        this.loadAbsentEmployees();
+        this.refreshCurrentView();
       },
       error: (error) => {
         notify(`Error marking attendance: ${error.message}`, 'error', 2000);
@@ -210,24 +221,19 @@ export class AttendanceComponent implements OnInit {
     });
   }
 
-  // Cancel attendance recording
   onCancelAttendance() {
     this.isAttendancePopupOpened = false;
   }
 
-  // Utility methods
   formatDateDisplay(dateString: string): string {
     if (!dateString) return 'Never';
 
     try {
-      // Handle different date formats from backend
       let date: Date;
 
       if (dateString.includes('T')) {
-        // ISO format with time
         date = new Date(dateString);
       } else {
-        // Date-only format (YYYY-MM-DD)
         const [year, month, day] = dateString.split('-').map(Number);
         date = new Date(year, month - 1, day);
       }
@@ -247,7 +253,6 @@ export class AttendanceComponent implements OnInit {
     }
   };
 
-  // Get employees not present today
   getEmployeesNotPresentToday(): any[] {
     const presentEmployeeIds = new Set(this.todayAttendance.map(emp => emp.employeeId));
     return this.employees.filter(emp => !presentEmployeeIds.has(emp.employeeId));

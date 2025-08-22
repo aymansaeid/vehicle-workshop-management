@@ -174,7 +174,25 @@ namespace vehicle_workshop_management.Server.Controllers
             };
             return Ok(response);
         }
+        [HttpPost("{id}/attendance/absent")]
+        public async Task<IActionResult> MarkAbsent(int id)
+        {
+            var employee = await _context.Employees.FindAsync(id);
 
+            if (employee == null)
+                return NotFound($"Employee with ID {id} not found.");
+
+            // Set LastPresentDate to null to mark as absent
+            employee.LastPresentDate = null;
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                Message = $"{employee.Name} marked as absent.",
+                employee.EmployeeId,
+                employee.LastPresentDate
+            });
+        }
         [HttpPost("{id}/attendance")]
         public async Task<IActionResult> MarkAttendance(int id)
         {
