@@ -27,11 +27,7 @@ export const routes: Routes = [
         loadComponent: () => import('./features/customers/customer-list/customer-list.component')
           .then(m => m.CustomerListComponent)
       },
-      {
-        path: 'vehicles',
-        loadComponent: () => import('./features/vehicles/vehicle-list/vehicle-list.component')
-          .then(m => m.VehicleListComponent)
-      },
+     
       {
         path: 'Customers-Cars',
         loadComponent: () => import('./features/customers/customers-cars/customers-cars.component')

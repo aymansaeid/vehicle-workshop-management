@@ -12,7 +12,14 @@
     <div *dxTemplate="let data of 'template'" style="width: 200px">
       <dx-list class="panel-list"
                [dataSource]="navigation"
-               (onItemClick)="onItemClick($event)"></dx-list>
+               (onItemClick)="onItemClick($event)">
+        <div *dxTemplate="let item of 'item'">
+          <div class="menu-item">
+            <i class="dx-icon-{{item.icon}}"></i>
+            <span>{{item.text}}</span>
+          </div>
+        </div>
+      </dx-list>
     </div>
 
     <!-- Main content -->
