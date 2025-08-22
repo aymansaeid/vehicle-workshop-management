@@ -97,17 +97,28 @@ export class ProjectsListComponent {
   }
 
   deleteProject(projectId: number) {
-    if (confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
-      this.apiService.delete('Projects', projectId).subscribe({
-        next: () => {
-          notify('Project deleted successfully', 'success', 2000);
-          this.refresh();
-        },
-        error: (error) => {
-          notify(`Error deleting project: ${error.message}`, 'error', 2000);
+    this.apiService.get(`Projects/${projectId}/tasks`).subscribe({
+      next: (tasks: any) => {
+        if (tasks && tasks.length > 0) {
+          notify(`Cannot delete project. It contains ${tasks.length} task(s). Please delete all tasks first.`, 'warning', 4000);
+        } else {
+          if (confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
+            this.apiService.delete('Projects', projectId).subscribe({
+              next: () => {
+                notify('Project deleted successfully', 'success', 2000);
+                this.refresh();
+              },
+              error: (error) => {
+                notify(`Error deleting project: ${error.message}`, 'error', 2000);
+              }
+            });
+          }
         }
-      });
-    }
+      },
+      error: (error) => {
+        notify(`Error checking project tasks: ${error.message}`, 'error', 2000);
+      }
+    });
   }
 
   onSaveProject() {
