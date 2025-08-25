@@ -115,7 +115,7 @@ export class TasksListComponent implements OnInit {
   }
 
   loadInventories() {
-    this.apiService.get('Inventory').subscribe({
+    this.apiService.get('Inventories').subscribe({
       next: (data: any) => {
         this.inventories = data;
       },
