@@ -169,6 +169,11 @@ namespace vehicle_workshop_management.Server.Controllers
             if (inventory == null)
                 return NotFound();
 
+            bool isUsedInTaskLines = await _context.TaskLines.AnyAsync(t => t.InventoryId == id);
+            if (isUsedInTaskLines)
+            {
+                return BadRequest("Cannot delete this inventory because it is used in a task.");
+            }
             // remove child items first
             var groupItems = _context.InventoryGroupItems.Where(x => x.InventoryId == id);
             _context.InventoryGroupItems.RemoveRange(groupItems);

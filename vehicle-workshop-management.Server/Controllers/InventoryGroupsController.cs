@@ -1,6 +1,7 @@
 ﻿using Mapster;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using vehicle_workshop_management.Server.Models;
 
@@ -21,8 +22,15 @@ namespace vehicle_workshop_management.Server.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<InventoryGroupDto>>> GetInventoryGroups()
         {
-            var group = await _context.InventoryGroups.ToListAsync();
-            return group.Adapt<List<InventoryGroupDto>>();
+            var group = await _context.InventoryGroups.Include(g => g.InventoryGroupItems).ToListAsync();
+
+            var result = group.Adapt<List<InventoryGroupDto>>();
+
+            for (int i = 0; i < group.Count; i++)
+            {
+                result[i].ItemCount = group[i].InventoryGroupItems?.Count ?? 0;
+            }
+            return result;
         }
 
         // GET: api/InventoryGroups/5
