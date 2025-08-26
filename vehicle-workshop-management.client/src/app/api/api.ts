@@ -32,12 +32,74 @@ export class ApiService {
     return this.http.put(`${API_URL}/${endpoint}/${id}`, data);
   }
 
-  delete(endpoint: string, id: number): Observable<any> {
-    return this.http.delete(`${API_URL}/${endpoint}/${id}`);
+  delete(endpoint: string, id?: number): Observable<any> {
+    if (id !== undefined) {
+      return this.http.delete(`${API_URL}/${endpoint}/${id}`);
+    }
+    return this.http.delete(`${API_URL}/${endpoint}`);
   }
 
   patch(endpoint: string, id: number, data: any): Observable<any> {
     return this.http.patch(`${API_URL}/${endpoint}/${id}`, data);
+  }
+
+  // Inventory-specific methods
+  getInventories(): Observable<any> {
+    return this.http.get(`${API_URL}/Inventories`);
+  }
+
+  getInventory(inventoryId: number): Observable<any> {
+    return this.http.get(`${API_URL}/Inventories/${inventoryId}`);
+  }
+
+  createInventory(inventory: any): Observable<any> {
+    return this.http.post(`${API_URL}/Inventories`, inventory);
+  }
+
+  updateInventory(inventoryId: number, inventory: any): Observable<any> {
+    return this.http.put(`${API_URL}/Inventories/${inventoryId}`, inventory);
+  }
+
+  deleteInventory(inventoryId: number): Observable<any> {
+    return this.http.delete(`${API_URL}/Inventories/${inventoryId}`);
+  }
+
+  // Inventory Groups methods
+  getInventoryGroups(): Observable<any> {
+    return this.http.get(`${API_URL}/InventoryGroups`);
+  }
+
+  getInventoryGroup(groupId: number): Observable<any> {
+    return this.http.get(`${API_URL}/InventoryGroups/${groupId}`);
+  }
+
+  createInventoryGroup(group: any): Observable<any> {
+    return this.http.post(`${API_URL}/InventoryGroups`, group);
+  }
+
+  updateInventoryGroup(groupId: number, group: any): Observable<any> {
+    return this.http.put(`${API_URL}/InventoryGroups/${groupId}`, group);
+  }
+
+  deleteInventoryGroup(groupId: number): Observable<any> {
+    return this.http.delete(`${API_URL}/InventoryGroups/${groupId}`);
+  }
+
+  // Inventory-Group Assignment methods
+  assignInventoryToGroup(inventoryId: number, groupId: number): Observable<any> {
+    return this.http.post(`${API_URL}/Inventories/AssignToGroup`, { inventoryId, groupId });
+  }
+
+  removeInventoryFromGroup(inventoryId: number, groupId: number): Observable<any> {
+    return this.http.delete(`${API_URL}/Inventories/${inventoryId}/Groups/${groupId}`);
+  }
+
+  getInventoryGroupsById(inventoryId: number): Observable<any> {
+    return this.http.get(`${API_URL}/Inventories/${inventoryId}/Groups`);
+  }
+
+  getGroupInventories(groupId: number): Observable<any> {
+    return this.http.get(`${API_URL}/InventoryGroups/${groupId}/Inventories`);
   }
 
   // Task-specific methods
@@ -114,10 +176,6 @@ export class ApiService {
 
   getEmployees(): Observable<any> {
     return this.http.get(`${API_URL}/Employees`);
-  }
-
-  getInventory(): Observable<any> {
-    return this.http.get(`${API_URL}/Inventory`);
   }
 
   getCustomers(): Observable<any> {
