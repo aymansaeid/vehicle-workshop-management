@@ -9,11 +9,13 @@ import {
   DxNumberBoxModule,
   DxValidatorModule,
   DxFormModule,
-  DxLoadPanelModule
+  DxLoadPanelModule,
+  DxTagBoxModule
 } from 'devextreme-angular';
 import { ApiService } from '../../../api/api';
 import notify from "devextreme/ui/notify";
 import { DxTextAreaModule, DxCheckBoxModule } from 'devextreme-angular';
+
 @Component({
   selector: 'app-inventore-list',
   templateUrl: './inventore-list.component.html',
@@ -30,28 +32,30 @@ import { DxTextAreaModule, DxCheckBoxModule } from 'devextreme-angular';
     DxValidatorModule,
     DxFormModule,
     DxLoadPanelModule,
+    DxTagBoxModule,
     DxTextAreaModule,
     DxCheckBoxModule
   ]
 })
 export class InventoreListComponent implements OnInit {
-
+  // Inventory data
   inventoryItems: any[] = [];
   inventoryGroups: any[] = [];
 
-  
+  // Popup controls
   isInventoryPopupOpened = false;
   isGroupPopupOpened = false;
   isAssignGroupPopupOpened = false;
+  isManageGroupsPopupOpened = false;
 
- 
+  // Current items for editing/adding
   currentInventory: any = {
     name: '',
     description: '',
     type: '',
-    price: 0,
     unit: '',
-    status: ''
+    price: 0,
+    status: 'Available'
   };
 
   currentGroup: any = {
@@ -64,10 +68,17 @@ export class InventoreListComponent implements OnInit {
     groupId: null
   };
 
+  selectedInventoryForGroups: any = null;
+  inventoryGroupsToManage: any[] = [];
+
   popupTitle = 'Add Inventory Item';
   groupPopupTitle = 'Add Inventory Group';
 
+  // Options
+  statusOptions = ['Available', 'OutOfStock', 'Discontinued', 'OnOrder'];
+  typeOptions = ['Raw Material', 'Finished Product', 'Component', 'Tool', 'Equipment'];
 
+  // View mode
   activeTab: 'items' | 'groups' = 'items';
 
   constructor(private apiService: ApiService) { }
@@ -77,7 +88,7 @@ export class InventoreListComponent implements OnInit {
     this.loadInventoryGroups();
   }
 
-
+  // Load inventory items
   loadInventoryItems() {
     this.apiService.get('Inventories').subscribe({
       next: (data: any) => {
@@ -89,7 +100,7 @@ export class InventoreListComponent implements OnInit {
     });
   }
 
-
+  // Load inventory groups
   loadInventoryGroups() {
     this.apiService.get('InventoryGroups').subscribe({
       next: (data: any) => {
@@ -101,7 +112,19 @@ export class InventoreListComponent implements OnInit {
     });
   }
 
+  // Load groups for a specific inventory item
+  loadInventoryGroupsForItem(inventoryId: number) {
+    this.apiService.get(`Inventories/${inventoryId}/Groups`).subscribe({
+      next: (data: any) => {
+        this.inventoryGroupsToManage = data;
+      },
+      error: (error) => {
+        notify(`Error loading inventory groups: ${error.message}`, 'error', 2000);
+      }
+    });
+  }
 
+  // Inventory CRUD Operations
   addInventory() {
     this.currentInventory = {
       name: '',
@@ -109,19 +132,21 @@ export class InventoreListComponent implements OnInit {
       type: '',
       unit: '',
       price: 0,
-      status: ''
+      status: 'Available'
     };
     this.popupTitle = 'Add Inventory Item';
     this.isInventoryPopupOpened = true;
   }
 
-  editInventory(item: any) {
+  editInventory = (e: any) => {
+    const item = e.row.data;
     this.currentInventory = { ...item };
     this.popupTitle = 'Edit Inventory Item';
     this.isInventoryPopupOpened = true;
   }
 
-  deleteInventory(itemId: number) {
+  deleteInventory = (e: any) => {
+    const itemId = e.row.data.inventoryId;
     if (confirm('Are you sure you want to delete this inventory item?')) {
       this.apiService.delete('Inventories', itemId).subscribe({
         next: () => {
@@ -136,6 +161,16 @@ export class InventoreListComponent implements OnInit {
   }
 
   onSaveInventory() {
+    if (!this.currentInventory.name || !this.currentInventory.name.trim()) {
+      notify('Please enter a name for the inventory item', 'error', 2000);
+      return;
+    }
+
+    if (this.currentInventory.price < 0) {
+      notify('Price cannot be negative', 'error', 2000);
+      return;
+    }
+
     const action = this.popupTitle === 'Add Inventory Item'
       ? this.apiService.post('Inventories', this.currentInventory)
       : this.apiService.put('Inventories', this.currentInventory.inventoryId, this.currentInventory);
@@ -152,7 +187,7 @@ export class InventoreListComponent implements OnInit {
     });
   }
 
-
+  // Group CRUD Operations
   addGroup() {
     this.currentGroup = {
       name: '',
@@ -162,13 +197,15 @@ export class InventoreListComponent implements OnInit {
     this.isGroupPopupOpened = true;
   }
 
-  editGroup(group: any) {
+  editGroup = (e: any) => {
+    const group = e.row.data;
     this.currentGroup = { ...group };
     this.groupPopupTitle = 'Edit Inventory Group';
     this.isGroupPopupOpened = true;
   }
 
-  deleteGroup(groupId: number) {
+  deleteGroup = (e: any) => {
+    const groupId = e.row.data.groupId;
     if (confirm('Are you sure you want to delete this inventory group?')) {
       this.apiService.delete('InventoryGroups', groupId).subscribe({
         next: () => {
@@ -183,6 +220,11 @@ export class InventoreListComponent implements OnInit {
   }
 
   onSaveGroup() {
+    if (!this.currentGroup.name || !this.currentGroup.name.trim()) {
+      notify('Please enter a name for the group', 'error', 2000);
+      return;
+    }
+
     const action = this.groupPopupTitle === 'Add Inventory Group'
       ? this.apiService.post('InventoryGroups', this.currentGroup)
       : this.apiService.put('InventoryGroups', this.currentGroup.groupId, this.currentGroup);
@@ -199,7 +241,7 @@ export class InventoreListComponent implements OnInit {
     });
   }
 
-
+  // Group Assignment Operations
   openAssignGroupPopup() {
     this.currentAssignment = {
       inventoryId: null,
@@ -214,15 +256,11 @@ export class InventoreListComponent implements OnInit {
       return;
     }
 
-    const assignmentData = {
-      inventoryId: this.currentAssignment.inventoryId,
-      groupId: this.currentAssignment.groupId
-    };
-
-    this.apiService.post('Inventories/AssignToGroup', assignmentData).subscribe({
+    this.apiService.post('Inventories/AssignToGroup', this.currentAssignment).subscribe({
       next: () => {
         notify('Inventory item assigned to group successfully', 'success', 2000);
         this.isAssignGroupPopupOpened = false;
+        this.loadInventoryItems();
       },
       error: (error) => {
         notify(`Error assigning inventory to group: ${error.message}`, 'error', 2000);
@@ -230,18 +268,57 @@ export class InventoreListComponent implements OnInit {
     });
   }
 
+  // Manage Groups for Inventory Item
+  openManageGroupsPopup = (e: any) => {
+    const item = e.row.data;
+    this.selectedInventoryForGroups = item;
+    this.loadInventoryGroupsForItem(item.inventoryId);
+    this.isManageGroupsPopupOpened = true;
+  }
 
+  openAssignFromManage() {
+    this.onCancelManageGroups();
+    this.currentAssignment.inventoryId = this.selectedInventoryForGroups?.inventoryId;
+    this.currentAssignment.groupId = null;
+    this.isAssignGroupPopupOpened = true;
+  }
+
+  removeFromGroup(inventoryId: number, groupId: number) {
+    if (!inventoryId || !groupId) {
+      notify('Invalid inventory or group ID', 'error', 2000);
+      return;
+    }
+
+    if (confirm('Are you sure you want to remove this inventory item from the group?')) {
+      this.apiService.delete(`Inventories/${inventoryId}/Groups/${groupId}`).subscribe({
+        next: () => {
+          notify('Inventory item removed from group successfully', 'success', 2000);
+          this.loadInventoryGroupsForItem(inventoryId);
+          this.loadInventoryItems();
+        },
+        error: (error) => {
+          notify(`Error removing inventory from group: ${error.message}`, 'error', 2000);
+        }
+      });
+    }
+  }
+
+  // Utility methods
   formatCurrency = (value: number) => {
     return value ? `$${value.toFixed(2)}` : '$0.00';
   };
 
-  getStockLevelClass = (quantity: number, minStockLevel: number) => {
-    if (quantity === 0) return 'stock-out';
-    if (quantity <= minStockLevel) return 'stock-low';
-    return 'stock-ok';
+  getStatusClass = (status: string) => {
+    switch (status) {
+      case 'Available': return 'status-available';
+      case 'OutOfStock': return 'status-outofstock';
+      case 'Discontinued': return 'status-discontinued';
+      case 'OnOrder': return 'status-onorder';
+      default: return 'status-unknown';
+    }
   };
 
-
+  // Cancel operations
   onCancelInventory() {
     this.isInventoryPopupOpened = false;
   }
@@ -252,5 +329,10 @@ export class InventoreListComponent implements OnInit {
 
   onCancelAssignment() {
     this.isAssignGroupPopupOpened = false;
+  }
+
+  onCancelManageGroups() {
+    this.isManageGroupsPopupOpened = false;
+    this.selectedInventoryForGroups = null;
   }
 }

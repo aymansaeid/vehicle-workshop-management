@@ -1,1 +1,377 @@
-<div class="inventory-container">  <!-- Header -->  <div class="inventory-header">    <h1>Inventory Management</h1>  </div>  <!-- Tab Navigation -->  <div class="tab-navigation">    <button [class.active]="activeTab === 'items'" (click)="activeTab = 'items'">      Inventory Items    </button>    <button [class.active]="activeTab === 'groups'" (click)="activeTab = 'groups'">      Inventory Groups    </button>  </div>  <!-- Inventory Items Tab -->  <div *ngIf="activeTab === 'items'" class="tab-content">    <div class="tab-header">      <h2>Inventory Items</h2>      <div class="header-actions">        <dx-button text="Add Item" icon="plus" type="default" stylingMode="contained" (onClick)="addInventory()">        </dx-button>        <dx-button text="Assign to Group" icon="link" type="normal" stylingMode="contained" (onClick)="openAssignGroupPopup()">        </dx-button>      </div>    </div>    <!-- Inventory Items Grid -->    <dx-data-grid [dataSource]="inventoryItems" [showBorders]="true" [allowColumnResizing]="true" [columnAutoWidth]="true">      <dxo-paging [pageSize]="10"></dxo-paging>      <dxo-pager [showPageSizeSelector]="true" [allowedPageSizes]="[5, 10, 20]" [showInfo]="true">      </dxo-pager>      <dxo-filter-row [visible]="true"></dxo-filter-row>      <dxo-search-panel [visible]="true" placeholder="Search inventory items"></dxo-search-panel>      <!-- Actions Column -->      <dxi-column type="buttons" caption="Actions" [width]="120">        <dxi-button icon="edit" hint="Edit" [onClick]="editInventory"></dxi-button>        <dxi-button icon="trash" hint="Delete" [onClick]="deleteInventory"></dxi-button>      </dxi-column>      <!-- Data Columns -->      <dxi-column dataField="name" caption="Name" [sortOrder]="'asc'"></dxi-column>      <dxi-column dataField="description" caption="Description"></dxi-column>      <dxi-column dataField="type" caption="Type" [cellTemplate]="'quantityCellTemplate'">      </dxi-column>      <dxi-column dataField="price" caption="Price" dataType="number" [format]="'$#,##0.##'">      </dxi-column>      <dxi-column dataField="unit" caption="Unit"></dxi-column>      <dxi-column dataField="status" caption="Status"></dxi-column>      <!-- Quantity Template -->      <div *dxTemplate="let cell of 'quantityCellTemplate'">        <span [class]="getStockLevelClass(cell.value, cell.data.price)">          {{ cell.value }}        </span>      </div>    </dx-data-grid>  </div>  <!-- Inventory Groups Tab -->  <div *ngIf="activeTab === 'groups'" class="tab-content">    <div class="tab-header">      <h2>Inventory Groups</h2>      <div class="header-actions">        <dx-button text="Add Group" icon="plus" type="default" stylingMode="contained" (onClick)="addGroup()">        </dx-button>      </div>    </div>    <!-- Inventory Groups Grid -->    <dx-data-grid [dataSource]="inventoryGroups" [showBorders]="true" [allowColumnResizing]="true" [columnAutoWidth]="true">      <dxo-paging [pageSize]="10"></dxo-paging>      <dxo-pager [showPageSizeSelector]="true" [allowedPageSizes]="[5, 10, 20]" [showInfo]="true">      </dxo-pager>      <dxo-filter-row [visible]="true"></dxo-filter-row>      <dxo-search-panel [visible]="true" placeholder="Search inventory groups"></dxo-search-panel>      <!-- Actions Column -->      <dxi-column type="buttons" caption="Actions" [width]="120">        <dxi-button icon="edit" hint="Edit" [onClick]="editGroup"></dxi-button>        <dxi-button icon="trash" hint="Delete" [onClick]="deleteGroup"></dxi-button>      </dxi-column>      <!-- Data Columns -->      <dxi-column dataField="name" caption="Name" [sortOrder]="'asc'"></dxi-column>      <dxi-column dataField="description" caption="Description"></dxi-column>    </dx-data-grid>  </div>  <!-- Add/Edit Inventory Item Popup -->  <dx-popup [title]="popupTitle" [visible]="isInventoryPopupOpened" (onHiding)="onCancelInventory()" [width]="600" [height]="500">    <div *dxTemplate="let content of 'content'">      <div class="form-container">        <div class="form-group">          <label>Name *</label>          <dx-text-box [(value)]="currentInventory.name" placeholder="Enter item name">          </dx-text-box>        </div>        <div class="form-group">          <label>Description</label>          <dx-text-area [(value)]="currentInventory.description" placeholder="Enter item description" [height]="80">          </dx-text-area>        </div>        <div class="form-row">          <div class="form-group">            <label>Type *</label>            <dx-number-box [(value)]="currentInventory.type"  placeholder="Enter Type">            </dx-number-box>          </div>          <div class="form-group">            <label>Price *</label>            <dx-number-box [(value)]="currentInventory.price" [min]="0" [format]="'$#,##0.##'" placeholder="Enter price">            </dx-number-box>          </div>        </div>        <div class="form-row">          <div class="form-group">            <label>Unit</label>            <dx-text-box [(value)]="currentInventory.unit" placeholder="e.g., pieces, kg, liters">            </dx-text-box>          </div>          <div class="form-group">            <label>Status</label>            <dx-number-box [(value)]="currentInventory.status" placeholder="The Status">            </dx-number-box>          </div>        </div>        <div class="button-group">          <dx-button text="Save" type="success" (onClick)="onSaveInventory()">          </dx-button>          <dx-button text="Cancel" type="normal" (onClick)="onCancelInventory()">          </dx-button>        </div>      </div>    </div>  </dx-popup>  <!-- Add/Edit Inventory Group Popup -->  <dx-popup [title]="groupPopupTitle" [visible]="isGroupPopupOpened" (onHiding)="onCancelGroup()" [width]="500" [height]="300">    <div *dxTemplate="let content of 'content'">      <div class="form-container">        <div class="form-group">          <label>Group Name *</label>          <dx-text-box [(value)]="currentGroup.name" placeholder="Enter group name">          </dx-text-box>        </div>        <div class="form-group">          <label>Description</label>          <dx-text-area [(value)]="currentGroup.description" placeholder="Enter group description" [height]="80">          </dx-text-area>        </div>        <div class="button-group">          <dx-button text="Save" type="success" (onClick)="onSaveGroup()">          </dx-button>          <dx-button text="Cancel" type="normal" (onClick)="onCancelGroup()">          </dx-button>        </div>      </div>    </div>  </dx-popup>  <!-- Assign to Group Popup -->  <dx-popup title="Assign Inventory to Group" [visible]="isAssignGroupPopupOpened" (onHiding)="onCancelAssignment()" [width]="500" [height]="300">    <div *dxTemplate="let content of 'content'">      <div class="form-container">        <div class="form-group">          <label>Inventory Item *</label>          <dx-select-box [items]="inventoryItems" displayExpr="name" valueExpr="inventoryId" [(value)]="currentAssignment.inventoryId" placeholder="Select inventory item">          </dx-select-box>        </div>        <div class="form-group">          <label>Group *</label>          <dx-select-box [items]="inventoryGroups" displayExpr="name" valueExpr="groupId" [(value)]="currentAssignment.groupId" placeholder="Select group">          </dx-select-box>        </div>        <div class="button-group">          <dx-button text="Assign" type="success" (onClick)="onAssignGroup()">          </dx-button>          <dx-button text="Cancel" type="normal" (onClick)="onCancelAssignment()">          </dx-button>        </div>      </div>    </div>  </dx-popup></div>
+<div class="inventory-container">
+  <!-- Header -->
+  <div class="inventory-header">
+    <h1>Inventory Management</h1>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="tab-navigation">
+    <button [class.active]="activeTab === 'items'"
+            (click)="activeTab = 'items'">
+      Inventory Items
+    </button>
+    <button [class.active]="activeTab === 'groups'"
+            (click)="activeTab = 'groups'">
+      Inventory Groups
+    </button>
+  </div>
+
+  <!-- Inventory Items Tab -->
+  <div *ngIf="activeTab === 'items'" class="tab-content">
+    <div class="tab-header">
+      <h2>Inventory Items</h2>
+      <div class="header-actions">
+        <dx-button text="Add Item"
+                   icon="plus"
+                   type="default"
+                   stylingMode="contained"
+                   (onClick)="addInventory()">
+        </dx-button>
+        <dx-button text="Assign to Group"
+                   icon="link"
+                   type="normal"
+                   stylingMode="contained"
+                   (onClick)="openAssignGroupPopup()">
+        </dx-button>
+      </div>
+    </div>
+
+    <!-- Inventory Items Grid -->
+    <dx-data-grid [dataSource]="inventoryItems"
+                  [showBorders]="true"
+                  [allowColumnResizing]="true"
+                  [columnAutoWidth]="true"
+                  keyExpr="inventoryId">
+
+      <dxo-paging [pageSize]="10"></dxo-paging>
+      <dxo-pager [showPageSizeSelector]="true"
+                 [allowedPageSizes]="[5, 10, 20]"
+                 [showInfo]="true">
+      </dxo-pager>
+
+      <dxo-filter-row [visible]="true"></dxo-filter-row>
+      <dxo-search-panel [visible]="true" placeholder="Search inventory items"></dxo-search-panel>
+
+      <!-- Actions Column -->
+      <dxi-column type="buttons" caption="Actions" [width]="180" [fixed]="true">
+        <dxi-button icon="edit" hint="Edit" (onClick)="editInventory"></dxi-button>
+        <dxi-button icon="group" hint="Manage Groups" (onClick)="openManageGroupsPopup"></dxi-button>
+        <dxi-button icon="trash" hint="Delete" (onClick)="deleteInventory"></dxi-button>
+      </dxi-column>
+
+      <!-- Data Columns -->
+      <dxi-column dataField="name" caption="Name" [sortOrder]="'asc'"></dxi-column>
+      <dxi-column dataField="description" caption="Description"></dxi-column>
+      <dxi-column dataField="type" caption="Type"></dxi-column>
+      <dxi-column dataField="unit" caption="Unit"></dxi-column>
+      <dxi-column dataField="price"
+                  caption="Price"
+                  dataType="number"
+                  format="currency">
+      </dxi-column>
+      <dxi-column dataField="status"
+                  caption="Status"
+                  cellTemplate="statusCellTemplate">
+      </dxi-column>
+      <dxi-column caption="Groups"
+                  cellTemplate="groupsCellTemplate"
+                  [allowSorting]="false">
+      </dxi-column>
+
+      <!-- Status Template -->
+      <div *dxTemplate="let data of 'statusCellTemplate'">
+        <span [class]="getStatusClass(data.value)" *ngIf="data.value">
+          {{ data.value }}
+        </span>
+        <span *ngIf="!data.value" class="status-unknown">Unknown</span>
+      </div>
+
+      <!-- Groups Template -->
+      <div *dxTemplate="let data of 'groupsCellTemplate'">
+        <ng-container *ngIf="data.data && data.data.inventoryGroupItems && data.data.inventoryGroupItems.length > 0; else noGroupsAssigned">
+          <span *ngFor="let groupItem of data.data.inventoryGroupItems; let last = last">
+            {{ groupItem?.group?.name || groupItem?.name || 'Unknown Group' }}<span *ngIf="!last">, </span>
+          </span>
+        </ng-container>
+        <ng-template #noGroupsAssigned>
+          <span class="text-muted">No groups assigned</span>
+        </ng-template>
+      </div>
+    </dx-data-grid>
+  </div>
+
+  <!-- Inventory Groups Tab -->
+  <div *ngIf="activeTab === 'groups'" class="tab-content">
+    <div class="tab-header">
+      <h2>Inventory Groups</h2>
+      <div class="header-actions">
+        <dx-button text="Add Group"
+                   icon="plus"
+                   type="default"
+                   stylingMode="contained"
+                   (onClick)="addGroup()">
+        </dx-button>
+      </div>
+    </div>
+
+    <!-- Inventory Groups Grid -->
+    <dx-data-grid [dataSource]="inventoryGroups"
+                  [showBorders]="true"
+                  [allowColumnResizing]="true"
+                  [columnAutoWidth]="true"
+                  keyExpr="groupId">
+
+      <dxo-paging [pageSize]="10"></dxo-paging>
+      <dxo-pager [showPageSizeSelector]="true"
+                 [allowedPageSizes]="[5, 10, 20]"
+                 [showInfo]="true">
+      </dxo-pager>
+
+      <dxo-filter-row [visible]="true"></dxo-filter-row>
+      <dxo-search-panel [visible]="true" placeholder="Search inventory groups"></dxo-search-panel>
+
+      <!-- Actions Column -->
+      <dxi-column type="buttons" caption="Actions" [width]="120" [fixed]="true">
+        <dxi-button icon="edit" hint="Edit" (onClick)="editGroup"></dxi-button>
+        <dxi-button icon="trash" hint="Delete" (onClick)="deleteGroup"></dxi-button>
+      </dxi-column>
+
+      <!-- Data Columns -->
+      <dxi-column dataField="name" caption="Name" [sortOrder]="'asc'"></dxi-column>
+      <dxi-column dataField="description" caption="Description"></dxi-column>
+          <dxi-column dataField="itemCount" caption="Item Counts"></dxi-column>
+
+
+      <!-- Items Count Template -->
+      <div *dxTemplate="let data of 'itemsCountTemplate'">
+        <span>{{ (data.data.inventoryGroupItems?.length || 0) }} items</span>
+      </div>
+    </dx-data-grid>
+  </div>
+
+  <!-- Add/Edit Inventory Item Popup -->
+  <dx-popup [title]="popupTitle"
+            [visible]="isInventoryPopupOpened"
+            (onHiding)="onCancelInventory()"
+            [width]="600"
+            [height]="550"
+            [dragEnabled]="true"
+            [resizeEnabled]="true">
+
+    <div *dxTemplate="let data of 'content'">
+      <div class="form-container">
+        <div class="form-group">
+          <label>Name *</label>
+          <dx-text-box [(value)]="currentInventory.name"
+                       placeholder="Enter item name"
+                       [isValid]="!!currentInventory.name?.trim()">
+            <dx-validator>
+              <dxi-validation-rule type="required" message="Name is required"></dxi-validation-rule>
+            </dx-validator>
+          </dx-text-box>
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <dx-text-area [(value)]="currentInventory.description"
+                        placeholder="Enter item description"
+                        [height]="80">
+          </dx-text-area>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Type</label>
+            <dx-select-box [dataSource]="typeOptions"
+                           [(value)]="currentInventory.type"
+                           placeholder="Select type">
+            </dx-select-box>
+          </div>
+
+          <div class="form-group">
+            <label>Unit</label>
+            <dx-text-box [(value)]="currentInventory.unit"
+                         placeholder="e.g., pieces, kg, liters">
+            </dx-text-box>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Price *</label>
+            <dx-number-box [(value)]="currentInventory.price"
+                           [min]="0"
+                           format="currency"
+                           placeholder="Enter price">
+              <dx-validator>
+                <dxi-validation-rule type="range" [min]="0" message="Price must be greater than or equal to 0"></dxi-validation-rule>
+              </dx-validator>
+            </dx-number-box>
+          </div>
+
+          <div class="form-group">
+            <label>Status</label>
+            <dx-select-box [dataSource]="statusOptions"
+                           [(value)]="currentInventory.status"
+                           placeholder="Select status">
+            </dx-select-box>
+          </div>
+        </div>
+
+        <div class="button-group">
+          <dx-button text="Save"
+                     type="success"
+                     (onClick)="onSaveInventory()">
+          </dx-button>
+          <dx-button text="Cancel"
+                     type="normal"
+                     (onClick)="onCancelInventory()">
+          </dx-button>
+        </div>
+      </div>
+    </div>
+  </dx-popup>
+
+  <!-- Add/Edit Inventory Group Popup -->
+  <dx-popup [title]="groupPopupTitle"
+            [visible]="isGroupPopupOpened"
+            (onHiding)="onCancelGroup()"
+            [width]="500"
+            [height]="350"
+            [dragEnabled]="true">
+
+    <div *dxTemplate="let data of 'content'">
+      <div class="form-container">
+        <div class="form-group">
+          <label>Group Name *</label>
+          <dx-text-box [(value)]="currentGroup.name"
+                       placeholder="Enter group name"
+                       [isValid]="!!currentGroup.name?.trim()">
+            <dx-validator>
+              <dxi-validation-rule type="required" message="Group name is required"></dxi-validation-rule>
+            </dx-validator>
+          </dx-text-box>
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <dx-text-area [(value)]="currentGroup.description"
+                        placeholder="Enter group description"
+                        [height]="80">
+          </dx-text-area>
+        </div>
+
+        <div class="button-group">
+          <dx-button text="Save"
+                     type="success"
+                     (onClick)="onSaveGroup()">
+          </dx-button>
+          <dx-button text="Cancel"
+                     type="normal"
+                     (onClick)="onCancelGroup()">
+          </dx-button>
+        </div>
+      </div>
+    </div>
+  </dx-popup>
+
+  <!-- Assign to Group Popup -->
+  <dx-popup title="Assign Inventory to Group"
+            [visible]="isAssignGroupPopupOpened"
+            (onHiding)="onCancelAssignment()"
+            [width]="500"
+            [height]="350"
+            [dragEnabled]="true">
+
+    <div *dxTemplate="let data of 'content'">
+      <div class="form-container">
+        <div class="form-group">
+          <label>Inventory Item *</label>
+          <dx-select-box [dataSource]="inventoryItems"
+                         displayExpr="name"
+                         valueExpr="inventoryId"
+                         [(value)]="currentAssignment.inventoryId"
+                         placeholder="Select inventory item"
+                         [searchEnabled]="true">
+          </dx-select-box>
+        </div>
+
+        <div class="form-group">
+          <label>Group *</label>
+          <dx-select-box [dataSource]="inventoryGroups"
+                         displayExpr="name"
+                         valueExpr="groupId"
+                         [(value)]="currentAssignment.groupId"
+                         placeholder="Select group"
+                         [searchEnabled]="true">
+          </dx-select-box>
+        </div>
+
+        <div class="button-group">
+          <dx-button text="Assign"
+                     type="success"
+                     (onClick)="onAssignGroup()">
+          </dx-button>
+          <dx-button text="Cancel"
+                     type="normal"
+                     (onClick)="onCancelAssignment()">
+          </dx-button>
+        </div>
+      </div>
+    </div>
+  </dx-popup>
+
+  <!-- Manage Groups Popup -->
+  <dx-popup [title]="'Manage Groups - ' + (selectedInventoryForGroups?.name || 'Unknown Item')"
+            [visible]="isManageGroupsPopupOpened"
+            (onHiding)="onCancelManageGroups()"
+            [width]="600"
+            [height]="450"
+            [dragEnabled]="true"
+            [resizeEnabled]="true">
+
+    <div *dxTemplate="let data of 'content'">
+      <div class="form-container">
+        <h3>Assigned Groups</h3>
+
+        <div *ngIf="inventoryGroupsToManage && inventoryGroupsToManage.length > 0; else noGroups">
+          <div class="group-list">
+            <div *ngFor="let groupItem of inventoryGroupsToManage" class="group-item">
+              <div class="group-info">
+                <strong>{{ groupItem?.group?.name || groupItem?.name || 'Unknown Group' }}</strong>
+                <p *ngIf="groupItem?.group?.description || groupItem?.description"
+                   class="group-description">
+                  {{ groupItem?.group?.description || groupItem?.description }}
+                </p>
+              </div>
+              <dx-button icon="trash"
+                         stylingMode="text"
+                         type="danger"
+                         hint="Remove from group"
+                         (onClick)="removeFromGroup(selectedInventoryForGroups?.inventoryId, groupItem?.group?.groupId || groupItem?.groupId)">
+              </dx-button>
+            </div>
+          </div>
+        </div>
+
+        <ng-template #noGroups>
+          <div class="no-groups-message">
+            <p>No groups assigned to this inventory item.</p>
+            <dx-button text="Assign to Group"
+                       icon="link"
+                       type="normal"
+                       (onClick)="openAssignFromManage()">
+            </dx-button>
+          </div>
+        </ng-template>
+
+        <div class="button-group">
+          <dx-button text="Close"
+                     type="normal"
+                     (onClick)="onCancelManageGroups()">
+          </dx-button>
+        </div>
+      </div>
+    </div>
+  </dx-popup>
+</div>

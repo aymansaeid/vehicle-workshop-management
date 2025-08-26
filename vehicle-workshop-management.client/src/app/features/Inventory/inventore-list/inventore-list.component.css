@@ -102,7 +102,131 @@
   justify-content: flex-end;
 }
 
-/* Stock Level Styles */
+/* Status Styles - Added missing classes */
+.status-available {
+  color: #2e7d32;
+  background-color: #e8f5e8;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  display: inline-block;
+}
+
+.status-outofstock {
+  color: #c62828;
+  background-color: #ffebee;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  display: inline-block;
+}
+
+.status-discontinued {
+  color: #6a1b9a;
+  background-color: #f3e5f5;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  display: inline-block;
+}
+
+.status-onorder {
+  color: #ed6c02;
+  background-color: #fff3e0;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  display: inline-block;
+}
+
+.status-unknown {
+  color: #757575;
+  background-color: #f5f5f5;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  display: inline-block;
+}
+
+/* Group Management Styles */
+.group-list {
+  max-height: 250px;
+  overflow-y: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 15px;
+}
+
+.group-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 15px;
+  border-bottom: 1px solid #f0f0f0;
+  background-color: #fafafa;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  transition: background-color 0.2s ease;
+}
+
+  .group-item:last-child {
+    margin-bottom: 0;
+    border-bottom: none;
+  }
+
+  .group-item:hover {
+    background-color: #f0f0f0;
+  }
+
+.group-info {
+  flex: 1;
+}
+
+  .group-info strong {
+    font-weight: 600;
+    color: #2a2a2a;
+    font-size: 14px;
+  }
+
+.group-description {
+  margin: 4px 0 0 0;
+  color: #666;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.no-groups-message {
+  text-align: center;
+  padding: 30px 20px;
+  color: #666;
+  background-color: #f9f9f9;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+  .no-groups-message p {
+    margin-bottom: 15px;
+    font-size: 14px;
+  }
+
+.text-muted {
+  color: #666;
+  font-style: italic;
+  font-size: 13px;
+}
+
+/* Stock Level Styles - Keep existing ones */
 .stock-out {
   color: #c62828;
   background-color: #ffebee;
@@ -127,8 +251,66 @@
   display: inline-block;
 }
 
+/* Data Grid Custom Styles */
+.dx-datagrid-rowsview .dx-row {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.dx-datagrid-headers .dx-header-row {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.dx-datagrid .dx-row:hover {
+  background-color: #f8f9fa;
+}
+
+/* Popup Enhancements */
+.dx-popup-content {
+  padding: 0;
+}
+
+.dx-popup-title {
+  background-color: #1976d2;
+  color: white;
+  font-weight: 500;
+}
+
+/* Form Validation Styles */
+.form-group.has-error .dx-texteditor {
+  border-color: #dc3545;
+}
+
+.form-group.has-error label {
+  color: #dc3545;
+}
+
+.error-message {
+  color: #dc3545;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+/* Loading States */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
+  .inventory-container {
+    padding: 10px;
+  }
+
   .tab-header {
     flex-direction: column;
     gap: 15px;
@@ -138,10 +320,39 @@
   .header-actions {
     width: 100%;
     justify-content: flex-start;
+    flex-wrap: wrap;
   }
 
   .form-row {
     flex-direction: column;
     gap: 0;
+  }
+
+  .tab-navigation button {
+    padding: 12px 15px;
+    font-size: 14px;
+  }
+
+  .inventory-header h1 {
+    font-size: 24px;
+  }
+
+  .button-group {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .inventory-container {
+    padding: 5px;
+  }
+
+  .form-container {
+    padding: 10px;
+  }
+
+  .tab-content {
+    padding: 15px;
   }
 }
