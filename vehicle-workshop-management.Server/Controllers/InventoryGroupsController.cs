@@ -88,15 +88,18 @@ namespace vehicle_workshop_management.Server.Controllers
         {
             var inventoryGroup = await _context.InventoryGroups.FindAsync(id);
             if (inventoryGroup == null)
-            {
                 return NotFound();
-            }
+
+            // remove child items first
+            var groupItems = _context.InventoryGroupItems.Where(x => x.GroupId == id);
+            _context.InventoryGroupItems.RemoveRange(groupItems);
 
             _context.InventoryGroups.Remove(inventoryGroup);
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
+
 
         private bool InventoryGroupExists(int id)
         {

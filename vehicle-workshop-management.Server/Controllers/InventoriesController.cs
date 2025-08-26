@@ -169,6 +169,10 @@ namespace vehicle_workshop_management.Server.Controllers
             if (inventory == null)
                 return NotFound();
 
+            // remove child items first
+            var groupItems = _context.InventoryGroupItems.Where(x => x.InventoryId == id);
+            _context.InventoryGroupItems.RemoveRange(groupItems);
+
             _context.Inventories.Remove(inventory);
             await _context.SaveChangesAsync();
 
