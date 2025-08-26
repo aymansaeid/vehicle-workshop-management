@@ -48,10 +48,10 @@ export class InventoreListComponent implements OnInit {
   currentInventory: any = {
     name: '',
     description: '',
-    quantity: 0,
+    type: '',
     price: 0,
     unit: '',
-    minStockLevel: 0
+    status: ''
   };
 
   currentGroup: any = {
@@ -106,10 +106,10 @@ export class InventoreListComponent implements OnInit {
     this.currentInventory = {
       name: '',
       description: '',
-      quantity: 0,
-      price: 0,
+      type: '',
       unit: '',
-      minStockLevel: 0
+      price: 0,
+      status: ''
     };
     this.popupTitle = 'Add Inventory Item';
     this.isInventoryPopupOpened = true;
