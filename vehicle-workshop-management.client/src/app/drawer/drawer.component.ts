@@ -26,16 +26,15 @@ export class DrawerComponent {
   navigation = [
     { id: 1, text: 'Dashboard', path: '/', icon: 'home' },
     { id: 2, text: 'Customers', path: '/customers', icon: 'user' },
-    { id: 3, text: 'Customers Cars', path: '/Customers-Cars', icon: 'car' },
-    { id: 4, text: 'Inventory', path: '/Inventory', icon: 'box' },
-    { id: 5, text: 'Invoices', path: '/Invoices', icon: 'money' },
-    { id: 6, text: 'Tasks', path: '/Tasks', icon: 'tasks' },
-    { id: 7, text: 'Projects', path: '/Projects', icon: 'folder' },
-    { id: 8, text: 'Employees', path: '/Employees', icon: 'group' }
+    { id: 3, text: 'Inventory', path: '/Inventory', icon: 'box' },
+    { id: 4, text: 'Invoices', path: '/Invoices', icon: 'money' },
+    { id: 5, text: 'Tasks', path: '/Tasks', icon: 'tasks' },
+    { id: 6, text: 'Projects', path: '/Projects', icon: 'folder' },
+    { id: 7, text: 'Employees', path: '/Employees', icon: 'group' }
   ];
   topRightMenuItems = [
-    { id: 9, text: 'Attendance', path: '/Attendance', icon: 'event' },
-    { id: 10, text: 'Logout', action: 'logout', icon: 'runner' }
+    { id: 8, text: 'Attendance', path: '/Attendance', icon: 'event' },
+    { id: 9, text: 'Logout', action: 'logout', icon: 'runner' }
   ];
 
   text = `<h2>Welcome to Vehicle Management System</h2><p>Select an option from the menu.</p>`;
