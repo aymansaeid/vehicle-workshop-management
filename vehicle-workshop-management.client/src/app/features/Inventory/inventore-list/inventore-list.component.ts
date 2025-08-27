@@ -139,6 +139,7 @@ export class InventoreListComponent implements OnInit {
   }
 
   editInventory = (e: any) => {
+    console.log('Edit inventory clicked', e);
     const item = e.row.data;
     this.currentInventory = { ...item };
     this.popupTitle = 'Edit Inventory Item';
@@ -146,6 +147,7 @@ export class InventoreListComponent implements OnInit {
   }
 
   deleteInventory = (e: any) => {
+    console.log('Delete inventory clicked', e);
     const itemId = e.row.data.inventoryId;
     if (confirm('Are you sure you want to delete this inventory item?')) {
       this.apiService.delete('Inventories', itemId).subscribe({
@@ -198,6 +200,7 @@ export class InventoreListComponent implements OnInit {
   }
 
   editGroup = (e: any) => {
+    console.log('Edit group clicked', e);
     const group = e.row.data;
     this.currentGroup = { ...group };
     this.groupPopupTitle = 'Edit Inventory Group';
@@ -205,6 +208,7 @@ export class InventoreListComponent implements OnInit {
   }
 
   deleteGroup = (e: any) => {
+    console.log('Delete group clicked', e);
     const groupId = e.row.data.groupId;
     if (confirm('Are you sure you want to delete this inventory group?')) {
       this.apiService.delete('InventoryGroups', groupId).subscribe({
@@ -270,6 +274,7 @@ export class InventoreListComponent implements OnInit {
 
   // Manage Groups for Inventory Item
   openManageGroupsPopup = (e: any) => {
+    console.log('Manage groups clicked', e);
     const item = e.row.data;
     this.selectedInventoryForGroups = item;
     this.loadInventoryGroupsForItem(item.inventoryId);

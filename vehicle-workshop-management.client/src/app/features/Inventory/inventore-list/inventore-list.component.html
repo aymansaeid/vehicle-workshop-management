@@ -54,9 +54,9 @@
 
       <!-- Actions Column -->
       <dxi-column type="buttons" caption="Actions" [width]="180" [fixed]="true">
-        <dxi-button icon="edit" hint="Edit" (onClick)="editInventory"></dxi-button>
-        <dxi-button icon="group" hint="Manage Groups" (onClick)="openManageGroupsPopup"></dxi-button>
-        <dxi-button icon="trash" hint="Delete" (onClick)="deleteInventory"></dxi-button>
+        <dxi-button icon="edit" hint="Edit" [onClick]="editInventory"></dxi-button>
+        <dxi-button icon="group" hint="Manage Groups" [onClick]="openManageGroupsPopup"></dxi-button>
+        <dxi-button icon="trash" hint="Delete" [onClick]="deleteInventory"></dxi-button>
       </dxi-column>
 
       <!-- Data Columns -->
@@ -132,15 +132,14 @@
 
       <!-- Actions Column -->
       <dxi-column type="buttons" caption="Actions" [width]="120" [fixed]="true">
-        <dxi-button icon="edit" hint="Edit" (onClick)="editGroup"></dxi-button>
-        <dxi-button icon="trash" hint="Delete" (onClick)="deleteGroup"></dxi-button>
+        <dxi-button icon="edit" hint="Edit" [onClick]="editGroup"></dxi-button>
+        <dxi-button icon="trash" hint="Delete" [onClick]="deleteGroup"></dxi-button>
       </dxi-column>
 
       <!-- Data Columns -->
       <dxi-column dataField="name" caption="Name" [sortOrder]="'asc'"></dxi-column>
       <dxi-column dataField="description" caption="Description"></dxi-column>
-          <dxi-column dataField="itemCount" caption="Item Counts"></dxi-column>
-
+      <dxi-column dataField="itemCount" caption="Item Counts"></dxi-column>
 
       <!-- Items Count Template -->
       <div *dxTemplate="let data of 'itemsCountTemplate'">
