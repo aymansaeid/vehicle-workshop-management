@@ -68,9 +68,8 @@
                 [width]="120">
     </dxi-column>
 
-    <dxi-column dataField="customerId"
+    <dxi-column dataField="customerName"
                 caption="Customer"
-                [calculateCellValue]="getCustomerName"
                 [width]="200">
     </dxi-column>
 
@@ -212,7 +211,7 @@
       <!-- Invoice Header Info -->
       <div class="invoice-detail-header" *ngIf="selectedInvoice">
         <div class="invoice-info">
-          <h3>{{getCustomerName(selectedInvoice.customerId)}}</h3>
+          <h3>{{selectedInvoice.customerName || getCustomerName(selectedInvoice.customerId)}}</h3>
           <div class="invoice-meta">
             <span>Total: {{formatCurrency(selectedInvoice.totalAmount)}}</span>
             <span [class]="getStatusClass(selectedInvoice.status)">{{selectedInvoice.status}}</span>

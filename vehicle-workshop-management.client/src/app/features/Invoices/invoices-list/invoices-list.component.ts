@@ -76,8 +76,8 @@ export class InvoicesListComponent implements OnInit {
   private getDefaultInvoice() {
     return {
       invoiceId: 0,
-      dateIssued: new Date(),
-      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      dateIssued: new Date().toISOString().split('T')[0], // Format as YYYY-MM-DD
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       totalAmount: 0,
       status: 'Draft',
       notes: '',
@@ -89,7 +89,6 @@ export class InvoicesListComponent implements OnInit {
   private getDefaultLine() {
     return {
       lineId: 0,
-      invoiceId: 0,
       taskLineId: null,
       inventoryId: null,
       description: '',
@@ -117,6 +116,7 @@ export class InvoicesListComponent implements OnInit {
     return new Promise((resolve, reject) => {
       this.apiService.get('Invoices').subscribe({
         next: (data: any[]) => {
+          console.log('Loaded invoices:', data);
           this.invoices = data || [];
           resolve();
         },
@@ -210,10 +210,11 @@ export class InvoicesListComponent implements OnInit {
     const invoice = e.row?.data || e;
     if (!invoice) return;
 
+    // Convert date strings to Date objects for the date picker
     this.currentInvoice = {
       ...invoice,
-      dateIssued: new Date(invoice.dateIssued),
-      dueDate: new Date(invoice.dueDate)
+      dateIssued: invoice.dateIssued ? new Date(invoice.dateIssued) : new Date(),
+      dueDate: invoice.dueDate ? new Date(invoice.dueDate) : new Date()
     };
     this.popupTitle = 'Edit Invoice';
     this.isEditMode = true;
@@ -242,15 +243,22 @@ export class InvoicesListComponent implements OnInit {
   onSaveInvoice() {
     if (!this.validateInvoice()) return;
 
-    const invoiceData = { ...this.currentInvoice };
+    // Prepare invoice data for API
+    const invoiceData: any = {
+      dateIssued: this.formatDateForAPI(this.currentInvoice.dateIssued),
+      dueDate: this.formatDateForAPI(this.currentInvoice.dueDate),
+      totalAmount: Number(this.currentInvoice.totalAmount) || 0,
+      status: this.currentInvoice.status,
+      notes: this.currentInvoice.notes || '',
+      customerId: Number(this.currentInvoice.customerId)
+    };
 
-    // Ensure dates are properly formatted
-    if (invoiceData.dateIssued) {
-      invoiceData.dateIssued = new Date(invoiceData.dateIssued).toISOString();
+    // Add invoiceId for updates
+    if (this.isEditMode && this.currentInvoice.invoiceId) {
+      invoiceData.invoiceId = this.currentInvoice.invoiceId;
     }
-    if (invoiceData.dueDate) {
-      invoiceData.dueDate = new Date(invoiceData.dueDate).toISOString();
-    }
+
+    console.log('Saving invoice data:', invoiceData);
 
     const action = this.isEditMode
       ? this.apiService.put('Invoices', this.currentInvoice.invoiceId, invoiceData)
@@ -269,6 +277,20 @@ export class InvoicesListComponent implements OnInit {
         notify(`Error ${actionText} invoice: ${error.message}`, 'error', 3000);
       }
     });
+  }
+
+  private formatDateForAPI(date: any): string {
+    if (!date) return new Date().toISOString().split('T')[0];
+
+    if (typeof date === 'string') {
+      return new Date(date).toISOString().split('T')[0];
+    }
+
+    if (date instanceof Date) {
+      return date.toISOString().split('T')[0];
+    }
+
+    return new Date().toISOString().split('T')[0];
   }
 
   private validateInvoice(): boolean {
@@ -346,7 +368,25 @@ export class InvoicesListComponent implements OnInit {
   onSaveLine() {
     if (!this.validateLine()) return;
 
-    const lineData = { ...this.currentLine };
+    // Prepare line data for API
+    const lineData: any = {
+      taskLineId: this.currentLine.taskLineId || null,
+      inventoryId: this.currentLine.inventoryId || null,
+      description: this.currentLine.description,
+      quantity: Number(this.currentLine.quantity),
+      unitPrice: Number(this.currentLine.unitPrice),
+      lineTotal: Number(this.currentLine.lineTotal)
+    };
+
+    // Add lineId for updates, invoiceId for creates
+    if (this.isLineEditMode && this.currentLine.lineId) {
+      lineData.lineId = this.currentLine.lineId;
+    } else if (this.selectedInvoice) {
+      // For new lines, we need to associate with the invoice
+      lineData.invoiceId = this.selectedInvoice.invoiceId;
+    }
+
+    console.log('Saving line data:', lineData);
 
     const action = this.isLineEditMode
       ? this.apiService.put('InvoiceLines', this.currentLine.lineId, lineData)
@@ -389,19 +429,16 @@ export class InvoicesListComponent implements OnInit {
 
   // Generate PDF
   generatePDF = (e: any) => {
+    /*
     const invoice = e.row?.data || e;
     if (!invoice || !invoice.invoiceId) return;
 
-    // Implement PDF generation logic here
-    notify('PDF generation feature coming soon', 'info', 2000);
-
-    /*
     this.apiService.get(`Invoices/${invoice.invoiceId}/pdf`, { responseType: 'blob' }).subscribe({
       next: (blob: Blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `invoice-${invoice.invoiceId}.pdf`;
+        a.download = `Invoice_${invoice.invoiceId}.pdf`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -427,8 +464,9 @@ export class InvoicesListComponent implements OnInit {
     if (taskLineId) {
       const taskLine = this.taskLines.find(tl => tl.taskLineId === taskLineId);
       if (taskLine) {
-        this.currentLine.description = taskLine.description;
-        this.currentLine.unitPrice = taskLine.rate || 0;
+        this.currentLine.description = taskLine.description || '';
+        this.currentLine.unitPrice = taskLine.rate || taskLine.unitPrice || 0;
+        this.currentLine.inventoryId = null; // Clear inventory selection
         this.calculateLineTotal();
       }
     }
@@ -438,8 +476,9 @@ export class InvoicesListComponent implements OnInit {
     if (inventoryId) {
       const inventoryItem = this.inventoryItems.find(item => item.inventoryId === inventoryId);
       if (inventoryItem) {
-        this.currentLine.description = inventoryItem.name;
-        this.currentLine.unitPrice = inventoryItem.price || 0;
+        this.currentLine.description = inventoryItem.name || inventoryItem.description || '';
+        this.currentLine.unitPrice = inventoryItem.price || inventoryItem.unitPrice || 0;
+        this.currentLine.taskLineId = null; // Clear task line selection
         this.calculateLineTotal();
       }
     }
@@ -447,13 +486,20 @@ export class InvoicesListComponent implements OnInit {
 
   // Utility methods
   formatCurrency = (value: number): string => {
-    return value ? `$${value.toFixed(2)}` : '$0.00';
+    if (value === null || value === undefined) return '$0.00';
+    return `${Number(value).toFixed(2)}`;
   };
 
   formatDate = (date: string | Date): string => {
     if (!date) return '';
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
-    return dateObj.toLocaleDateString('en-GB');
+    try {
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      if (isNaN(dateObj.getTime())) return '';
+      return dateObj.toLocaleDateString('en-GB');
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return '';
+    }
   };
 
   getStatusClass = (status: string): string => {
@@ -470,6 +516,11 @@ export class InvoicesListComponent implements OnInit {
   getCustomerName = (customerId: number): string => {
     const customer = this.customers.find(c => c.customerId === customerId);
     return customer ? customer.name : 'Unknown Customer';
+  };
+
+  // This method is used for the grid display when customerName is already included in the invoice data
+  getCustomerDisplayName = (invoice: any): string => {
+    return invoice.customerName || this.getCustomerName(invoice.customerId);
   };
 
   // Cancel operations
