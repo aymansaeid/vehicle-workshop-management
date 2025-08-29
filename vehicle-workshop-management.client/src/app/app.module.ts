@@ -10,10 +10,11 @@ import { InvoicesListComponent } from './features/Invoices/invoices-list/invoice
 import { TasksListComponent } from './features/Tasks/tasks-list/tasks-list.component';
 import { ProjectsListComponent } from './features/Projects/projects-list/projects-list.component';
 import { EmployeesListComponent } from './features/Employees/employees-list/employees-list.component';
-import { AttendanceComponent } from './features/attendance/attendance.component'; 
+import { AttendanceComponent } from './features/attendance/attendance.component';
+import { CustomerListComponent } from './features/customers/customer-list/customer-list.component';
 
 @NgModule({
-  declarations: [AppComponent, LoginComponent, InventoreListComponent, InvoicesListComponent, TasksListComponent, ProjectsListComponent, EmployeesListComponent, AttendanceComponent],
+  declarations: [AppComponent, LoginComponent, InventoreListComponent, InvoicesListComponent, CustomerListComponent ,TasksListComponent, ProjectsListComponent, EmployeesListComponent, AttendanceComponent],
   imports: [BrowserModule, FormsModule, HttpClientModule],
   bootstrap: [AppComponent],
 })

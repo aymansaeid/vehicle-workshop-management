@@ -1,6 +1,5 @@
 <!-- Main Customer Data Grid -->
 <dx-data-grid [dataSource]="dataSource"
-              (rowClick)="rowClick($event)"
               [allowColumnResizing]="true"
               [columnAutoWidth]="true"
               [showBorders]="true">
@@ -8,7 +7,7 @@
     <dxi-button icon="edit" hint="Edit Customer" [onClick]="onEditClick.bind(this)"></dxi-button>
     <dxi-button icon="trash" hint="Delete Customer" [onClick]="onDeleteClick.bind(this)"></dxi-button>
     <dxi-button icon="car" hint="Manage Cars" [onClick]="onManageCarsClick.bind(this)"></dxi-button>
-    <dxi-button icon="user" hint="Manage Contacts" [onClick]="onManageContactsClick.bind(this)"></dxi-button>
+    <dxi-button icon="group" hint="Manage Contacts" [onClick]="onManageContactsClick.bind(this)"></dxi-button>
   </dxi-column>
   <dxo-paging [pageSize]="10"></dxo-paging>
   <dxo-pager [showPageSizeSelector]="true"
@@ -18,15 +17,9 @@
   <dxi-column dataField="name" caption="Name"></dxi-column>
   <dxi-column dataField="phone" caption="Phone" [customizeText]="customizePhoneCell"></dxi-column>
   <dxi-column dataField="email" caption="Email"></dxi-column>
-  <dxi-column dataField="type"
-              caption="Type"
-              [cellTemplate]="'typeCellTemplate'"></dxi-column>
-  <dxi-column dataField="status"
-              caption="Status"
-              [cellTemplate]="'statusCellTemplate'"></dxi-column>
-  <dxi-column dataField="createdAt"
-              caption="Created Date"
-              [customizeText]="formatDate"></dxi-column>
+  <dxi-column dataField="type" caption="Type" [cellTemplate]="'typeCellTemplate'"></dxi-column>
+  <dxi-column dataField="status" caption="Status" [cellTemplate]="'statusCellTemplate'"></dxi-column>
+  <dxi-column dataField="createdAt" caption="Created Date" dataType="date" [customizeText]="formatDate"></dxi-column>
   <div *dxTemplate="let cell of 'typeCellTemplate'">
     <i [class]="'dx-icon-' + getTypeIcon(cell.value)"></i> {{ cell.value }}
   </div>
@@ -35,24 +28,16 @@
   </div>
   <dxo-toolbar>
     <dxi-item location="before">
-      <dx-button icon="plus"
-                 text="Add Customer"
-                 (onClick)="addCustomer()"></dx-button>
+      <dx-button icon="plus" text="Add Customer" (onClick)="addCustomer()"></dx-button>
     </dxi-item>
     <dxi-item location="after">
-      <dx-drop-down-button [items]="filterStatusList"
-                           text="Filter by Status"
-                           (onItemClick)="filterByStatus($event)"></dx-drop-down-button>
+      <dx-drop-down-button [items]="filterStatusList" text="Filter by Status" (onItemClick)="filterByStatus($event)"></dx-drop-down-button>
     </dxi-item>
     <dxi-item location="after">
-      <dx-drop-down-button [items]="filterTypeList"
-                           text="Filter by Type"
-                           (onItemClick)="filterByType($event)"></dx-drop-down-button>
+      <dx-drop-down-button [items]="filterTypeList" text="Filter by Type" (onItemClick)="filterByType($event)"></dx-drop-down-button>
     </dxi-item>
     <dxi-item location="after">
-      <dx-button icon="refresh"
-                 text="Refresh"
-                 (onClick)="refresh()"></dx-button>
+      <dx-button icon="refresh" text="Refresh" (onClick)="refresh()"></dx-button>
     </dxi-item>
   </dxo-toolbar>
 </dx-data-grid>
@@ -62,16 +47,15 @@
           [visible]="isAddCustomerPopupOpened || isEditCustomerPopupOpened"
           (onHiding)="onCancelEdit()"
           [width]="500"
-          [height]="500">
-  <div *dxTemplate="let context of 'content'">
-    <h2>{{popupTitle}}</h2>
+          [height]="'auto'">
+  <div *dxTemplate="let data of 'content'">
     <div class="form-group">
       <label>Name</label>
       <dx-text-box [(value)]="currentCustomer.name"></dx-text-box>
     </div>
     <div class="form-group">
       <label>Phone</label>
-      <dx-text-box [(value)]="currentCustomer.phone"></dx-text-box>
+      <dx-text-box [(value)]="currentCustomer.phone" mask="(000) 000-0000"></dx-text-box>
     </div>
     <div class="form-group">
       <label>Email</label>
@@ -86,21 +70,19 @@
       <dx-select-box [items]="statusList" [(value)]="currentCustomer.status"></dx-select-box>
     </div>
     <div class="button-group">
-      <dx-button text="Save" type="success"
-                 (onClick)="popupTitle === 'Add Customer' ? onSaveNewCustomer() : onSaveEditedCustomer()">
-      </dx-button>
+      <dx-button text="Save" type="success" (onClick)="popupTitle === 'Add Customer' ? onSaveNewCustomer() : onSaveEditedCustomer()"></dx-button>
       <dx-button text="Cancel" type="normal" (onClick)="onCancelEdit()"></dx-button>
     </div>
   </div>
 </dx-popup>
 
 <!-- Customer Cars Management Popup -->
-<dx-popup [title]="'Manage Cars for ' + currentCustomerForCars?.name"
+<dx-popup [title]="'Manage Cars for ' + (currentCustomerForCars?.name || '')"
           [visible]="isCarsPopupOpened"
           (onHiding)="onCloseCarsPopup()"
-          [width]="900"
-          [height]="600">
-  <div *dxTemplate="let context of 'content'">
+          [width]="'80%'"
+          [height]="'80%'">
+  <div *dxTemplate="let data of 'content'">
     <dx-data-grid #carsDataGrid
                   [dataSource]="carsDataSource"
                   [allowColumnResizing]="true"
@@ -113,14 +95,10 @@
       <dxi-column dataField="make" caption="Make"></dxi-column>
       <dxi-column dataField="model" caption="Model"></dxi-column>
       <dxi-column dataField="year" caption="Year"></dxi-column>
-      <dxi-column dataField="licensePlate" caption="License Plate"></dxi-column>
-      <dxi-column dataField="vin" caption="VIN"></dxi-column>
       <dxi-column dataField="color" caption="Color"></dxi-column>
       <dxo-toolbar>
         <dxi-item location="before">
-          <dx-button icon="plus"
-                     text="Add Car"
-                     (onClick)="addCar()"></dx-button>
+          <dx-button icon="plus" text="Add Car" (onClick)="addCar()"></dx-button>
         </dxi-item>
       </dxo-toolbar>
     </dx-data-grid>
@@ -132,9 +110,8 @@
           [visible]="isAddCarPopupOpened || isEditCarPopupOpened"
           (onHiding)="onCancelCarEdit()"
           [width]="500"
-          [height]="550">
-  <div *dxTemplate="let context of 'content'">
-    <h2>{{carPopupTitle}}</h2>
+          [height]="'auto'">
+  <div *dxTemplate="let data of 'content'">
     <div class="form-group">
       <label>Make</label>
       <dx-text-box [(value)]="currentCar.make"></dx-text-box>
@@ -148,33 +125,23 @@
       <dx-text-box [(value)]="currentCar.year"></dx-text-box>
     </div>
     <div class="form-group">
-      <label>License Plate</label>
-      <dx-text-box [(value)]="currentCar.licensePlate"></dx-text-box>
-    </div>
-    <div class="form-group">
-      <label>VIN</label>
-      <dx-text-box [(value)]="currentCar.vin"></dx-text-box>
-    </div>
-    <div class="form-group">
       <label>Color</label>
       <dx-text-box [(value)]="currentCar.color"></dx-text-box>
     </div>
     <div class="button-group">
-      <dx-button text="Save" type="success"
-                 (onClick)="carPopupTitle === 'Add Car' ? onSaveNewCar() : onSaveEditedCar()">
-      </dx-button>
+      <dx-button text="Save" type="success" (onClick)="carPopupTitle === 'Add Car' ? onSaveNewCar() : onSaveEditedCar()"></dx-button>
       <dx-button text="Cancel" type="normal" (onClick)="onCancelCarEdit()"></dx-button>
     </div>
   </div>
 </dx-popup>
 
 <!-- Customer Contacts Management Popup -->
-<dx-popup [title]="'Manage Contacts for ' + currentCustomerForContacts?.name"
+<dx-popup [title]="'Manage Contacts for ' + (currentCustomerForContacts?.name || '')"
           [visible]="isContactsPopupOpened"
           (onHiding)="onCloseContactsPopup()"
-          [width]="900"
-          [height]="600">
-  <div *dxTemplate="let context of 'content'">
+          [width]="'80%'"
+          [height]="'80%'">
+  <div *dxTemplate="let data of 'content'">
     <dx-data-grid #contactsDataGrid
                   [dataSource]="contactsDataSource"
                   [allowColumnResizing]="true"
@@ -187,20 +154,9 @@
       <dxi-column dataField="name" caption="Name"></dxi-column>
       <dxi-column dataField="phone" caption="Phone" [customizeText]="customizePhoneCell"></dxi-column>
       <dxi-column dataField="email" caption="Email"></dxi-column>
-      <dxi-column dataField="position" caption="Position"></dxi-column>
-      <dxi-column dataField="isPrimary"
-                  caption="Primary"
-                  [cellTemplate]="'primaryCellTemplate'"></dxi-column>
-      <div *dxTemplate="let cell of 'primaryCellTemplate'">
-        <span [class]="cell.value ? 'primary-contact' : 'secondary-contact'">
-          {{ cell.value ? 'Primary' : 'Secondary' }}
-        </span>
-      </div>
       <dxo-toolbar>
         <dxi-item location="before">
-          <dx-button icon="plus"
-                     text="Add Contact"
-                     (onClick)="addContact()"></dx-button>
+          <dx-button icon="plus" text="Add Contact" (onClick)="addContact()"></dx-button>
         </dxi-item>
       </dxo-toolbar>
     </dx-data-grid>
@@ -208,39 +164,29 @@
 </dx-popup>
 
 <!-- Contact Add/Edit Popup -->
+<!-- FIXED: Removed fields that don't exist in the API model -->
 <dx-popup [title]="contactPopupTitle"
           [visible]="isAddContactPopupOpened || isEditContactPopupOpened"
           (onHiding)="onCancelContactEdit()"
           [width]="500"
-          [height]="550">
-  <div *dxTemplate="let context of 'content'">
-    <h2>{{contactPopupTitle}}</h2>
+          [height]="'auto'">
+  <div *dxTemplate="let data of 'content'">
     <div class="form-group">
       <label>Name</label>
       <dx-text-box [(value)]="currentContact.name"></dx-text-box>
     </div>
     <div class="form-group">
       <label>Phone</label>
-      <dx-text-box [(value)]="currentContact.phone"></dx-text-box>
+      <dx-text-box [(value)]="currentContact.phone" mask="(000) 000-0000"></dx-text-box>
     </div>
     <div class="form-group">
       <label>Email</label>
       <dx-text-box [(value)]="currentContact.email"></dx-text-box>
     </div>
-    <div class="form-group">
-      <label>Position</label>
-      <dx-text-box [(value)]="currentContact.position"></dx-text-box>
-    </div>
-    <div class="form-group">
-      <dx-check-box text="Primary Contact"
-                    [(value)]="currentContact.isPrimary">
-      </dx-check-box>
-    </div>
     <div class="button-group">
-      <dx-button text="Save" type="success"
-                 (onClick)="contactPopupTitle === 'Add Contact' ? onSaveNewContact() : onSaveEditedContact()">
-      </dx-button>
+      <dx-button text="Save" type="success" (onClick)="contactPopupTitle === 'Add Contact' ? onSaveNewContact() : onSaveEditedContact()"></dx-button>
       <dx-button text="Cancel" type="normal" (onClick)="onCancelContactEdit()"></dx-button>
     </div>
   </div>
 </dx-popup>
+

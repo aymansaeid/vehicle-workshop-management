@@ -1,16 +1,13 @@
 import { Component, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {
-  DxDataGridModule,
-  DxDataGridComponent,
-  DxButtonModule,
-  DxDropDownButtonModule,
-  DxTextBoxModule,
-  DxSelectBoxModule,
-  DxPopupModule,
-  DxCheckBoxModule,
-} from 'devextreme-angular';
+import { DxDataGridModule, DxDataGridComponent } from 'devextreme-angular/ui/data-grid';
+import { DxButtonModule } from 'devextreme-angular/ui/button';
+import { DxDropDownButtonModule } from 'devextreme-angular/ui/drop-down-button';
+import { DxTextBoxModule } from 'devextreme-angular/ui/text-box';
+import { DxSelectBoxModule } from 'devextreme-angular/ui/select-box';
+import { DxPopupModule } from 'devextreme-angular/ui/popup';
+import { DxCheckBoxModule } from 'devextreme-angular/ui/check-box';
 import DataSource from 'devextreme/data/data_source';
 import { ApiService } from '../../../api/api';
 import notify from "devextreme/ui/notify";
@@ -18,8 +15,18 @@ import notify from "devextreme/ui/notify";
 type FilterCustomerStatus = 'Active' | 'Inactive' | 'All';
 type FilterCustomerType = 'Company' | 'Individual' | 'All';
 
+interface Customer {
+  customerId: number;
+  name: string;
+  phone: string;
+  email: string;
+  type: 'Company' | 'Individual';
+  status: 'Active' | 'Inactive';
+  createdAt: string;
+}
+
 interface CustomerCar {
-  id?: number;
+  carId?: number;
   customerId: number;
   make: string;
   model: string;
@@ -28,13 +35,38 @@ interface CustomerCar {
 }
 
 interface CustomerContact {
-  id?: number;
+  contactId?: number;
   customerId: number;
   name: string;
   phone: string;
   email: string;
-  position: string;
-  isPrimary: boolean;
+}
+
+interface CustomerForm {
+  customerId?: number;  
+  name: string;
+  phone: string;
+  email: string;
+  type: 'Company' | 'Individual';
+  status: 'Active' | 'Inactive';
+}
+
+
+interface CarForm {
+  carId?: number;
+  customerId: number;
+  make: string;
+  model: string;
+  year: string;
+  color: string;
+}
+
+interface ContactForm {
+  contactId?: number;
+  customerId: number;
+  name: string;
+  phone: string;
+  email: string;
 }
 
 @Component({
@@ -55,60 +87,36 @@ interface CustomerContact {
   ]
 })
 export class CustomerListComponent {
-  @ViewChild(DxDataGridComponent, { static: true }) dataGrid!: DxDataGridComponent;
+  @ViewChild(DxDataGridComponent, { static: false }) dataGrid!: DxDataGridComponent;
   @ViewChild('carsDataGrid', { static: false }) carsDataGrid!: DxDataGridComponent;
   @ViewChild('contactsDataGrid', { static: false }) contactsDataGrid!: DxDataGridComponent;
 
   statusList = ['Active', 'Inactive'];
   typeList = ['Company', 'Individual'];
-
   filterStatusList: FilterCustomerStatus[] = ['All', 'Active', 'Inactive'];
   filterTypeList: FilterCustomerType[] = ['All', 'Company', 'Individual'];
 
   // Customer popup states
   isEditCustomerPopupOpened = false;
   isAddCustomerPopupOpened = false;
-  currentCustomer: any = {
-    name: '',
-    phone: '',
-    email: '',
-    type: 'Company',
-    status: 'Active'
-  };
+  currentCustomer: CustomerForm = this.getInitialCustomerState();
   popupTitle = 'Add Customer';
 
   // Cars management states
   isCarsPopupOpened = false;
   isAddCarPopupOpened = false;
   isEditCarPopupOpened = false;
-  currentCustomerForCars: any = null;
-  currentCar: CustomerCar = {
-    customerId: 0,
-    make: '',
-    model: '',
-    year: new Date().getFullYear().toString(),
-    color: ''
-  };
+  currentCustomerForCars: Customer | null = null;
+  currentCar: CarForm = this.getInitialCarState();
   carPopupTitle = 'Add Car';
 
   // Contacts management states
   isContactsPopupOpened = false;
   isAddContactPopupOpened = false;
   isEditContactPopupOpened = false;
-  currentCustomerForContacts: any = null;
-  currentContact: CustomerContact = {
-    customerId: 0,
-    name: '',
-    phone: '',
-    email: '',
-    position: '',
-    isPrimary: false
-  };
+  currentCustomerForContacts: Customer | null = null;
+  currentContact: ContactForm = this.getInitialContactState();
   contactPopupTitle = 'Add Contact';
-
-  // Panel states
-  isPanelOpened = false;
-  selectedCustomerId: number | null = null;
 
   // Data sources
   dataSource = new DataSource({
@@ -122,11 +130,10 @@ export class CustomerListComponent {
   });
 
   carsDataSource = new DataSource({
-    key: 'customerId',
+    key: 'carId',
     load: () => new Promise((resolve, reject) => {
       if (!this.currentCustomerForCars?.customerId) {
-        resolve([]);
-        return;
+        return resolve([]);
       }
       this.apiService.get(`CustomerCars/${this.currentCustomerForCars.customerId}/cars`).subscribe({
         next: (data: any) => resolve(data),
@@ -139,8 +146,7 @@ export class CustomerListComponent {
     key: 'contactId',
     load: () => new Promise((resolve, reject) => {
       if (!this.currentCustomerForContacts?.customerId) {
-        resolve([]);
-        return;
+        return resolve([]);
       }
       this.apiService.get(`CustomerContacts/${this.currentCustomerForContacts.customerId}/contacts`).subscribe({
         next: (data: any) => resolve(data),
@@ -150,16 +156,22 @@ export class CustomerListComponent {
   });
 
   constructor(private apiService: ApiService) { }
+  
+  // Utility method for initializing customer form data
+  getInitialCustomerState(): CustomerForm {
+    return { name: '', phone: '', email: '', type: 'Company', status: 'Active' };
+  }
+  getInitialCarState(customerId = 0): CarForm {
+    return { customerId, make: '', model: '', year: new Date().getFullYear().toString(), color: '' };
+  }
+
+  getInitialContactState(customerId = 0): ContactForm {
+    return { customerId, name: '', phone: '', email: '' };
+  }
 
   // Customer CRUD operations
   addCustomer() {
-    this.currentCustomer = {
-      name: '',
-      phone: '',
-      email: '',
-      type: 'Company',
-      status: 'Active'
-    };
+    this.currentCustomer = this.getInitialCustomerState();
     this.popupTitle = 'Add Customer';
     this.isAddCustomerPopupOpened = true;
   }
@@ -171,74 +183,47 @@ export class CustomerListComponent {
           notify('Customer deleted successfully', 'success', 2000);
           this.refresh();
         },
-        error: (error) => {
-          notify(`Error deleting customer: ${error.message}`, 'error', 2000);
-        }
+        error: (error) => notify(`Error deleting customer: ${error.message}`, 'error', 2000)
       });
     }
   }
 
-  editCustomer(customer: any) {
+  editCustomer(customer: Customer) {
     this.currentCustomer = { ...customer };
     this.popupTitle = 'Edit Customer';
     this.isEditCustomerPopupOpened = true;
   }
 
-  onEditClick(e: any) {
-    if (e.row?.data) {
-      this.editCustomer(e.row.data);
-    }
-  }
-
-  onDeleteClick(e: any) {
-    if (e.row?.data) {
-      this.deleteCustomer(e.row.data.customerId);
-    }
-  }
-
   onSaveEditedCustomer() {
-    this.apiService.put('Customers', this.currentCustomer.customerId, this.currentCustomer)
-      .subscribe({
-        next: () => {
-          notify('Customer updated successfully', 'success', 2000);
-          this.isEditCustomerPopupOpened = false;
-          this.refresh();
-        },
-        error: (error) => {
-          notify(`Error updating customer: ${error.message}`, 'error', 2000);
-        }
-      });
+    if (!this.currentCustomer.customerId) {
+      notify('Missing Customer ID', 'error');
+      return;
+    }
+    this.apiService.put('Customers', this.currentCustomer.customerId, this.currentCustomer).subscribe({
+      next: () => {
+        notify('Customer updated successfully', 'success', 2000);
+        this.isEditCustomerPopupOpened = false;
+        this.refresh();
+      },
+      error: (error) => notify(`Error updating customer: ${error.message}`, 'error', 2000)
+    });
   }
 
   onSaveNewCustomer() {
     this.apiService.post('Customers', this.currentCustomer).subscribe({
       next: () => {
-        notify({
-          message: `New customer "${this.currentCustomer.name}" saved`,
-          position: { at: 'bottom center', my: 'bottom center' }
-        }, 'success');
+        notify(`New customer "${this.currentCustomer.name}" saved`, 'success');
         this.isAddCustomerPopupOpened = false;
         this.refresh();
       },
-      error: (error: any) => {
-        notify({
-          message: `Failed to save customer: ${error.message}`,
-          position: { at: 'bottom center', my: 'bottom center' }
-        }, 'error');
-      }
+      error: (error: any) => notify(`Failed to save customer: ${error.message}`, 'error')
     });
   }
 
   onCancelEdit() {
     this.isEditCustomerPopupOpened = false;
     this.isAddCustomerPopupOpened = false;
-    this.currentCustomer = {
-      name: '',
-      phone: '',
-      email: '',
-      type: 'Company',
-      status: 'Active'
-    };
+    this.currentCustomer = this.getInitialCustomerState();
   }
 
   // Cars management methods
@@ -251,13 +236,7 @@ export class CustomerListComponent {
   }
 
   addCar() {
-    this.currentCar = {
-      customerId: this.currentCustomerForCars.customerId,
-      make: '',
-      model: '',
-      year: new Date().getFullYear().toString(),
-      color: ''
-    };
+    this.currentCar = this.getInitialCarState(this.currentCustomerForCars!.customerId);
     this.carPopupTitle = 'Add Car';
     this.isAddCarPopupOpened = true;
   }
@@ -268,66 +247,54 @@ export class CustomerListComponent {
     this.isEditCarPopupOpened = true;
   }
 
-  onEditCarClick(e: any) {
-    if (e.row?.data) {
-      this.editCar(e.row.data);
-    }
-  }
-
   onDeleteCarClick(e: any) {
     if (e.row?.data && confirm('Are you sure you want to delete this car?')) {
-      this.apiService.delete('CustomerCars', e.row.data.id).subscribe({
+      this.apiService.delete('CustomerCars', e.row.data.carId).subscribe({
         next: () => {
           notify('Car deleted successfully', 'success', 2000);
           this.carsDataSource.reload();
         },
-        error: (error) => {
-          notify(`Error deleting car: ${error.message}`, 'error', 2000);
-        }
+        error: (error) => notify(`Error deleting car: ${error.message}`, 'error', 2000)
       });
     }
   }
 
   onSaveNewCar() {
-    this.apiService.post(`CustomerCars/customers/${this.currentCustomerForCars.customerId}/cars`, this.currentCar)
-      .subscribe({
-        next: () => {
-          notify('Car saved successfully', 'success', 2000);
-          this.isAddCarPopupOpened = false;
-          this.carsDataSource.reload();
-        },
-        error: (error) => {
-          notify(`Error saving car: ${error.message}`, 'error', 2000);
-        }
-      });
+    const payload = {
+      make: this.currentCar.make, model: this.currentCar.model, year: this.currentCar.year, color: this.currentCar.color
+    };
+    this.apiService.post(`CustomerCars/customers/${this.currentCustomerForCars!.customerId}/cars`, payload).subscribe({
+      next: () => {
+        notify('Car saved successfully', 'success', 2000);
+        this.isAddCarPopupOpened = false;
+        this.carsDataSource.reload();
+      },
+      error: (error) => notify(`Error saving car: ${error.message}`, 'error', 2000)
+    });
   }
 
   onSaveEditedCar() {
-    /*
-    this.apiService.put(`customers/${this.currentCustomerForCars.customerId}/cars/${this.currentCar.id}`, this.currentCar)
-      .subscribe({
-        next: () => {
-          notify('Car updated successfully', 'success', 2000);
-          this.isEditCarPopupOpened = false;
-          this.carsDataSource.reload();
-        },
-        error: (error) => {
-          notify(`Error updating car: ${error.message}`, 'error', 2000);
-        }
-      });
-      */
+    if (!this.currentCar.carId) {
+      notify('Cannot update car without a Car ID.', 'error');
+      return;
+    }
+    const payload = {
+      make: this.currentCar.make, model: this.currentCar.model, year: this.currentCar.year, color: this.currentCar.color
+    };
+    this.apiService.put('CustomerCars', this.currentCar.carId, payload).subscribe({
+      next: () => {
+        notify('Car updated successfully', 'success', 2000);
+        this.isEditCarPopupOpened = false;
+        this.carsDataSource.reload();
+      },
+      error: (error) => notify(`Error updating car: ${error.message}`, 'error', 2000)
+    });
   }
 
   onCancelCarEdit() {
     this.isAddCarPopupOpened = false;
     this.isEditCarPopupOpened = false;
-    this.currentCar = {
-      customerId: 0,
-      make: '',
-      model: '',
-      year: new Date().getFullYear().toString(),
-      color: ''
-    };
+    this.currentCar = this.getInitialCarState();
   }
 
   onCloseCarsPopup() {
@@ -345,14 +312,7 @@ export class CustomerListComponent {
   }
 
   addContact() {
-    this.currentContact = {
-      customerId: this.currentCustomerForContacts.customerId,
-      name: '',
-      phone: '',
-      email: '',
-      position: '',
-      isPrimary: false
-    };
+    this.currentContact = this.getInitialContactState(this.currentCustomerForContacts!.customerId);
     this.contactPopupTitle = 'Add Contact';
     this.isAddContactPopupOpened = true;
   }
@@ -363,65 +323,54 @@ export class CustomerListComponent {
     this.isEditContactPopupOpened = true;
   }
 
-  onEditContactClick(e: any) {
-    if (e.row?.data) {
-      this.editContact(e.row.data);
-    }
-  }
-
   onDeleteContactClick(e: any) {
     if (e.row?.data && confirm('Are you sure you want to delete this contact?')) {
-      this.apiService.delete('CustomerContacts', e.row.data.id).subscribe({
+      this.apiService.delete('CustomerContacts', e.row.data.contactId).subscribe({
         next: () => {
           notify('Contact deleted successfully', 'success', 2000);
           this.contactsDataSource.reload();
         },
-        error: (error) => {
-          notify(`Error deleting contact: ${error.message}`, 'error', 2000);
-        }
+        error: (error) => notify(`Error deleting contact: ${error.message}`, 'error', 2000)
       });
     }
   }
 
   onSaveNewContact() {
-    this.apiService.post(`CustomerContacts/customers/${this.currentCustomerForContacts.customerId}/contacts`, this.currentContact)
-      .subscribe({
-        next: () => {
-          notify('Contact saved successfully', 'success', 2000);
-          this.isAddContactPopupOpened = false;
-          this.contactsDataSource.reload();
-        },
-        error: (error) => {
-          notify(`Error saving contact: ${error.message}`, 'error', 2000);
-        }
-      });
+    const payload = {
+      name: this.currentContact.name, phone: this.currentContact.phone, email: this.currentContact.email
+    };
+    this.apiService.post(`CustomerContacts/customers/${this.currentCustomerForContacts!.customerId}/contacts`, payload).subscribe({
+      next: () => {
+        notify('Contact saved successfully', 'success', 2000);
+        this.isAddContactPopupOpened = false;
+        this.contactsDataSource.reload();
+      },
+      error: (error) => notify(`Error saving contact: ${error.message}`, 'error', 2000)
+    });
   }
 
   onSaveEditedContact() {
-    this.apiService.put('CustomerContacts', this.currentContact.id!, this.currentContact)
-      .subscribe({
-        next: () => {
-          notify('Contact updated successfully', 'success', 2000);
-          this.isEditContactPopupOpened = false;
-          this.contactsDataSource.reload();
-        },
-        error: (error) => {
-          notify(`Error updating contact: ${error.message}`, 'error', 2000);
-        }
-      });
+    if (!this.currentContact.contactId) {
+      notify('Cannot update contact without a Contact ID.', 'error');
+      return;
+    }
+    const payload = {
+      name: this.currentContact.name, phone: this.currentContact.phone, email: this.currentContact.email
+    };
+    this.apiService.put('CustomerContacts', this.currentContact.contactId, payload).subscribe({
+      next: () => {
+        notify('Contact updated successfully', 'success', 2000);
+        this.isEditContactPopupOpened = false;
+        this.contactsDataSource.reload();
+      },
+      error: (error) => notify(`Error updating contact: ${error.message}`, 'error', 2000)
+    });
   }
 
   onCancelContactEdit() {
     this.isAddContactPopupOpened = false;
     this.isEditContactPopupOpened = false;
-    this.currentContact = {
-      customerId: 0,
-      name: '',
-      phone: '',
-      email: '',
-      position: '',
-      isPrimary: false
-    };
+    this.currentContact = this.getInitialContactState();
   }
 
   onCloseContactsPopup() {
@@ -429,47 +378,43 @@ export class CustomerListComponent {
     this.currentCustomerForContacts = null;
   }
 
-  // Utility methods
+
   refresh() {
     this.dataGrid.instance.refresh();
   }
 
-  rowClick(e: any) {
-    const data = e.data;
-    this.selectedCustomerId = data.customerId;
-    this.isPanelOpened = true;
-  }
-
-  onOpenedChange(value: boolean) {
-    if (!value) {
-      this.selectedCustomerId = null;
-    }
-  }
+  // Grid event handlers
+  onEditClick(e: any) { if (e.row?.data) this.editCustomer(e.row.data); }
+  onDeleteClick(e: any) { if (e.row?.data) this.deleteCustomer(e.row.data.customerId); }
+  onEditCarClick(e: any) { if (e.row?.data) this.editCar(e.row.data); }
+  onEditContactClick(e: any) { if (e.row?.data) this.editContact(e.row.data); }
 
   filterByStatus(e: any) {
     const status = e.itemData as FilterCustomerStatus;
     status === 'All'
-      ? this.dataGrid.instance.clearFilter('status')
+      ? this.dataGrid.instance.clearFilter()
       : this.dataGrid.instance.filter(['status', '=', status]);
   }
 
   filterByType(e: any) {
     const type = e.itemData as FilterCustomerType;
     type === 'All'
-      ? this.dataGrid.instance.clearFilter('type')
+      ? this.dataGrid.instance.clearFilter()
       : this.dataGrid.instance.filter(['type', '=', type]);
   }
 
+  // Cell formatters
   customizePhoneCell = ({ value }: { value: string }) => {
     if (!value) return '';
     const cleaned = value.replace(/\D/g, '');
-    return cleaned.length === 10 && cleaned.startsWith('05')
-      ? `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6)}`
-      : value;
+    if (cleaned.length === 10) {
+      return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+    }
+    return value;
   };
 
   formatDate = ({ value }: { value: string }) => {
-    return value ? new Date(value).toLocaleDateString('en-GB') : '';
+    return value ? new Date(value).toLocaleDateString('en-US') : '';
   };
 
   getStatusClass = (status: string) => {
@@ -480,3 +425,4 @@ export class CustomerListComponent {
     return type === 'Company' ? 'home' : 'user';
   };
 }
+
