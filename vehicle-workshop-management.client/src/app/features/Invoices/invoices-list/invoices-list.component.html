@@ -1,1 +1,281 @@
-<p>invoices-list works!</p>
+<div class="invoices-container">
+  <!-- Header -->
+  <div class="invoices-header">
+    <h1>Invoice Management</h1>
+    <div class="header-actions">
+      <dx-button text="Create Invoice"
+                 icon="plus"
+                 type="default"
+                 stylingMode="contained"
+                 (onClick)="addInvoice()">
+      </dx-button>
+    </div>
+  </div>
+
+  <!-- Invoices Grid -->
+  <dx-data-grid [dataSource]="invoices"
+                [showBorders]="true"
+                [allowColumnResizing]="true"
+                [columnAutoWidth]="true">
+
+    <dxo-paging [pageSize]="10"></dxo-paging>
+    <dxo-pager [showPageSizeSelector]="true"
+               [allowedPageSizes]="[5, 10, 20]"
+               [showInfo]="true">
+    </dxo-pager>
+
+    <dxo-filter-row [visible]="true"></dxo-filter-row>
+    <dxo-search-panel [visible]="true" placeholder="Search invoices"></dxo-search-panel>
+
+    <!-- Actions Column -->
+    <dxi-column type="buttons" caption="Actions" [width]="220">
+      <dxi-button icon="edit" hint="Edit" [onClick]="editInvoice"></dxi-button>
+      <dxi-button icon="list" hint="View Lines" [onClick]="viewInvoiceLines"></dxi-button>
+      <dxi-button icon="file" hint="Generate PDF" [onClick]="generatePDF"></dxi-button>
+      <dxi-button icon="trash" hint="Delete" [onClick]="deleteInvoice"></dxi-button>
+    </dxi-column>
+
+    <!-- Data Columns -->
+    <dxi-column dataField="invoiceId" caption="Invoice #"></dxi-column>
+    <dxi-column dataField="customerName" caption="Customer"></dxi-column>
+    <dxi-column dataField="dateIssued"
+                caption="Date Issued"
+                dataType="date"
+                [customizeText]="formatDate">
+    </dxi-column>
+    <dxi-column dataField="dueDate"
+                caption="Due Date"
+                dataType="date"
+                [customizeText]="formatDate">
+    </dxi-column>
+    <dxi-column dataField="totalAmount"
+                caption="Total Amount"
+                dataType="number"
+                [format]="'$#,##0.##'">
+    </dxi-column>
+    <dxi-column dataField="status"
+                caption="Status"
+                [cellTemplate]="'statusCellTemplate'">
+    </dxi-column>
+    <dxi-column dataField="notes" caption="Notes"></dxi-column>
+
+    <!-- Status Template -->
+    <div *dxTemplate="let cell of 'statusCellTemplate'">
+      <span [class]="getStatusClass(cell.value)">{{ cell.value }}</span>
+    </div>
+  </dx-data-grid>
+
+  <!-- Add/Edit Invoice Popup -->
+  <dx-popup [title]="popupTitle"
+            [visible]="isInvoicePopupOpened"
+            (onHiding)="onCancelInvoice()"
+            [width]="600"
+            [height]="500">
+
+    <div *dxTemplate="let content of 'content'">
+      <div class="form-container">
+        <div class="form-group">
+          <label>Customer *</label>
+          <dx-select-box [items]="customers"
+                         displayExpr="name"
+                         valueExpr="customerId"
+                         [(value)]="currentInvoice.customerId"
+                         placeholder="Select customer">
+          </dx-select-box>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Date Issued *</label>
+            <dx-date-box [(value)]="currentInvoice.dateIssued"
+                         type="date">
+            </dx-date-box>
+          </div>
+
+          <div class="form-group">
+            <label>Due Date *</label>
+            <dx-date-box [(value)]="currentInvoice.dueDate"
+                         type="date">
+            </dx-date-box>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Total Amount *</label>
+            <dx-number-box [(value)]="currentInvoice.totalAmount"
+                           [min]="0"
+                           [format]="'$#,##0.##'"
+                           placeholder="Enter total amount">
+            </dx-number-box>
+          </div>
+
+          <div class="form-group">
+            <label>Status</label>
+            <dx-select-box [items]="statusOptions"
+                           [(value)]="currentInvoice.status"
+                           placeholder="Select status">
+            </dx-select-box>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Notes</label>
+          <dx-text-area [(value)]="currentInvoice.notes"
+                        placeholder="Additional notes"
+                        [height]="80">
+          </dx-text-area>
+        </div>
+
+        <div class="button-group">
+          <dx-button text="Save"
+                     type="success"
+                     (onClick)="onSaveInvoice()">
+          </dx-button>
+          <dx-button text="Cancel"
+                     type="normal"
+                     (onClick)="onCancelInvoice()">
+          </dx-button>
+        </div>
+      </div>
+    </div>
+  </dx-popup>
+
+  <!-- View/Edit Invoice Lines Popup -->
+  <dx-popup [title]="'Invoice Lines - #' + (selectedInvoice?.invoiceId || '')"
+            [visible]="isLinesViewPopupOpened"
+            (onHiding)="onCancelLinesView()"
+            [width]="800"
+            [height]="600">
+
+    <div *dxTemplate="let content of 'content'">
+      <div class="popup-header">
+        <div class="invoice-info">
+          <h3>Customer: {{selectedInvoice?.customerName}}</h3>
+          <p>Total: {{formatCurrency(selectedInvoice?.totalAmount)}} | Status: {{selectedInvoice?.status}}</p>
+        </div>
+        <dx-button text="Add Line"
+                   icon="plus"
+                   type="default"
+                   stylingMode="contained"
+                   (onClick)="addInvoiceLine(selectedInvoice)">
+        </dx-button>
+      </div>
+
+      <dx-data-grid [dataSource]="invoiceLines"
+                    [showBorders]="true"
+                    [allowColumnResizing]="true">
+
+        <dxo-paging [pageSize]="10"></dxo-paging>
+
+        <!-- Actions Column -->
+        <dxi-column type="buttons" caption="Actions" [width]="120">
+          <dxi-button icon="edit" hint="Edit" [onClick]="editInvoiceLine"></dxi-button>
+          <dxi-button icon="trash" hint="Delete" [onClick]="deleteInvoiceLine"></dxi-button>
+        </dxi-column>
+
+        <!-- Data Columns -->
+        <dxi-column dataField="description" caption="Description"></dxi-column>
+        <dxi-column dataField="quantity" caption="Qty" dataType="number"></dxi-column>
+        <dxi-column dataField="unitPrice"
+                    caption="Unit Price"
+                    dataType="number"
+                    [format]="'$#,##0.##'">
+        </dxi-column>
+        <dxi-column dataField="lineTotal"
+                    caption="Line Total"
+                    dataType="number"
+                    [format]="'$#,##0.##'">
+        </dxi-column>
+      </dx-data-grid>
+
+      <div class="button-group">
+        <dx-button text="Close"
+                   type="normal"
+                   (onClick)="onCancelLinesView()">
+        </dx-button>
+      </div>
+    </div>
+  </dx-popup>
+
+  <!-- Add/Edit Invoice Line Popup -->
+  <dx-popup [title]="linePopupTitle"
+            [visible]="isLinePopupOpened"
+            (onHiding)="onCancelLine()"
+            [width]="500"
+            [height]="450">
+
+    <div *dxTemplate="let content of 'content'">
+      <div class="form-container">
+        <div class="form-group">
+          <label>Description *</label>
+          <dx-text-box [(value)]="currentLine.description"
+                       placeholder="Enter line description">
+          </dx-text-box>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Task Line</label>
+            <dx-select-box [items]="taskLines"
+                           displayExpr="description"
+                           valueExpr="taskLineId"
+                           [(value)]="currentLine.taskLineId"
+                           placeholder="Select task line (optional)">
+            </dx-select-box>
+          </div>
+
+          <div class="form-group">
+            <label>Inventory Item</label>
+            <dx-select-box [items]="inventoryItems"
+                           displayExpr="name"
+                           valueExpr="inventoryId"
+                           [(value)]="currentLine.inventoryId"
+                           placeholder="Select inventory item (optional)">
+            </dx-select-box>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Quantity *</label>
+            <dx-number-box [(value)]="currentLine.quantity"
+                           [min]="1"
+                           (onValueChanged)="calculateLineTotal()"
+                           placeholder="Enter quantity">
+            </dx-number-box>
+          </div>
+
+          <div class="form-group">
+            <label>Unit Price *</label>
+            <dx-number-box [(value)]="currentLine.unitPrice"
+                           [min]="0"
+                           [format]="'$#,##0.##'"
+                           (onValueChanged)="calculateLineTotal()"
+                           placeholder="Enter unit price">
+            </dx-number-box>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Line Total</label>
+          <dx-number-box [(value)]="currentLine.lineTotal"
+                         [format]="'$#,##0.##'"
+                         [readOnly]="true">
+          </dx-number-box>
+        </div>
+
+        <div class="button-group">
+          <dx-button text="Save"
+                     type="success"
+                     (onClick)="onSaveLine()">
+          </dx-button>
+          <dx-button text="Cancel"
+                     type="normal"
+                     (onClick)="onCancelLine()">
+          </dx-button>
+        </div>
+      </div>
+    </div>
+  </dx-popup>
+</div>

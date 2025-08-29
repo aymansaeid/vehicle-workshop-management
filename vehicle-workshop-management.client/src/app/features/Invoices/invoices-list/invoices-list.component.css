@@ -1,0 +1,142 @@
+.invoices-container {
+  padding: 20px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+.invoices-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+  .invoices-header h1 {
+    margin: 0;
+    color: #2a2a2a;
+    font-size: 28px;
+  }
+
+.form-container {
+  padding: 15px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+  .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #2a2a2a;
+  }
+
+.form-row {
+  display: flex;
+  gap: 15px;
+}
+
+  .form-row .form-group {
+    flex: 1;
+  }
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  justify-content: flex-end;
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.invoice-info h3 {
+  margin: 0 0 5px 0;
+  color: #2a2a2a;
+}
+
+.invoice-info p {
+  margin: 0;
+  color: #666;
+}
+
+/* Status Styles */
+.status-paid {
+  color: #2e7d32;
+  background-color: #e8f5e8;
+  padding: 4px 8px;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+.status-sent {
+  color: #1976d2;
+  background-color: #e3f2fd;
+  padding: 4px 8px;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+.status-draft {
+  color: #ed6c02;
+  background-color: #fff3e0;
+  padding: 4px 8px;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+.status-overdue {
+  color: #c62828;
+  background-color: #ffebee;
+  padding: 4px 8px;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+.status-cancelled {
+  color: #757575;
+  background-color: #f5f5f5;
+  padding: 4px 8px;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+.status-unknown {
+  color: #9e9e9e;
+  background-color: #f5f5f5;
+  padding: 4px 8px;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .invoices-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+  }
+
+  .popup-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+}
