@@ -10,11 +10,12 @@ import {
   DxValidatorModule,
   DxFormModule,
   DxLoadPanelModule,
-  DxDateBoxModule
+  DxDateBoxModule,
+  DxTextAreaModule,
+  DxCheckBoxModule
 } from 'devextreme-angular';
 import { ApiService } from '../../../api/api';
 import notify from "devextreme/ui/notify";
-import { DxTextAreaModule, DxCheckBoxModule } from 'devextreme-angular';
 
 @Component({
   selector: 'app-invoices-list',
@@ -38,41 +39,29 @@ import { DxTextAreaModule, DxCheckBoxModule } from 'devextreme-angular';
   ]
 })
 export class InvoicesListComponent implements OnInit {
-  // Invoices data
+  // Data arrays
   invoices: any[] = [];
   customers: any[] = [];
   invoiceLines: any[] = [];
   taskLines: any[] = [];
   inventoryItems: any[] = [];
 
-  // Popup controls
+  // Popup state management
   isInvoicePopupOpened = false;
   isLinePopupOpened = false;
-  isLinesViewPopupOpened = false;
+  isInvoiceDetailPopupOpened = false;
+  isLoading = false;
 
   // Current items for editing/adding
-  currentInvoice: any = {
-    dateIssued: new Date(),
-    dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-    totalAmount: 0,
-    status: 'Draft',
-    notes: '',
-    customerId: null
-  };
-
-  currentLine: any = {
-    taskLineId: null,
-    inventoryId: null,
-    description: '',
-    quantity: 1,
-    unitPrice: 0,
-    lineTotal: 0
-  };
-
+  currentInvoice: any = this.getDefaultInvoice();
+  currentLine: any = this.getDefaultLine();
   selectedInvoice: any = null;
 
+  // UI state
   popupTitle = 'Add Invoice';
   linePopupTitle = 'Add Invoice Line';
+  isEditMode = false;
+  isLineEditMode = false;
 
   // Options
   statusOptions = ['Draft', 'Sent', 'Paid', 'Overdue', 'Cancelled'];
@@ -80,123 +69,27 @@ export class InvoicesListComponent implements OnInit {
   constructor(private apiService: ApiService) { }
 
   ngOnInit() {
-    this.loadInvoices();
-    this.loadCustomers();
-    this.loadTaskLines();
-    this.loadInventoryItems();
+    this.loadAllData();
   }
 
-  // Load data methods
-  loadInvoices() {
-    this.apiService.get('Invoices').subscribe({
-      next: (data: any) => {
-        this.invoices = data;
-      },
-      error: (error) => {
-        notify(`Error loading invoices: ${error.message}`, 'error', 2000);
-      }
-    });
-  }
-
-  loadCustomers() {
-    this.apiService.get('Customers').subscribe({
-      next: (data: any) => {
-        this.customers = data;
-      },
-      error: (error) => {
-        notify(`Error loading customers: ${error.message}`, 'error', 2000);
-      }
-    });
-  }
-
-  loadTaskLines() {
-    this.apiService.get('TaskLines').subscribe({
-      next: (data: any) => {
-        this.taskLines = data;
-      },
-      error: (error) => {
-        notify(`Error loading task lines: ${error.message}`, 'error', 2000);
-      }
-    });
-  }
-
-  loadInventoryItems() {
-    this.apiService.get('Inventories').subscribe({
-      next: (data: any) => {
-        this.inventoryItems = data;
-      },
-      error: (error) => {
-        notify(`Error loading inventory items: ${error.message}`, 'error', 2000);
-      }
-    });
-  }
-
-  loadInvoiceLines(invoiceId: number) {
-    this.apiService.get(`Invoices/${invoiceId}/lines`).subscribe({
-      next: (data: any) => {
-        this.invoiceLines = data;
-      },
-      error: (error) => {
-        notify(`Error loading invoice lines: ${error.message}`, 'error', 2000);
-      }
-    });
-  }
-
-  // Invoice CRUD Operations
-  addInvoice() {
-    this.currentInvoice = {
+  // Default object factories
+  private getDefaultInvoice() {
+    return {
+      invoiceId: 0,
       dateIssued: new Date(),
-      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
       totalAmount: 0,
       status: 'Draft',
       notes: '',
-      customerId: null
+      customerId: null,
+      customerName: ''
     };
-    this.popupTitle = 'Add Invoice';
-    this.isInvoicePopupOpened = true;
   }
 
-  editInvoice(invoice: any) {
-    this.currentInvoice = { ...invoice };
-    this.popupTitle = 'Edit Invoice';
-    this.isInvoicePopupOpened = true;
-  }
-
-  deleteInvoice(invoiceId: number) {
-    if (confirm('Are you sure you want to delete this invoice?')) {
-      this.apiService.delete('Invoices', invoiceId).subscribe({
-        next: () => {
-          notify('Invoice deleted successfully', 'success', 2000);
-          this.loadInvoices();
-        },
-        error: (error) => {
-          notify(`Error deleting invoice: ${error.message}`, 'error', 2000);
-        }
-      });
-    }
-  }
-
-  onSaveInvoice() {
-    const action = this.popupTitle === 'Add Invoice'
-      ? this.apiService.post('Invoices', this.currentInvoice)
-      : this.apiService.put('Invoices', this.currentInvoice.invoiceId, this.currentInvoice);
-
-    action.subscribe({
-      next: () => {
-        notify(`Invoice ${this.popupTitle === 'Add Invoice' ? 'created' : 'updated'} successfully`, 'success', 2000);
-        this.isInvoicePopupOpened = false;
-        this.loadInvoices();
-      },
-      error: (error) => {
-        notify(`Error ${this.popupTitle === 'Add Invoice' ? 'creating' : 'updating'} invoice: ${error.message}`, 'error', 2000);
-      }
-    });
-  }
-
-  // Invoice Line Operations
-  addInvoiceLine(invoice: any) {
-    this.selectedInvoice = invoice;
-    this.currentLine = {
+  private getDefaultLine() {
+    return {
+      lineId: 0,
+      invoiceId: 0,
       taskLineId: null,
       inventoryId: null,
       description: '',
@@ -204,118 +97,400 @@ export class InvoicesListComponent implements OnInit {
       unitPrice: 0,
       lineTotal: 0
     };
-    this.linePopupTitle = 'Add Invoice Line';
-    this.isLinePopupOpened = true;
   }
 
-  editInvoiceLine(line: any) {
-    this.currentLine = { ...line };
-    this.linePopupTitle = 'Edit Invoice Line';
-    this.isLinePopupOpened = true;
+  // Load all required data
+  private loadAllData() {
+    this.isLoading = true;
+    Promise.all([
+      this.loadInvoices(),
+      this.loadCustomers(),
+      this.loadTaskLines(),
+      this.loadInventoryItems()
+    ]).finally(() => {
+      this.isLoading = false;
+    });
   }
 
-  deleteInvoiceLine(lineId: number) {
-    if (confirm('Are you sure you want to delete this invoice line?')) {
-      this.apiService.delete('InvoiceLines', lineId).subscribe({
-        next: () => {
-          notify('Invoice line deleted successfully', 'success', 2000);
-          this.loadInvoiceLines(this.selectedInvoice.invoiceId);
+  // Load data methods with proper error handling
+  private loadInvoices(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.apiService.get('Invoices').subscribe({
+        next: (data: any[]) => {
+          this.invoices = data || [];
+          resolve();
         },
         error: (error) => {
-          notify(`Error deleting invoice line: ${error.message}`, 'error', 2000);
+          console.error('Error loading invoices:', error);
+          notify(`Error loading invoices: ${error.message}`, 'error', 3000);
+          this.invoices = [];
+          reject(error);
         }
       });
-    }
+    });
   }
 
-  onSaveLine() {
-    if (!this.selectedInvoice) return;
+  private loadCustomers(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.apiService.get('Customers').subscribe({
+        next: (data: any[]) => {
+          this.customers = data || [];
+          resolve();
+        },
+        error: (error) => {
+          console.error('Error loading customers:', error);
+          notify(`Error loading customers: ${error.message}`, 'error', 3000);
+          this.customers = [];
+          reject(error);
+        }
+      });
+    });
+  }
 
-    const action = this.linePopupTitle === 'Add Invoice Line'
-      ? this.apiService.post('InvoiceLines', {
-        ...this.currentLine,
-        invoiceId: this.selectedInvoice.invoiceId
-      })
-      : this.apiService.put('InvoiceLines', this.currentLine.lineId, this.currentLine);
+  private loadTaskLines(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.apiService.get('TaskLines').subscribe({
+        next: (data: any[]) => {
+          this.taskLines = data || [];
+          resolve();
+        },
+        error: (error) => {
+          console.error('Error loading task lines:', error);
+          notify(`Error loading task lines: ${error.message}`, 'error', 3000);
+          this.taskLines = [];
+          reject(error);
+        }
+      });
+    });
+  }
 
-    action.subscribe({
+  private loadInventoryItems(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.apiService.get('Inventories').subscribe({
+        next: (data: any[]) => {
+          this.inventoryItems = data || [];
+          resolve();
+        },
+        error: (error) => {
+          console.error('Error loading inventory items:', error);
+          notify(`Error loading inventory items: ${error.message}`, 'error', 3000);
+          this.inventoryItems = [];
+          reject(error);
+        }
+      });
+    });
+  }
+
+  private loadInvoiceLines(invoiceId: number): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.apiService.get(`Invoices/${invoiceId}/lines`).subscribe({
+        next: (data: any[]) => {
+          this.invoiceLines = data || [];
+          resolve();
+        },
+        error: (error) => {
+          console.error('Error loading invoice lines:', error);
+          notify(`Error loading invoice lines: ${error.message}`, 'error', 3000);
+          this.invoiceLines = [];
+          reject(error);
+        }
+      });
+    });
+  }
+
+  // Invoice CRUD Operations
+  addInvoice() {
+    this.currentInvoice = this.getDefaultInvoice();
+    this.popupTitle = 'Add Invoice';
+    this.isEditMode = false;
+    this.isInvoicePopupOpened = true;
+  }
+
+  editInvoice = (e: any) => {
+    const invoice = e.row?.data || e;
+    if (!invoice) return;
+
+    this.currentInvoice = {
+      ...invoice,
+      dateIssued: new Date(invoice.dateIssued),
+      dueDate: new Date(invoice.dueDate)
+    };
+    this.popupTitle = 'Edit Invoice';
+    this.isEditMode = true;
+    this.isInvoicePopupOpened = true;
+  };
+
+  deleteInvoice = (e: any) => {
+    const invoice = e.row?.data || e;
+    if (!invoice || !invoice.invoiceId) return;
+
+    const result = confirm(`Are you sure you want to delete Invoice #${invoice.invoiceId}?`);
+    if (!result) return;
+
+    this.apiService.delete('Invoices', invoice.invoiceId).subscribe({
       next: () => {
-        notify(`Invoice line ${this.linePopupTitle === 'Add Invoice Line' ? 'added' : 'updated'} successfully`, 'success', 2000);
-        this.isLinePopupOpened = false;
-        this.loadInvoiceLines(this.selectedInvoice.invoiceId);
-        this.loadInvoices(); // Refresh invoices to update totals
+        notify('Invoice deleted successfully', 'success', 2000);
+        this.loadInvoices();
       },
       error: (error) => {
-        notify(`Error ${this.linePopupTitle === 'Add Invoice Line' ? 'adding' : 'updating'} invoice line: ${error.message}`, 'error', 2000);
+        console.error('Error deleting invoice:', error);
+        notify(`Error deleting invoice: ${error.message}`, 'error', 3000);
+      }
+    });
+  };
+
+  onSaveInvoice() {
+    if (!this.validateInvoice()) return;
+
+    const invoiceData = { ...this.currentInvoice };
+
+    // Ensure dates are properly formatted
+    if (invoiceData.dateIssued) {
+      invoiceData.dateIssued = new Date(invoiceData.dateIssued).toISOString();
+    }
+    if (invoiceData.dueDate) {
+      invoiceData.dueDate = new Date(invoiceData.dueDate).toISOString();
+    }
+
+    const action = this.isEditMode
+      ? this.apiService.put('Invoices', this.currentInvoice.invoiceId, invoiceData)
+      : this.apiService.post('Invoices', invoiceData);
+
+    action.subscribe({
+      next: (response: any) => {
+        const actionText = this.isEditMode ? 'updated' : 'created';
+        notify(`Invoice ${actionText} successfully`, 'success', 2000);
+        this.isInvoicePopupOpened = false;
+        this.loadInvoices();
+      },
+      error: (error) => {
+        console.error('Error saving invoice:', error);
+        const actionText = this.isEditMode ? 'updating' : 'creating';
+        notify(`Error ${actionText} invoice: ${error.message}`, 'error', 3000);
       }
     });
   }
 
-  // View invoice lines
-  viewInvoiceLines(invoice: any) {
+  private validateInvoice(): boolean {
+    if (!this.currentInvoice.customerId) {
+      notify('Please select a customer', 'warning', 2000);
+      return false;
+    }
+    if (!this.currentInvoice.dateIssued) {
+      notify('Please select a date issued', 'warning', 2000);
+      return false;
+    }
+    if (!this.currentInvoice.dueDate) {
+      notify('Please select a due date', 'warning', 2000);
+      return false;
+    }
+    return true;
+  }
+
+  // Invoice Detail Operations
+  viewInvoiceDetails = (e: any) => {
+    const invoice = e.row?.data || e;
+    if (!invoice) return;
+
     this.selectedInvoice = invoice;
-    this.loadInvoiceLines(invoice.invoiceId);
-    this.isLinesViewPopupOpened = true;
+    this.loadInvoiceLines(invoice.invoiceId).then(() => {
+      this.isInvoiceDetailPopupOpened = true;
+    });
+  };
+
+  // Invoice Line CRUD Operations
+  addInvoiceLine() {
+    if (!this.selectedInvoice) return;
+
+    this.currentLine = {
+      ...this.getDefaultLine(),
+      invoiceId: this.selectedInvoice.invoiceId
+    };
+    this.linePopupTitle = 'Add Invoice Line';
+    this.isLineEditMode = false;
+    this.isLinePopupOpened = true;
+  }
+
+  editInvoiceLine = (e: any) => {
+    const line = e.row?.data || e;
+    if (!line) return;
+
+    this.currentLine = { ...line };
+    this.linePopupTitle = 'Edit Invoice Line';
+    this.isLineEditMode = true;
+    this.isLinePopupOpened = true;
+  };
+
+  deleteInvoiceLine = (e: any) => {
+    const line = e.row?.data || e;
+    if (!line || !line.lineId) return;
+
+    const result = confirm('Are you sure you want to delete this invoice line?');
+    if (!result) return;
+
+    this.apiService.delete('InvoiceLines', line.lineId).subscribe({
+      next: () => {
+        notify('Invoice line deleted successfully', 'success', 2000);
+        if (this.selectedInvoice) {
+          this.loadInvoiceLines(this.selectedInvoice.invoiceId);
+          this.loadInvoices(); // Refresh to update totals
+        }
+      },
+      error: (error) => {
+        console.error('Error deleting invoice line:', error);
+        notify(`Error deleting invoice line: ${error.message}`, 'error', 3000);
+      }
+    });
+  };
+
+  onSaveLine() {
+    if (!this.validateLine()) return;
+
+    const lineData = { ...this.currentLine };
+
+    const action = this.isLineEditMode
+      ? this.apiService.put('InvoiceLines', this.currentLine.lineId, lineData)
+      : this.apiService.post('InvoiceLines', lineData);
+
+    action.subscribe({
+      next: (response: any) => {
+        const actionText = this.isLineEditMode ? 'updated' : 'added';
+        notify(`Invoice line ${actionText} successfully`, 'success', 2000);
+        this.isLinePopupOpened = false;
+
+        if (this.selectedInvoice) {
+          this.loadInvoiceLines(this.selectedInvoice.invoiceId);
+          this.loadInvoices(); // Refresh to update totals
+        }
+      },
+      error: (error) => {
+        console.error('Error saving invoice line:', error);
+        const actionText = this.isLineEditMode ? 'updating' : 'adding';
+        notify(`Error ${actionText} invoice line: ${error.message}`, 'error', 3000);
+      }
+    });
+  }
+
+  private validateLine(): boolean {
+    if (!this.currentLine.description?.trim()) {
+      notify('Please enter a description', 'warning', 2000);
+      return false;
+    }
+    if (!this.currentLine.quantity || this.currentLine.quantity <= 0) {
+      notify('Please enter a valid quantity', 'warning', 2000);
+      return false;
+    }
+    if (this.currentLine.unitPrice < 0) {
+      notify('Unit price cannot be negative', 'warning', 2000);
+      return false;
+    }
+    return true;
   }
 
   // Generate PDF
-  generatePDF(invoiceId: number) {
+  generatePDF = (e: any) => {
+    const invoice = e.row?.data || e;
+    if (!invoice || !invoice.invoiceId) return;
+
+    // Implement PDF generation logic here
+    notify('PDF generation feature coming soon', 'info', 2000);
+
     /*
-    this.apiService.get(`Invoices/${invoiceId}/pdf`, { responseType: 'blob' , e }).subscribe({
+    this.apiService.get(`Invoices/${invoice.invoiceId}/pdf`, { responseType: 'blob' }).subscribe({
       next: (blob: Blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `invoice-${invoiceId}.pdf`;
+        a.download = `invoice-${invoice.invoiceId}.pdf`;
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
         notify('PDF generated successfully', 'success', 2000);
       },
       error: (error) => {
-        notify(`Error generating PDF: ${error.message}`, 'error', 2000);
+        console.error('Error generating PDF:', error);
+        notify(`Error generating PDF: ${error.message}`, 'error', 3000);
       }
     });
-    */ 
+    */
+  };
+
+  // Calculations
+  calculateLineTotal() {
+    const quantity = Number(this.currentLine.quantity) || 0;
+    const unitPrice = Number(this.currentLine.unitPrice) || 0;
+    this.currentLine.lineTotal = quantity * unitPrice;
   }
 
-  // Calculate line total
-  calculateLineTotal() {
-    if (this.currentLine.quantity && this.currentLine.unitPrice) {
-      this.currentLine.lineTotal = this.currentLine.quantity * this.currentLine.unitPrice;
+  onTaskLineChanged(taskLineId: any) {
+    if (taskLineId) {
+      const taskLine = this.taskLines.find(tl => tl.taskLineId === taskLineId);
+      if (taskLine) {
+        this.currentLine.description = taskLine.description;
+        this.currentLine.unitPrice = taskLine.rate || 0;
+        this.calculateLineTotal();
+      }
+    }
+  }
+
+  onInventoryItemChanged(inventoryId: any) {
+    if (inventoryId) {
+      const inventoryItem = this.inventoryItems.find(item => item.inventoryId === inventoryId);
+      if (inventoryItem) {
+        this.currentLine.description = inventoryItem.name;
+        this.currentLine.unitPrice = inventoryItem.price || 0;
+        this.calculateLineTotal();
+      }
     }
   }
 
   // Utility methods
-  formatCurrency = (value: number) => {
+  formatCurrency = (value: number): string => {
     return value ? `$${value.toFixed(2)}` : '$0.00';
   };
 
-  formatDate = (date: string) => {
-    return date ? new Date(date).toLocaleDateString('en-GB') : '';
+  formatDate = (date: string | Date): string => {
+    if (!date) return '';
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return dateObj.toLocaleDateString('en-GB');
   };
 
-  getStatusClass = (status: string) => {
-    switch (status) {
-      case 'Paid': return 'status-paid';
-      case 'Sent': return 'status-sent';
-      case 'Draft': return 'status-draft';
-      case 'Overdue': return 'status-overdue';
-      case 'Cancelled': return 'status-cancelled';
+  getStatusClass = (status: string): string => {
+    switch (status?.toLowerCase()) {
+      case 'paid': return 'status-paid';
+      case 'sent': return 'status-sent';
+      case 'draft': return 'status-draft';
+      case 'overdue': return 'status-overdue';
+      case 'cancelled': return 'status-cancelled';
       default: return 'status-unknown';
     }
+  };
+
+  getCustomerName = (customerId: number): string => {
+    const customer = this.customers.find(c => c.customerId === customerId);
+    return customer ? customer.name : 'Unknown Customer';
   };
 
   // Cancel operations
   onCancelInvoice() {
     this.isInvoicePopupOpened = false;
+    this.currentInvoice = this.getDefaultInvoice();
   }
 
   onCancelLine() {
     this.isLinePopupOpened = false;
+    this.currentLine = this.getDefaultLine();
   }
 
-  onCancelLinesView() {
-    this.isLinesViewPopupOpened = false;
+  onCancelInvoiceDetail() {
+    this.isInvoiceDetailPopupOpened = false;
     this.selectedInvoice = null;
+    this.invoiceLines = [];
+  }
+
+  // Refresh data
+  refreshData() {
+    this.loadAllData();
   }
 }

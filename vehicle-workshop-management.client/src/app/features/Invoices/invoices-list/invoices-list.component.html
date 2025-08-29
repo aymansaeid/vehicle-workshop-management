@@ -1,8 +1,19 @@
 <div class="invoices-container">
+  <!-- Loading Panel -->
+  <dx-load-panel [visible]="isLoading"
+                 message="Loading data...">
+  </dx-load-panel>
+
   <!-- Header -->
   <div class="invoices-header">
     <h1>Invoice Management</h1>
     <div class="header-actions">
+      <dx-button text="Refresh"
+                 icon="refresh"
+                 type="normal"
+                 stylingMode="outlined"
+                 (onClick)="refreshData()">
+      </dx-button>
       <dx-button text="Create Invoice"
                  icon="plus"
                  type="default"
@@ -16,48 +27,84 @@
   <dx-data-grid [dataSource]="invoices"
                 [showBorders]="true"
                 [allowColumnResizing]="true"
-                [columnAutoWidth]="true">
+                [columnAutoWidth]="true"
+                [allowColumnReordering]="true"
+                keyExpr="invoiceId">
 
     <dxo-paging [pageSize]="10"></dxo-paging>
     <dxo-pager [showPageSizeSelector]="true"
-               [allowedPageSizes]="[5, 10, 20]"
+               [allowedPageSizes]="[5, 10, 20, 50]"
                [showInfo]="true">
     </dxo-pager>
 
     <dxo-filter-row [visible]="true"></dxo-filter-row>
-    <dxo-search-panel [visible]="true" placeholder="Search invoices"></dxo-search-panel>
+    <dxo-search-panel [visible]="true" placeholder="Search invoices..."></dxo-search-panel>
+    <dxo-header-filter [visible]="true"></dxo-header-filter>
 
     <!-- Actions Column -->
-    <dxi-column type="buttons" caption="Actions" [width]="220">
-      <dxi-button icon="edit" hint="Edit" [onClick]="editInvoice"></dxi-button>
-      <dxi-button icon="list" hint="View Lines" [onClick]="viewInvoiceLines"></dxi-button>
-      <dxi-button icon="file" hint="Generate PDF" [onClick]="generatePDF"></dxi-button>
-      <dxi-button icon="trash" hint="Delete" [onClick]="deleteInvoice"></dxi-button>
+    <dxi-column type="buttons" caption="Actions" [width]="280" [fixed]="true">
+      <dxi-button icon="edit"
+                  hint="Edit Invoice"
+                  [onClick]="editInvoice">
+      </dxi-button>
+      <dxi-button icon="detailslayout"
+                  hint="View Details"
+                  [onClick]="viewInvoiceDetails">
+      </dxi-button>
+      <dxi-button icon="exportpdf"
+                  hint="Generate PDF"
+                  [onClick]="generatePDF">
+      </dxi-button>
+      <dxi-button icon="trash"
+                  hint="Delete Invoice"
+                  [onClick]="deleteInvoice">
+      </dxi-button>
     </dxi-column>
 
     <!-- Data Columns -->
-    <dxi-column dataField="invoiceId" caption="Invoice #"></dxi-column>
-    <dxi-column dataField="customerName" caption="Customer"></dxi-column>
+    <dxi-column dataField="invoiceId"
+                caption="Invoice #"
+                dataType="number"
+                [width]="120">
+    </dxi-column>
+
+    <dxi-column dataField="customerId"
+                caption="Customer"
+                [calculateCellValue]="getCustomerName"
+                [width]="200">
+    </dxi-column>
+
     <dxi-column dataField="dateIssued"
                 caption="Date Issued"
                 dataType="date"
-                [customizeText]="formatDate">
+                [format]="'dd/MM/yyyy'"
+                [width]="120">
     </dxi-column>
+
     <dxi-column dataField="dueDate"
                 caption="Due Date"
                 dataType="date"
-                [customizeText]="formatDate">
+                [format]="'dd/MM/yyyy'"
+                [width]="120">
     </dxi-column>
+
     <dxi-column dataField="totalAmount"
                 caption="Total Amount"
                 dataType="number"
-                [format]="'$#,##0.##'">
+                [format]="'currency'"
+                [width]="140">
     </dxi-column>
+
     <dxi-column dataField="status"
                 caption="Status"
-                [cellTemplate]="'statusCellTemplate'">
+                [cellTemplate]="'statusCellTemplate'"
+                [width]="120">
     </dxi-column>
-    <dxi-column dataField="notes" caption="Notes"></dxi-column>
+
+    <dxi-column dataField="notes"
+                caption="Notes"
+                [visible]="false">
+    </dxi-column>
 
     <!-- Status Template -->
     <div *dxTemplate="let cell of 'statusCellTemplate'">
@@ -70,7 +117,10 @@
             [visible]="isInvoicePopupOpened"
             (onHiding)="onCancelInvoice()"
             [width]="600"
-            [height]="500">
+            [height]="550"
+            [showCloseButton]="true"
+            [dragEnabled]="false"
+            [resizeEnabled]="false">
 
     <div *dxTemplate="let content of 'content'">
       <div class="form-container">
@@ -80,7 +130,8 @@
                          displayExpr="name"
                          valueExpr="customerId"
                          [(value)]="currentInvoice.customerId"
-                         placeholder="Select customer">
+                         placeholder="Select customer"
+                         [searchEnabled]="true">
           </dx-select-box>
         </div>
 
@@ -88,30 +139,34 @@
           <div class="form-group">
             <label>Date Issued *</label>
             <dx-date-box [(value)]="currentInvoice.dateIssued"
-                         type="date">
+                         type="date"
+                         [max]="currentInvoice.dueDate">
             </dx-date-box>
           </div>
 
           <div class="form-group">
             <label>Due Date *</label>
             <dx-date-box [(value)]="currentInvoice.dueDate"
-                         type="date">
+                         type="date"
+                         [min]="currentInvoice.dateIssued">
             </dx-date-box>
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label>Total Amount *</label>
+            <label>Total Amount</label>
             <dx-number-box [(value)]="currentInvoice.totalAmount"
                            [min]="0"
-                           [format]="'$#,##0.##'"
-                           placeholder="Enter total amount">
+                           [format]="'currency'"
+                           placeholder="Enter total amount"
+                           [readOnly]="true">
             </dx-number-box>
+            <small class="form-text">Total will be calculated from invoice lines</small>
           </div>
 
           <div class="form-group">
-            <label>Status</label>
+            <label>Status *</label>
             <dx-select-box [items]="statusOptions"
                            [(value)]="currentInvoice.status"
                            placeholder="Select status">
@@ -130,10 +185,12 @@
         <div class="button-group">
           <dx-button text="Save"
                      type="success"
+                     stylingMode="contained"
                      (onClick)="onSaveInvoice()">
           </dx-button>
           <dx-button text="Cancel"
                      type="normal"
+                     stylingMode="outlined"
                      (onClick)="onCancelInvoice()">
           </dx-button>
         </div>
@@ -141,58 +198,94 @@
     </div>
   </dx-popup>
 
-  <!-- View/Edit Invoice Lines Popup -->
-  <dx-popup [title]="'Invoice Lines - #' + (selectedInvoice?.invoiceId || '')"
-            [visible]="isLinesViewPopupOpened"
-            (onHiding)="onCancelLinesView()"
-            [width]="800"
-            [height]="600">
+  <!-- Invoice Details Popup -->
+  <dx-popup [title]="'Invoice Details - #' + (selectedInvoice?.invoiceId || '')"
+            [visible]="isInvoiceDetailPopupOpened"
+            (onHiding)="onCancelInvoiceDetail()"
+            [width]="900"
+            [height]="700"
+            [showCloseButton]="true"
+            [dragEnabled]="false"
+            [resizeEnabled]="true">
 
     <div *dxTemplate="let content of 'content'">
-      <div class="popup-header">
+      <!-- Invoice Header Info -->
+      <div class="invoice-detail-header" *ngIf="selectedInvoice">
         <div class="invoice-info">
-          <h3>Customer: {{selectedInvoice?.customerName}}</h3>
-          <p>Total: {{formatCurrency(selectedInvoice?.totalAmount)}} | Status: {{selectedInvoice?.status}}</p>
+          <h3>{{getCustomerName(selectedInvoice.customerId)}}</h3>
+          <div class="invoice-meta">
+            <span>Total: {{formatCurrency(selectedInvoice.totalAmount)}}</span>
+            <span [class]="getStatusClass(selectedInvoice.status)">{{selectedInvoice.status}}</span>
+            <span>Due: {{formatDate(selectedInvoice.dueDate)}}</span>
+          </div>
+          <p *ngIf="selectedInvoice.notes" class="invoice-notes">{{selectedInvoice.notes}}</p>
         </div>
-        <dx-button text="Add Line"
-                   icon="plus"
-                   type="default"
-                   stylingMode="contained"
-                   (onClick)="addInvoiceLine(selectedInvoice)">
-        </dx-button>
+        <div class="invoice-actions">
+          <dx-button text="Add Line"
+                     icon="plus"
+                     type="default"
+                     stylingMode="contained"
+                     (onClick)="addInvoiceLine()">
+          </dx-button>
+          <dx-button text="Edit Invoice"
+                     icon="edit"
+                     type="normal"
+                     stylingMode="outlined"
+                     (onClick)="editInvoice(selectedInvoice)">
+          </dx-button>
+        </div>
       </div>
 
-      <dx-data-grid [dataSource]="invoiceLines"
-                    [showBorders]="true"
-                    [allowColumnResizing]="true">
+      <!-- Invoice Lines Grid -->
+      <div class="invoice-lines-section">
+        <h4>Invoice Lines</h4>
+        <dx-data-grid [dataSource]="invoiceLines"
+                      [showBorders]="true"
+                      [allowColumnResizing]="true"
+                      [columnAutoWidth]="true"
+                      keyExpr="lineId">
 
-        <dxo-paging [pageSize]="10"></dxo-paging>
+          <dxo-paging [pageSize]="10"></dxo-paging>
 
-        <!-- Actions Column -->
-        <dxi-column type="buttons" caption="Actions" [width]="120">
-          <dxi-button icon="edit" hint="Edit" [onClick]="editInvoiceLine"></dxi-button>
-          <dxi-button icon="trash" hint="Delete" [onClick]="deleteInvoiceLine"></dxi-button>
-        </dxi-column>
+          <!-- Actions Column -->
+          <dxi-column type="buttons" caption="Actions" [width]="150">
+            <dxi-button icon="edit"
+                        hint="Edit Line"
+                        [onClick]="editInvoiceLine">
+            </dxi-button>
+            <dxi-button icon="trash"
+                        hint="Delete Line"
+                        [onClick]="deleteInvoiceLine">
+            </dxi-button>
+          </dxi-column>
 
-        <!-- Data Columns -->
-        <dxi-column dataField="description" caption="Description"></dxi-column>
-        <dxi-column dataField="quantity" caption="Qty" dataType="number"></dxi-column>
-        <dxi-column dataField="unitPrice"
-                    caption="Unit Price"
-                    dataType="number"
-                    [format]="'$#,##0.##'">
-        </dxi-column>
-        <dxi-column dataField="lineTotal"
-                    caption="Line Total"
-                    dataType="number"
-                    [format]="'$#,##0.##'">
-        </dxi-column>
-      </dx-data-grid>
+          <!-- Data Columns -->
+          <dxi-column dataField="description" caption="Description"></dxi-column>
+          <dxi-column dataField="quantity"
+                      caption="Qty"
+                      dataType="number"
+                      [width]="80">
+          </dxi-column>
+          <dxi-column dataField="unitPrice"
+                      caption="Unit Price"
+                      dataType="number"
+                      [format]="'currency'"
+                      [width]="120">
+          </dxi-column>
+          <dxi-column dataField="lineTotal"
+                      caption="Line Total"
+                      dataType="number"
+                      [format]="'currency'"
+                      [width]="120">
+          </dxi-column>
+        </dx-data-grid>
+      </div>
 
       <div class="button-group">
         <dx-button text="Close"
                    type="normal"
-                   (onClick)="onCancelLinesView()">
+                   stylingMode="outlined"
+                   (onClick)="onCancelInvoiceDetail()">
         </dx-button>
       </div>
     </div>
@@ -202,8 +295,11 @@
   <dx-popup [title]="linePopupTitle"
             [visible]="isLinePopupOpened"
             (onHiding)="onCancelLine()"
-            [width]="500"
-            [height]="450">
+            [width]="550"
+            [height]="500"
+            [showCloseButton]="true"
+            [dragEnabled]="false"
+            [resizeEnabled]="false">
 
     <div *dxTemplate="let content of 'content'">
       <div class="form-container">
@@ -221,7 +317,9 @@
                            displayExpr="description"
                            valueExpr="taskLineId"
                            [(value)]="currentLine.taskLineId"
-                           placeholder="Select task line (optional)">
+                           (onValueChanged)="onTaskLineChanged($event.value)"
+                           placeholder="Select task line (optional)"
+                           [searchEnabled]="true">
             </dx-select-box>
           </div>
 
@@ -231,7 +329,9 @@
                            displayExpr="name"
                            valueExpr="inventoryId"
                            [(value)]="currentLine.inventoryId"
-                           placeholder="Select inventory item (optional)">
+                           (onValueChanged)="onInventoryItemChanged($event.value)"
+                           placeholder="Select inventory item (optional)"
+                           [searchEnabled]="true">
             </dx-select-box>
           </div>
         </div>
@@ -240,7 +340,8 @@
           <div class="form-group">
             <label>Quantity *</label>
             <dx-number-box [(value)]="currentLine.quantity"
-                           [min]="1"
+                           [min]="0.01"
+                           [step]="1"
                            (onValueChanged)="calculateLineTotal()"
                            placeholder="Enter quantity">
             </dx-number-box>
@@ -250,7 +351,7 @@
             <label>Unit Price *</label>
             <dx-number-box [(value)]="currentLine.unitPrice"
                            [min]="0"
-                           [format]="'$#,##0.##'"
+                           [format]="'currency'"
                            (onValueChanged)="calculateLineTotal()"
                            placeholder="Enter unit price">
             </dx-number-box>
@@ -260,18 +361,21 @@
         <div class="form-group">
           <label>Line Total</label>
           <dx-number-box [(value)]="currentLine.lineTotal"
-                         [format]="'$#,##0.##'"
-                         [readOnly]="true">
+                         [format]="'currency'"
+                         [readOnly]="true"
+                         placeholder="Calculated automatically">
           </dx-number-box>
         </div>
 
         <div class="button-group">
           <dx-button text="Save"
                      type="success"
+                     stylingMode="contained"
                      (onClick)="onSaveLine()">
           </dx-button>
           <dx-button text="Cancel"
                      type="normal"
+                     stylingMode="outlined"
                      (onClick)="onCancelLine()">
           </dx-button>
         </div>
