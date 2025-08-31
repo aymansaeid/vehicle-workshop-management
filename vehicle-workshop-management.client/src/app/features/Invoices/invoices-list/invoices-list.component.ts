@@ -63,8 +63,8 @@ export class InvoicesListComponent implements OnInit {
   isEditMode = false;
   isLineEditMode = false;
 
-  // Options
-  statusOptions = ['Draft', 'Sent', 'Paid', 'Overdue', 'Cancelled'];
+  // Status options - simplified to match requirements
+  statusOptions = ['Paid', 'Unpaid', 'Cancelled'];
 
   constructor(private apiService: ApiService) { }
 
@@ -74,12 +74,16 @@ export class InvoicesListComponent implements OnInit {
 
   // Default object factories
   private getDefaultInvoice() {
+    const today = new Date();
+    const dueDate = new Date();
+    dueDate.setDate(today.getDate() + 30); // 30 days from now
+
     return {
       invoiceId: 0,
-      dateIssued: new Date().toISOString().split('T')[0], // Format as YYYY-MM-DD
-      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      dateIssued: today,
+      dueDate: dueDate,
       totalAmount: 0,
-      status: 'Draft',
+      status: 'Unpaid',
       notes: '',
       customerId: null,
       customerName: ''
@@ -117,7 +121,14 @@ export class InvoicesListComponent implements OnInit {
       this.apiService.get('Invoices').subscribe({
         next: (data: any[]) => {
           console.log('Loaded invoices:', data);
-          this.invoices = data || [];
+          // Calculate status for each invoice based on due date and current status
+          this.invoices = (data || []).map(invoice => {
+            return {
+              ...invoice,
+              // Determine if invoice is overdue
+              status: this.calculateInvoiceStatus(invoice)
+            };
+          });
           resolve();
         },
         error: (error) => {
@@ -128,6 +139,33 @@ export class InvoicesListComponent implements OnInit {
         }
       });
     });
+  }
+
+  // Calculate the correct status for an invoice
+  private calculateInvoiceStatus(invoice: any): string {
+    // If explicitly cancelled, return cancelled
+    if (invoice.status === 'Cancelled') {
+      return 'Cancelled';
+    }
+
+    // If paid, return paid
+    if (invoice.status === 'Paid') {
+      return 'Paid';
+    }
+
+    // Check if overdue
+    if (invoice.dueDate) {
+      const dueDate = new Date(invoice.dueDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Reset time part for accurate comparison
+
+      if (dueDate < today) {
+        return 'Overdue';
+      }
+    }
+
+    // Default to unpaid
+    return 'Unpaid';
   }
 
   private loadCustomers(): Promise<void> {
@@ -210,7 +248,6 @@ export class InvoicesListComponent implements OnInit {
     const invoice = e.row?.data || e;
     if (!invoice) return;
 
-    // Convert date strings to Date objects for the date picker
     this.currentInvoice = {
       ...invoice,
       dateIssued: invoice.dateIssued ? new Date(invoice.dateIssued) : new Date(),
@@ -487,7 +524,7 @@ export class InvoicesListComponent implements OnInit {
   // Utility methods
   formatCurrency = (value: number): string => {
     if (value === null || value === undefined) return '$0.00';
-    return `${Number(value).toFixed(2)}`;
+    return `$${Number(value).toFixed(2)}`;
   };
 
   formatDate = (date: string | Date): string => {
@@ -505,8 +542,7 @@ export class InvoicesListComponent implements OnInit {
   getStatusClass = (status: string): string => {
     switch (status?.toLowerCase()) {
       case 'paid': return 'status-paid';
-      case 'sent': return 'status-sent';
-      case 'draft': return 'status-draft';
+      case 'unpaid': return 'status-unpaid';
       case 'overdue': return 'status-overdue';
       case 'cancelled': return 'status-cancelled';
       default: return 'status-unknown';

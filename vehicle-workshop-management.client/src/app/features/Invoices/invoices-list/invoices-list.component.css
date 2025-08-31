@@ -134,7 +134,7 @@
     padding-bottom: 10px;
   }
 
-/* Status Styles */
+/* Status Styles - Updated for new status options */
 .status-paid {
   color: #2e7d32;
   background-color: #e8f5e8;
@@ -147,21 +147,9 @@
   letter-spacing: 0.5px;
 }
 
-.status-sent {
+.status-unpaid {
   color: #1976d2;
   background-color: #e3f2fd;
-  padding: 6px 12px;
-  border-radius: 16px;
-  display: inline-block;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.status-draft {
-  color: #ed6c02;
-  background-color: #fff3e0;
   padding: 6px 12px;
   border-radius: 16px;
   display: inline-block;
@@ -411,8 +399,7 @@
   }
 
   .status-paid,
-  .status-sent,
-  .status-draft,
+  .status-unpaid,
   .status-overdue,
   .status-cancelled,
   .status-unknown {
