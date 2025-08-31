@@ -43,14 +43,13 @@ interface CustomerContact {
 }
 
 interface CustomerForm {
-  customerId?: number;  
+  customerId?: number;
   name: string;
   phone: string;
   email: string;
   type: 'Company' | 'Individual';
   status: 'Active' | 'Inactive';
 }
-
 
 interface CarForm {
   carId?: number;
@@ -156,7 +155,7 @@ export class CustomerListComponent {
   });
 
   constructor(private apiService: ApiService) { }
-  
+
   // Utility method for initializing customer form data
   getInitialCustomerState(): CustomerForm {
     return { name: '', phone: '', email: '', type: 'Company', status: 'Active' };
@@ -199,7 +198,9 @@ export class CustomerListComponent {
       notify('Missing Customer ID', 'error');
       return;
     }
-    this.apiService.put('Customers', this.currentCustomer.customerId, this.currentCustomer).subscribe({
+
+    // Fixed: Use the correct endpoint structure
+    this.apiService.put(`Customers/${this.currentCustomer.customerId}`, 0, this.currentCustomer).subscribe({
       next: () => {
         notify('Customer updated successfully', 'success', 2000);
         this.isEditCustomerPopupOpened = false;
@@ -260,8 +261,13 @@ export class CustomerListComponent {
   }
 
   onSaveNewCar() {
+    // Fixed: Include customerId in payload and use correct endpoint
     const payload = {
-      make: this.currentCar.make, model: this.currentCar.model, year: this.currentCar.year, color: this.currentCar.color
+      customerId: this.currentCustomerForCars!.customerId,
+      make: this.currentCar.make,
+      model: this.currentCar.model,
+      year: this.currentCar.year,
+      color: this.currentCar.color
     };
     this.apiService.post(`CustomerCars/customers/${this.currentCustomerForCars!.customerId}/cars`, payload).subscribe({
       next: () => {
@@ -278,10 +284,16 @@ export class CustomerListComponent {
       notify('Cannot update car without a Car ID.', 'error');
       return;
     }
+
+    // Fixed: Include customerId in payload and use correct endpoint structure
     const payload = {
-      make: this.currentCar.make, model: this.currentCar.model, year: this.currentCar.year, color: this.currentCar.color
+      customerId: this.currentCar.customerId,
+      make: this.currentCar.make,
+      model: this.currentCar.model,
+      year: this.currentCar.year,
+      color: this.currentCar.color
     };
-    this.apiService.put('CustomerCars', this.currentCar.carId, payload).subscribe({
+    this.apiService.put(`CustomerCars/${this.currentCar.carId}`, 0, payload).subscribe({
       next: () => {
         notify('Car updated successfully', 'success', 2000);
         this.isEditCarPopupOpened = false;
@@ -336,8 +348,12 @@ export class CustomerListComponent {
   }
 
   onSaveNewContact() {
+    // Fixed: Include customerId in payload (based on API structure, contacts might need customerId)
     const payload = {
-      name: this.currentContact.name, phone: this.currentContact.phone, email: this.currentContact.email
+      customerId: this.currentCustomerForContacts!.customerId,
+      name: this.currentContact.name,
+      phone: this.currentContact.phone,
+      email: this.currentContact.email
     };
     this.apiService.post(`CustomerContacts/customers/${this.currentCustomerForContacts!.customerId}/contacts`, payload).subscribe({
       next: () => {
@@ -354,10 +370,15 @@ export class CustomerListComponent {
       notify('Cannot update contact without a Contact ID.', 'error');
       return;
     }
+
+    // Fixed: Include customerId in payload and use correct endpoint structure  
     const payload = {
-      name: this.currentContact.name, phone: this.currentContact.phone, email: this.currentContact.email
+      customerId: this.currentContact.customerId,
+      name: this.currentContact.name,
+      phone: this.currentContact.phone,
+      email: this.currentContact.email
     };
-    this.apiService.put('CustomerContacts', this.currentContact.contactId, payload).subscribe({
+    this.apiService.put(`CustomerContacts/${this.currentContact.contactId}`, 0, payload).subscribe({
       next: () => {
         notify('Contact updated successfully', 'success', 2000);
         this.isEditContactPopupOpened = false;
@@ -377,7 +398,6 @@ export class CustomerListComponent {
     this.isContactsPopupOpened = false;
     this.currentCustomerForContacts = null;
   }
-
 
   refresh() {
     this.dataGrid.instance.refresh();
@@ -425,4 +445,3 @@ export class CustomerListComponent {
     return type === 'Company' ? 'home' : 'user';
   };
 }
-
