@@ -4,9 +4,29 @@
                  message="Loading data...">
   </dx-load-panel>
 
-  <!-- Header -->
+  <!-- Header with Summary Cards -->
   <div class="invoices-header">
-    <h1>Invoice Management</h1>
+    <div class="header-left">
+      <h1>Invoice Management</h1>
+      <div class="summary-cards" *ngIf="!isLoading">
+        <div class="summary-card">
+          <div class="card-number">{{ invoiceSummary.total }}</div>
+          <div class="card-label">Total</div>
+        </div>
+        <div class="summary-card paid">
+          <div class="card-number">{{ invoiceSummary.paid }}</div>
+          <div class="card-label">Paid</div>
+        </div>
+        <div class="summary-card unpaid">
+          <div class="card-number">{{ invoiceSummary.unpaid }}</div>
+          <div class="card-label">Unpaid</div>
+        </div>
+        <div class="summary-card overdue" *ngIf="invoiceSummary.overdue > 0">
+          <div class="card-number">{{ invoiceSummary.overdue }}</div>
+          <div class="card-label">Overdue</div>
+        </div>
+      </div>
+    </div>
     <div class="header-actions">
       <dx-button text="Refresh"
                  icon="refresh"
@@ -24,102 +44,110 @@
   </div>
 
   <!-- Invoices Grid -->
-  <dx-data-grid [dataSource]="invoices"
-                [showBorders]="true"
-                [allowColumnResizing]="true"
-                [columnAutoWidth]="true"
-                [allowColumnReordering]="true"
-                keyExpr="invoiceId">
+  <div class="grid-container">
+    <dx-data-grid [dataSource]="invoices"
+                  [showBorders]="true"
+                  [allowColumnResizing]="true"
+                  [columnAutoWidth]="false"
+                  [allowColumnReordering]="true"
+                  [hoverStateEnabled]="true"
+                  keyExpr="invoiceId"
+                  [height]="'calc(100vh - 300px)'"
+                  [width]="'100%'">
 
-    <dxo-paging [pageSize]="10"></dxo-paging>
-    <dxo-pager [showPageSizeSelector]="true"
-               [allowedPageSizes]="[5, 10, 20, 50]"
-               [showInfo]="true">
-    </dxo-pager>
+      <dxo-paging [pageSize]="15"></dxo-paging>
+      <dxo-pager [showPageSizeSelector]="true"
+                 [allowedPageSizes]="[10, 15, 25, 50]"
+                 [showInfo]="true">
+      </dxo-pager>
 
-    <dxo-filter-row [visible]="true"></dxo-filter-row>
-    <dxo-search-panel [visible]="true" placeholder="Search invoices..."></dxo-search-panel>
-    <dxo-header-filter [visible]="true"></dxo-header-filter>
+      <dxo-filter-row [visible]="true"></dxo-filter-row>
+      <dxo-search-panel [visible]="true" placeholder="Search invoices..."></dxo-search-panel>
+      <dxo-header-filter [visible]="true"></dxo-header-filter>
+      <dxo-scrolling mode="virtual"></dxo-scrolling>
 
-    <!-- Actions Column -->
-    <dxi-column type="buttons" caption="Actions" [width]="280" [fixed]="true">
-      <dxi-button icon="edit"
-                  hint="Edit Invoice"
-                  [onClick]="editInvoice">
-      </dxi-button>
-      <dxi-button icon="detailslayout"
-                  hint="View Details"
-                  [onClick]="viewInvoiceDetails">
-      </dxi-button>
-      <dxi-button icon="exportpdf"
-                  hint="Generate PDF"
-                  [onClick]="generatePDF">
-      </dxi-button>
-      <dxi-button icon="trash"
-                  hint="Delete Invoice"
-                  [onClick]="deleteInvoice">
-      </dxi-button>
-    </dxi-column>
+      <!-- Actions Column -->
+      <dxi-column type="buttons" caption="Actions" [width]="200" [fixed]="true">
+        <dxi-button icon="edit"
+                    hint="Edit Invoice"
+                    [onClick]="editInvoice">
+        </dxi-button>
+        <dxi-button icon="detailslayout"
+                    hint="View Details"
+                    [onClick]="viewInvoiceDetails">
+        </dxi-button>
+        <dxi-button icon="exportpdf"
+                    hint="Generate PDF"
+                    [onClick]="generatePDF">
+        </dxi-button>
+        <dxi-button icon="trash"
+                    hint="Delete Invoice"
+                    [onClick]="deleteInvoice">
+        </dxi-button>
+      </dxi-column>
 
-    <!-- Data Columns -->
-    <dxi-column dataField="invoiceId"
-                caption="Invoice #"
-                dataType="number"
-                [width]="120">
-    </dxi-column>
+      <!-- Data Columns -->
+      <dxi-column dataField="invoiceId"
+                  caption="Invoice #"
+                  dataType="number"
+                  [width]="120">
+      </dxi-column>
 
-    <dxi-column dataField="customerName"
-                caption="Customer"
-                [width]="200">
-    </dxi-column>
+      <dxi-column dataField="customerName"
+                  caption="Customer"
+                  [width]="250">
+      </dxi-column>
 
-    <dxi-column dataField="dateIssued"
-                caption="Date Issued"
-                dataType="date"
-                [format]="'dd/MM/yyyy'"
-                [width]="120">
-    </dxi-column>
+      <dxi-column dataField="dateIssued"
+                  caption="Date Issued"
+                  dataType="date"
+                  [format]="'dd/MM/yyyy'"
+                  [width]="150">
+      </dxi-column>
 
-    <dxi-column dataField="dueDate"
-                caption="Due Date"
-                dataType="date"
-                [format]="'dd/MM/yyyy'"
-                [width]="120">
-    </dxi-column>
+      <dxi-column dataField="dueDate"
+                  caption="Due Date"
+                  dataType="date"
+                  [format]="'dd/MM/yyyy'"
+                  [width]="150">
+      </dxi-column>
 
-    <dxi-column dataField="totalAmount"
-                caption="Total Amount"
-                dataType="number"
-                [format]="'currency'"
-                [width]="140">
-    </dxi-column>
+      <dxi-column dataField="totalAmount"
+                  caption="Total Amount"
+                  dataType="number"
+                  [format]="'currency'"
+                  [width]="150"
+                  alignment="right">
+      </dxi-column>
 
-    <dxi-column dataField="status"
-                caption="Status"
-                [cellTemplate]="'statusCellTemplate'"
-                [width]="120">
-    </dxi-column>
+      <dxi-column dataField="status"
+                  caption="Status"
+                  [cellTemplate]="'statusCellTemplate'"
+                  [width]="120">
+      </dxi-column>
 
-    <dxi-column dataField="notes"
-                caption="Notes"
-                [visible]="false">
-    </dxi-column>
+      <dxi-column dataField="notes"
+                  caption="Notes"
+                  [visible]="false"
+                  [width]="200">
+      </dxi-column>
 
-    <!-- Status Template -->
-    <div *dxTemplate="let cell of 'statusCellTemplate'">
-      <span [class]="getStatusClass(cell.value)">{{ cell.value }}</span>
-    </div>
-  </dx-data-grid>
+      <!-- Status Template -->
+      <div *dxTemplate="let cell of 'statusCellTemplate'">
+        <span [class]="'status-badge ' + getStatusClass(cell.value)">{{ cell.value }}</span>
+      </div>
+    </dx-data-grid>
+  </div>
 
   <!-- Add/Edit Invoice Popup -->
   <dx-popup [title]="popupTitle"
             [visible]="isInvoicePopupOpened"
             (onHiding)="onCancelInvoice()"
-            [width]="600"
-            [height]="550"
+            [width]="'min(90vw, 600px)'"
+            [height]="'min(80vh, 550px)'"
             [showCloseButton]="true"
-            [dragEnabled]="false"
-            [resizeEnabled]="false">
+            [dragEnabled]="true"
+            [resizeEnabled]="true">
 
     <div *dxTemplate="let content of 'content'">
       <div class="form-container">
@@ -201,10 +229,10 @@
   <dx-popup [title]="'Invoice Details - #' + (selectedInvoice?.invoiceId || '')"
             [visible]="isInvoiceDetailPopupOpened"
             (onHiding)="onCancelInvoiceDetail()"
-            [width]="900"
-            [height]="700"
+            [width]="'min(95vw, 1000px)'"
+            [height]="'min(90vh, 700px)'"
             [showCloseButton]="true"
-            [dragEnabled]="false"
+            [dragEnabled]="true"
             [resizeEnabled]="true">
 
     <div *dxTemplate="let content of 'content'">
@@ -214,7 +242,7 @@
           <h3>{{selectedInvoice.customerName || getCustomerName(selectedInvoice.customerId)}}</h3>
           <div class="invoice-meta">
             <span>Total: {{formatCurrency(selectedInvoice.totalAmount)}}</span>
-            <span [class]="getStatusClass(selectedInvoice.status)">{{selectedInvoice.status}}</span>
+            <span [class]="'status-badge ' + getStatusClass(selectedInvoice.status)">{{selectedInvoice.status}}</span>
             <span>Due: {{formatDate(selectedInvoice.dueDate)}}</span>
           </div>
           <p *ngIf="selectedInvoice.notes" class="invoice-notes">{{selectedInvoice.notes}}</p>
@@ -242,6 +270,8 @@
                       [showBorders]="true"
                       [allowColumnResizing]="true"
                       [columnAutoWidth]="true"
+                      [hoverStateEnabled]="true"
+                      [height]="'400px'"
                       keyExpr="lineId">
 
           <dxo-paging [pageSize]="10"></dxo-paging>
@@ -294,11 +324,11 @@
   <dx-popup [title]="linePopupTitle"
             [visible]="isLinePopupOpened"
             (onHiding)="onCancelLine()"
-            [width]="550"
-            [height]="500"
+            [width]="'min(90vw, 550px)'"
+            [height]="'min(80vh, 500px)'"
             [showCloseButton]="true"
-            [dragEnabled]="false"
-            [resizeEnabled]="false">
+            [dragEnabled]="true"
+            [resizeEnabled]="true">
 
     <div *dxTemplate="let content of 'content'">
       <div class="form-container">

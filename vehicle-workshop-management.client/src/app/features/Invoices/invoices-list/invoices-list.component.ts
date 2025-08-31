@@ -66,6 +66,15 @@ export class InvoicesListComponent implements OnInit {
   // Status options - simplified to match requirements
   statusOptions = ['Paid', 'Unpaid', 'Cancelled'];
 
+  // Summary data
+  invoiceSummary = {
+    total: 0,
+    paid: 0,
+    unpaid: 0,
+    overdue: 0,
+    totalAmount: 0
+  };
+
   constructor(private apiService: ApiService) { }
 
   ngOnInit() {
@@ -112,6 +121,7 @@ export class InvoicesListComponent implements OnInit {
       this.loadInventoryItems()
     ]).finally(() => {
       this.isLoading = false;
+      this.calculateSummary();
     });
   }
 
@@ -236,6 +246,17 @@ export class InvoicesListComponent implements OnInit {
     });
   }
 
+  // Calculate summary statistics
+  private calculateSummary() {
+    this.invoiceSummary = {
+      total: this.invoices.length,
+      paid: this.invoices.filter(i => i.status === 'Paid').length,
+      unpaid: this.invoices.filter(i => i.status === 'Unpaid').length,
+      overdue: this.invoices.filter(i => i.status === 'Overdue').length,
+      totalAmount: this.invoices.reduce((sum, i) => sum + (i.totalAmount || 0), 0)
+    };
+  }
+
   // Invoice CRUD Operations
   addInvoice() {
     this.currentInvoice = this.getDefaultInvoice();
@@ -268,7 +289,7 @@ export class InvoicesListComponent implements OnInit {
     this.apiService.delete('Invoices', invoice.invoiceId).subscribe({
       next: () => {
         notify('Invoice deleted successfully', 'success', 2000);
-        this.loadInvoices();
+        this.loadInvoices().then(() => this.calculateSummary());
       },
       error: (error) => {
         console.error('Error deleting invoice:', error);
@@ -306,7 +327,7 @@ export class InvoicesListComponent implements OnInit {
         const actionText = this.isEditMode ? 'updated' : 'created';
         notify(`Invoice ${actionText} successfully`, 'success', 2000);
         this.isInvoicePopupOpened = false;
-        this.loadInvoices();
+        this.loadInvoices().then(() => this.calculateSummary());
       },
       error: (error) => {
         console.error('Error saving invoice:', error);
@@ -392,7 +413,7 @@ export class InvoicesListComponent implements OnInit {
         notify('Invoice line deleted successfully', 'success', 2000);
         if (this.selectedInvoice) {
           this.loadInvoiceLines(this.selectedInvoice.invoiceId);
-          this.loadInvoices(); // Refresh to update totals
+          this.loadInvoices().then(() => this.calculateSummary()); // Refresh to update totals
         }
       },
       error: (error) => {
@@ -437,7 +458,7 @@ export class InvoicesListComponent implements OnInit {
 
         if (this.selectedInvoice) {
           this.loadInvoiceLines(this.selectedInvoice.invoiceId);
-          this.loadInvoices(); // Refresh to update totals
+          this.loadInvoices().then(() => this.calculateSummary()); // Refresh to update totals
         }
       },
       error: (error) => {
@@ -466,10 +487,12 @@ export class InvoicesListComponent implements OnInit {
 
   // Generate PDF
   generatePDF = (e: any) => {
-    /*
     const invoice = e.row?.data || e;
     if (!invoice || !invoice.invoiceId) return;
 
+    notify('PDF generation functionality would be implemented here', 'info', 2000);
+
+    /*
     this.apiService.get(`Invoices/${invoice.invoiceId}/pdf`, { responseType: 'blob' }).subscribe({
       next: (blob: Blob) => {
         const url = window.URL.createObjectURL(blob);
