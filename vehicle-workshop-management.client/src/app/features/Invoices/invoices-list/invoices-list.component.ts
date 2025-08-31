@@ -237,10 +237,18 @@ export class InvoicesListComponent implements OnInit {
           resolve();
         },
         error: (error) => {
-          console.error('Error loading invoice lines:', error);
-          notify(`Error loading invoice lines: ${error.message}`, 'error', 3000);
-          this.invoiceLines = [];
-          reject(error);
+          // Check if the error is a 404 (Not Found)
+          if (error.status === 404) {
+
+            this.invoiceLines = [];
+            resolve(); 
+          } else {
+           
+            console.error('Error loading invoice lines:', error);
+            notify(`Error loading invoice lines: ${error.message}`, 'error', 3000);
+            this.invoiceLines = [];
+            reject(error); // Reject for other errors
+          }
         }
       });
     });
