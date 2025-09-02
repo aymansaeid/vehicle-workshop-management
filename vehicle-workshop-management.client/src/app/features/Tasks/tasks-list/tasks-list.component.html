@@ -215,7 +215,9 @@
         <dx-select-box [items]="customers"
                        displayExpr="name"
                        valueExpr="customerId"
-                       [(value)]="currentTask.customerId">
+                       [(value)]="currentTask.customerId"
+                       (onValueChanged)="onCustomerChanged($event.value)"
+                       placeholder="Select a customer">
         </dx-select-box>
       </div>
       <div class="form-group">
@@ -223,7 +225,9 @@
         <dx-select-box [items]="cars"
                        displayExpr="model"
                        valueExpr="carId"
-                       [(value)]="currentTask.carId">
+                       [(value)]="currentTask.carId"
+                       placeholder="Select a car"
+                       [disabled]="!currentTask.customerId">
         </dx-select-box>
       </div>
       <div class="button-group">

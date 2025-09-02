@@ -43,6 +43,8 @@ export class TasksListComponent implements OnInit {
   projects: any[] = [];
   customers: any[] = [];
   cars: any[] = [];
+  allCars: any[] = [];
+
   selectedProjectId: number | null = null;
   isAssignProjectPopupOpened = false;
   taskToAssign: any = null;
@@ -105,11 +107,24 @@ export class TasksListComponent implements OnInit {
       }
     });
   }
+  onCustomerChanged(customerId: number) {
+    if (!customerId) {
+      this.cars = [];
+      this.currentTask.carId = null;
+      return;
+    }
 
+    this.cars = this.allCars.filter(c => c.customerId === customerId);
+
+    // reset car selection if it doesn’t belong to new customer
+    if (!this.cars.some(c => c.carId === this.currentTask.carId)) {
+      this.currentTask.carId = null;
+    }
+  }
   loadCars() {
     this.apiService.get('CustomerCars').subscribe({
       next: (data) => {
-        this.cars = data;
+        this.allCars = data;
       },
       error: (error) => {
         notify(`Error loading cars: ${error.message}`, 'error', 2000);
