@@ -208,16 +208,16 @@ export class TasksListComponent implements OnInit {
 
   addTask() {
     this.currentTask = {
+      customerId: null,
+      carId: null,
       name: '',
       description: '',
-      status: 'Pending',
-      startTime: new Date(),
-      endTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      delayReason: ''
+      status: 'Pending'
     };
     this.popupTitle = 'Add Task';
     this.isAddTaskPopupOpened = true;
   }
+
 
   editTask(task: any) {
     this.currentTask = {
@@ -244,9 +244,17 @@ export class TasksListComponent implements OnInit {
   }
 
   onSaveTask() {
+    const payload = {
+      customerId: this.currentTask.customerId,
+      carId: this.currentTask.carId,
+      name: this.currentTask.name,
+      description: this.currentTask.description,
+      status: this.currentTask.status
+    };
+
     const action = this.popupTitle === 'Add Task'
-      ? this.apiService.post('Tasks', this.currentTask)
-      : this.apiService.put('Tasks', this.currentTask.taskId, this.currentTask);
+      ? this.apiService.post('Tasks', payload)
+      : this.apiService.put('Tasks', this.currentTask.taskId, payload);
 
     action.subscribe({
       next: () => {
@@ -259,6 +267,7 @@ export class TasksListComponent implements OnInit {
       }
     });
   }
+
 
   onCancelEdit() {
     this.isAddTaskPopupOpened = false;
