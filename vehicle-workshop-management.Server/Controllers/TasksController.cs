@@ -156,16 +156,25 @@ namespace vehicle_workshop_management.Server.Controllers
             return NoContent();
         }
 
-        // DELETE: api/Tasks/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTask(int id)
         {
-            var task = await _context.Tasks.FindAsync(id);
+            var task = await _context.Tasks
+                .Include(t => t.TaskLines) // Include related TaskLines
+                .FirstOrDefaultAsync(t => t.TaskId == id);
+
             if (task == null)
             {
                 return NotFound();
             }
 
+            // Remove all related TaskLines first
+            if (task.TaskLines != null && task.TaskLines.Any())
+            {
+                _context.TaskLines.RemoveRange(task.TaskLines);
+            }
+
+            // Then remove the task
             _context.Tasks.Remove(task);
             await _context.SaveChangesAsync();
 
