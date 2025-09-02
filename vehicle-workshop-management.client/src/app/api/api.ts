@@ -123,9 +123,12 @@ export class ApiService {
     return this.http.delete(`${API_URL}/Tasks/${taskId}`);
   }
 
-  assignTaskToProject(taskId: number, projectId: number): Observable<any> {
-    return this.http.put(`${API_URL}/Tasks/${taskId}/assign-to-project`, { projectId });
+  assignTaskToProject(taskId: number, projectId: number) {
+    return this.http.put(`/api/Tasks/${taskId}/assign-to-project`, projectId, {
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
+
 
   assignTaskToEmployee(taskId: number, employeeId: number): Observable<any> {
     return this.http.post(`${API_URL}/Tasks/AssignTaskToEmployee`, { taskId, employeeId });

@@ -41,13 +41,15 @@ export class TasksListComponent implements OnInit {
   filterStatusList: TaskStatus[] = ['All', 'Pending', 'In Progress', 'Completed', 'Delayed'];
 
   projects: any[] = [];
+  customers: any[] = [];
+  cars: any[] = [];
   selectedProjectId: number | null = null;
   isAssignProjectPopupOpened = false;
   taskToAssign: any = null;
   isTaskLineEditPopupOpened = false;
-
-  isPanelOpened = false;
   isAddTaskPopupOpened = false;
+  isEditTaskPopupOpened = false;
+  isPanelOpened = false;
   selectedTaskId: number | null = null;
   selectedTask: any = null;
   currentTask: any = {
@@ -90,8 +92,30 @@ export class TasksListComponent implements OnInit {
     this.loadProjects();
     this.loadEmployees();
     this.loadInventories();
+    this.loadCustomers();
+    this.loadCars();
+  }
+  loadCustomers() {
+    this.apiService.get('Customers').subscribe({
+      next: (data) => {
+        this.customers = data;
+      },
+      error: (error) => {
+        notify(`Error loading customers: ${error.message}`, 'error', 2000);
+      }
+    });
   }
 
+  loadCars() {
+    this.apiService.get('CustomerCars').subscribe({
+      next: (data) => {
+        this.cars = data;
+      },
+      error: (error) => {
+        notify(`Error loading cars: ${error.message}`, 'error', 2000);
+      }
+    });
+  }
   loadProjects() {
     this.apiService.get('Projects').subscribe({
       next: (data: any) => {
@@ -214,19 +238,64 @@ export class TasksListComponent implements OnInit {
       description: '',
       status: 'Pending'
     };
-    this.popupTitle = 'Add Task';
     this.isAddTaskPopupOpened = true;
   }
 
+  onSaveNewTask() {
+    const payload = {
+      customerId: this.currentTask.customerId,
+      carId: this.currentTask.carId,
+      name: this.currentTask.name,
+      description: this.currentTask.description,
+      status: this.currentTask.status
+    };
 
+    this.apiService.post('Tasks', payload).subscribe({
+      next: () => {
+        notify('Task added successfully', 'success', 2000);
+        this.isAddTaskPopupOpened = false;
+        this.refresh();
+      },
+      error: (error) => {
+        notify(`Error adding task: ${error.message}`, 'error', 2000);
+      }
+    });
+  }
+  onCancelAddTask() {
+    this.isAddTaskPopupOpened = false;
+  }
+  // Open Edit Popup
   editTask(task: any) {
     this.currentTask = {
       ...task,
       startTime: new Date(task.startTime),
       endTime: new Date(task.endTime)
     };
-    this.popupTitle = 'Edit Task';
-    this.isAddTaskPopupOpened = true;
+    this.isEditTaskPopupOpened = true;
+  }
+  onUpdateTask() {
+    const payload = {
+      customerId: this.currentTask.customerId,
+      carId: this.currentTask.carId,
+      name: this.currentTask.name,
+      description: this.currentTask.description,
+      status: this.currentTask.status
+    };
+
+    this.apiService.put('Tasks', this.currentTask.taskId, payload).subscribe({
+      next: () => {
+        notify('Task updated successfully', 'success', 2000);
+        this.isEditTaskPopupOpened = false;
+        this.refresh();
+      },
+      error: (error) => {
+        notify(`Error updating task: ${error.message}`, 'error', 2000);
+      }
+    });
+  }
+
+  onCancelEditTask() {
+    this.isEditTaskPopupOpened = false;
   }
 
   deleteTask(taskId: number) {
@@ -241,31 +310,6 @@ export class TasksListComponent implements OnInit {
         }
       });
     }
-  }
-
-  onSaveTask() {
-    const payload = {
-      customerId: this.currentTask.customerId,
-      carId: this.currentTask.carId,
-      name: this.currentTask.name,
-      description: this.currentTask.description,
-      status: this.currentTask.status
-    };
-
-    const action = this.popupTitle === 'Add Task'
-      ? this.apiService.post('Tasks', payload)
-      : this.apiService.put('Tasks', this.currentTask.taskId, payload);
-
-    action.subscribe({
-      next: () => {
-        notify(`Task ${this.popupTitle === 'Add Task' ? 'added' : 'updated'} successfully`, 'success', 2000);
-        this.isAddTaskPopupOpened = false;
-        this.refresh();
-      },
-      error: (error) => {
-        notify(`Error ${this.popupTitle === 'Add Task' ? 'adding' : 'updating'} task: ${error.message}`, 'error', 2000);
-      }
-    });
   }
 
 
