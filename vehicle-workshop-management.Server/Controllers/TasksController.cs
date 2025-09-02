@@ -81,21 +81,23 @@ namespace vehicle_workshop_management.Server.Controllers
 
             return CreatedAtAction(nameof(GetTask), new { id = task.TaskId }, createdTask.Adapt<TaskDto>());
         }
+
         // PUT: api/Tasks/{taskId}/assign-to-project
         [HttpPut("{taskId}/assign-to-project")]
-        public async Task<IActionResult> AssignTaskToProject(int taskId, [FromBody] int projectId)
+        public async Task<IActionResult> AssignTaskToProject(int taskId, [FromBody] AssignProjectDto dto)
         {
             var task = await _context.Tasks.FindAsync(taskId);
             if (task == null) return NotFound("Task not found");
 
-            if (!await _context.Projects.AnyAsync(p => p.ProjectId == projectId))
+            if (!await _context.Projects.AnyAsync(p => p.ProjectId == dto.ProjectId))
                 return BadRequest("Invalid ProjectId");
 
-            task.ProjectId = projectId;
+            task.ProjectId = dto.ProjectId;
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
+
         // PUT: api/Tasks/5
         [HttpPut("{id}")]
         public async Task<IActionResult> PutTask(int id, UpdateTaskDto taskDto)

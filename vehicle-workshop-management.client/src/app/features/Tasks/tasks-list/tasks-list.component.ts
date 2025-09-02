@@ -200,7 +200,7 @@ export class TasksListComponent implements OnInit {
       notify('Please select a project', 'error', 2000);
       return;
     }
-
+    console.log("Sending:", { ProjectId: this.selectedProjectId });
     this.apiService.assignTaskToProject(this.taskToAssign.taskId, this.selectedProjectId).subscribe({
       next: () => {
         notify('Task assigned to project successfully', 'success', 2000);

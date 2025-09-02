@@ -124,12 +124,11 @@ export class ApiService {
   }
 
   assignTaskToProject(taskId: number, projectId: number) {
-    return this.http.put(`/api/Tasks/${taskId}/assign-to-project`, projectId, {
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return this.http.put(
+      `https://localhost:7188/api/Tasks/${taskId}/assign-to-project`,
+      { ProjectId: projectId }
+    );
   }
-
-
   assignTaskToEmployee(taskId: number, employeeId: number): Observable<any> {
     return this.http.post(`${API_URL}/Tasks/AssignTaskToEmployee`, { taskId, employeeId });
   }
