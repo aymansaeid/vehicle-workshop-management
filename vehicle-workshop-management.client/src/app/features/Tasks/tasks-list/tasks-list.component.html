@@ -246,35 +246,53 @@
             [visible]="isEditTaskPopupOpened"
             (onHiding)="onCancelEditTask()"
             [width]="500"
-            [height]="600">
+            [height]="750">
     <div *dxTemplate="let content of 'content'">
       <div class="form-group">
         <label>Task Name</label>
         <dx-text-box [(value)]="currentTask.name"></dx-text-box>
       </div>
+
       <div class="form-group">
         <label>Description</label>
         <dx-text-box [(value)]="currentTask.description"></dx-text-box>
       </div>
+
       <div class="form-group">
         <label>Delay Reason</label>
         <dx-text-box [(value)]="currentTask.delayReason"></dx-text-box>
       </div>
+
       <div class="form-group">
         <label>Status</label>
         <dx-select-box [items]="statusList"
                        [(value)]="currentTask.status"></dx-select-box>
       </div>
+
       <div class="form-group">
         <label>Start Time</label>
         <dx-date-box [(value)]="currentTask.startTime"
                      type="datetime"></dx-date-box>
       </div>
+
       <div class="form-group">
         <label>End Time</label>
         <dx-date-box [(value)]="currentTask.endTime"
                      type="datetime"></dx-date-box>
       </div>
+
+      <div class="form-group">
+        <label>Received At</label>
+        <dx-date-box [(value)]="currentTask.receivedAt"
+                     type="datetime"></dx-date-box>
+      </div>
+
+      <div class="form-group">
+        <label>Delivered At</label>
+        <dx-date-box [(value)]="currentTask.deliveredAt"
+                     type="datetime"></dx-date-box>
+      </div>
+
       <div class="button-group">
         <dx-button text="Update"
                    type="success"

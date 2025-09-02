@@ -279,22 +279,27 @@ export class TasksListComponent implements OnInit {
   onCancelAddTask() {
     this.isAddTaskPopupOpened = false;
   }
-  // Open Edit Popup
+
   editTask(task: any) {
     this.currentTask = {
       ...task,
-      startTime: new Date(task.startTime),
-      endTime: new Date(task.endTime)
+      startTime: task.startTime ? new Date(task.startTime) : null,
+      endTime: task.endTime ? new Date(task.endTime) : null,
+      receivedAt: task.receivedAt ? new Date(task.receivedAt) : null,
+      deliveredAt: task.deliveredAt ? new Date(task.deliveredAt) : null
     };
     this.isEditTaskPopupOpened = true;
   }
   onUpdateTask() {
     const payload = {
-      customerId: this.currentTask.customerId,
-      carId: this.currentTask.carId,
+      startTime: this.currentTask.startTime ? new Date(this.currentTask.startTime).toISOString() : null,
+      endTime: this.currentTask.endTime ? new Date(this.currentTask.endTime).toISOString() : null,
+      receivedAt: this.currentTask.receivedAt ? new Date(this.currentTask.receivedAt).toISOString() : null,
+      deliveredAt: this.currentTask.deliveredAt ? new Date(this.currentTask.deliveredAt).toISOString() : null,
       name: this.currentTask.name,
       description: this.currentTask.description,
-      status: this.currentTask.status
+      status: this.currentTask.status,
+      delayReason: this.currentTask.delayReason
     };
 
     this.apiService.put('Tasks', this.currentTask.taskId, payload).subscribe({
