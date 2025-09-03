@@ -399,16 +399,6 @@ export class InvoicesListComponent implements OnInit {
     this.isLinePopupOpened = true;
   }
 
-  editInvoiceLine = (e: any) => {
-    const line = e.row?.data || e;
-    if (!line) return;
-
-    this.currentLine = { ...line };
-    this.linePopupTitle = 'Edit Invoice Line';
-    this.isLineEditMode = true;
-    this.isLinePopupOpened = true;
-  };
-
   deleteInvoiceLine = (e: any) => {
     const line = e.row?.data || e;
     if (!line || !line.lineId) return;
