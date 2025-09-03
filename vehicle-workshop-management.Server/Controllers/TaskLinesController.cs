@@ -128,36 +128,43 @@ namespace vehicle_workshop_management.Server.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutTaskLine(int id, UpdateTaskLineDto tasklineDto)
         {
-            var taskline = await _context.Tasks.FindAsync(id);
-
-            if (taskline == null)
+            var taskLine = await _context.TaskLines.FindAsync(id);
+            if (taskLine == null)
             {
-                return BadRequest();
+                return NotFound("TaskLine not found");
             }
 
-            
-            tasklineDto.LineTotal = tasklineDto.Quantity * tasklineDto.UnitPrice;
-            tasklineDto.Adapt(taskline);
-            _context.Entry(taskline).State = EntityState.Modified;
+            // Update TaskLine values
+            tasklineDto.LineTotal = (tasklineDto.Quantity ?? 0) * (tasklineDto.UnitPrice ?? 0);
+            tasklineDto.Adapt(taskLine);
 
-            try
+            _context.Entry(taskLine).State = EntityState.Modified;
+
+            var invoiceLine = await _context.InvoiceLines.FirstOrDefaultAsync(il => il.TaskLineId == id);
+            if (invoiceLine != null)
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!TaskLineExists(id))
+                invoiceLine.Description = taskLine.Description;
+                invoiceLine.Quantity = taskLine.Quantity;
+                invoiceLine.UnitPrice = taskLine.UnitPrice;
+                invoiceLine.LineTotal = taskLine.LineTotal;
+
+                _context.Entry(invoiceLine).State = EntityState.Modified;
+
+                var invoice = await _context.Invoices
+                    .Include(i => i.InvoiceLines)
+                    .FirstOrDefaultAsync(i => i.InvoiceId == invoiceLine.InvoiceId);
+
+                if (invoice != null)
                 {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
+                    invoice.TotalAmount = invoice.InvoiceLines.Sum(il => il.LineTotal);
+                    _context.Entry(invoice).State = EntityState.Modified;
                 }
             }
 
+            await _context.SaveChangesAsync();
             return NoContent();
         }
+
 
         // DELETE: api/TaskLines/5
         [HttpDelete("{id}")]
@@ -166,11 +173,33 @@ namespace vehicle_workshop_management.Server.Controllers
             var taskLine = await _context.TaskLines.FindAsync(id);
             if (taskLine == null)
             {
-                return NotFound();
+                return NotFound("TaskLine not found");
+            }
+
+            var invoiceLine = await _context.InvoiceLines.FirstOrDefaultAsync(il => il.TaskLineId == id);
+            int? invoiceId = invoiceLine?.InvoiceId;
+
+            if (invoiceLine != null)
+            {
+                _context.InvoiceLines.Remove(invoiceLine);
             }
 
             _context.TaskLines.Remove(taskLine);
             await _context.SaveChangesAsync();
+
+            if (invoiceId.HasValue)
+            {
+                var invoice = await _context.Invoices
+                    .Include(i => i.InvoiceLines)
+                    .FirstOrDefaultAsync(i => i.InvoiceId == invoiceId.Value);
+
+                if (invoice != null)
+                {
+                    invoice.TotalAmount = invoice.InvoiceLines.Sum(il => il.LineTotal);
+                    _context.Entry(invoice).State = EntityState.Modified;
+                    await _context.SaveChangesAsync();
+                }
+            }
 
             return NoContent();
         }
