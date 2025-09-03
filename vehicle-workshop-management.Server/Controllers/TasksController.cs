@@ -65,15 +65,28 @@ namespace vehicle_workshop_management.Server.Controllers
             {
                 return BadRequest("Invalid CustomerId");
             }
-            var task = taskDto.Adapt<AppTask>();
 
-            
+            var task = taskDto.Adapt<AppTask>();
             task.ReceivedAt ??= DateTime.UtcNow;
             task.Status ??= "Pending";
 
             _context.Tasks.Add(task);
             await _context.SaveChangesAsync();
 
+            var invoice = new Invoice
+            {
+                CustomerId = task.CustomerId,
+                DateIssued = DateOnly.FromDateTime(DateTime.UtcNow),
+                DueDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30)),
+                Status = "Pending",
+                Notes = $"Invoice automatically created for Task #{task.TaskId} - {task.Name}",
+                TotalAmount = 0 // Will be updated once TaskLines/InvoiceLines are added
+            };
+
+            _context.Invoices.Add(invoice);
+            await _context.SaveChangesAsync();
+
+            //  you can return both task + invoice info together
             var createdTask = await _context.Tasks
                 .Include(t => t.Car)
                 .Include(t => t.Customer)
@@ -81,6 +94,7 @@ namespace vehicle_workshop_management.Server.Controllers
 
             return CreatedAtAction(nameof(GetTask), new { id = task.TaskId }, createdTask.Adapt<TaskDto>());
         }
+
 
         // PUT: api/Tasks/{taskId}/assign-to-project
         [HttpPut("{taskId}/assign-to-project")]
