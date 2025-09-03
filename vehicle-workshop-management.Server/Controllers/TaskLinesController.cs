@@ -104,10 +104,10 @@ namespace vehicle_workshop_management.Server.Controllers
             };
 
             _context.InvoiceLines.Add(invoiceLine);
+            await _context.SaveChangesAsync();
 
-            invoice.TotalAmount = invoice.InvoiceLines.Sum(il => il.LineTotal) + taskLine.LineTotal;
+            invoice.TotalAmount = invoice.InvoiceLines.Sum(il => il.LineTotal);
             _context.Entry(invoice).State = EntityState.Modified;
-
             await _context.SaveChangesAsync();
 
             // Reload TaskLine with relationships
