@@ -184,14 +184,45 @@ export class EmployeesListComponent {
   onSelectionChanged(e: any) {
     const selected = e.selectedRowsData[0];
     if (selected) {
+      this.selectedEmployeeId = selected.employeeId;
       this.apiService.get(`Employees/${selected.employeeId}`).subscribe({
         next: (result: any) => {
           const employee = Array.isArray(result) ? result[0] : result;
           this.taskLines = employee?.taskLines || [];
-          this.isTaskPopupOpened = true; 
+          this.isTaskPopupOpened = true;
         },
         error: (err) => {
           notify(`Error loading task lines: ${err.message}`, 'error', 2000);
+        }
+      });
+    }
+  }
+
+
+
+  onDeleteTaskLine(e: any) {
+    const deletedLine = e.data;
+    if (confirm('Are you sure you want to delete this task line?')) {
+      this.apiService.delete('TaskLines', deletedLine.taskLineId).subscribe({
+        next: () => {
+          notify('Task line deleted successfully', 'success', 2000);
+          this.refreshTaskLines();
+        },
+        error: (error) => {
+          notify(`Error deleting task line: ${error.message}`, 'error', 2000);
+        }
+      });
+    }
+  }
+
+  refreshTaskLines() {
+    if (this.selectedEmployeeId) {
+      this.apiService.get(`Employees/${this.selectedEmployeeId}`).subscribe({
+        next: (employee: any) => {
+          this.taskLines = employee.taskLines || [];
+        },
+        error: (err) => {
+          notify(`Error refreshing task lines: ${err.message}`, 'error', 2000);
         }
       });
     }

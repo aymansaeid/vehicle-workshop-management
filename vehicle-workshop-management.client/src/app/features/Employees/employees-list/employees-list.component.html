@@ -170,13 +170,21 @@
       <dx-data-grid [dataSource]="taskLines"
                     [showBorders]="true"
                     [columnAutoWidth]="true"
-                    [rowAlternationEnabled]="true">
-        <dxi-column dataField="taskLineId" caption="ID" width="60"></dxi-column>
-        <dxi-column dataField="taskId" caption="Task ID" width="80"></dxi-column>
+                    [rowAlternationEnabled]="true"
+                    [editing]="{
+                mode: 'row',
+                allowDeleting: true,
+                allowAdding: false
+              }"
+                    (onRowRemoved)="onDeleteTaskLine($event)">
+        <dxi-column dataField="taskLineId" caption="ID" width="60" [allowEditing]="false"></dxi-column>
+        <dxi-column dataField="taskId" caption="Task ID" width="80" [allowEditing]="false"></dxi-column>
         <dxi-column dataField="description" caption="Description"></dxi-column>
-        <dxi-column dataField="status" caption="Status"></dxi-column>
-        <dxi-column dataField="delayReason" caption="Delay Reason"></dxi-column>
+        <dxi-column dataField="quantity" caption="quantity"></dxi-column>
+        <dxi-column dataField="lineTotal" caption="lineTotal"></dxi-column>
+        <dxi-column type="buttons"></dxi-column>
       </dx-data-grid>
+
 
       <div *ngIf="!taskLines || taskLines.length === 0" class="mt-2">
         <em>No tasks assigned</em>
