@@ -48,42 +48,81 @@ namespace vehicle_workshop_management.Server.Controllers
         }
 
         [HttpPost("tasks/{taskId}/Tasklines")]
-        public async Task<ActionResult<TaskLineDto>> AddTaskLine(int taskId,[FromBody] CreateTaskLineDto createDto)
+        public async Task<ActionResult<TaskLineDto>> AddTaskLine(int taskId, [FromBody] CreateTaskLineDto createDto)
         {
-           
             if (!await _context.Tasks.AnyAsync(t => t.TaskId == taskId))
             {
                 return NotFound("Task not found");
             }
-        
+
             if (!await _context.Employees.AnyAsync(e => e.EmployeeId == createDto.EmployeeId))
             {
                 return BadRequest("Invalid EmployeeId");
             }
 
-            /*
-            if (!await _context.Inventory.AnyAsync(i => i.InventoryId == createDto.InventoryId))
-            {
-                return BadRequest("Invalid InventoryId");
-            }
-            */
-           
+            // Map TaskLine
             var taskLine = createDto.Adapt<TaskLine>();
-            taskLine.TaskId = taskId; // Ensure taskId from route is used
+            taskLine.TaskId = taskId;
+            taskLine.LineTotal = (createDto.Quantity ?? 0) * (createDto.UnitPrice ?? 0);
 
             _context.TaskLines.Add(taskLine);
             await _context.SaveChangesAsync();
 
-            // Reload with relationships
+            var task = await _context.Tasks
+                .Include(t => t.Customer)
+                .FirstOrDefaultAsync(t => t.TaskId == taskId);
+
+            var invoice = await _context.Invoices
+                .Include(i => i.InvoiceLines)
+                .FirstOrDefaultAsync(i => i.CustomerId == task.CustomerId && i.Status == "Pending");
+
+            if (invoice == null)
+            {
+                invoice = new Invoice
+                {
+                    CustomerId = task.CustomerId,
+                    DateIssued = DateOnly.FromDateTime(DateTime.UtcNow),
+                    DueDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30)),
+                    Status = "Pending",
+                    Notes = $"Auto-generated for Task #{task.TaskId}",
+                    TotalAmount = 0
+                };
+                _context.Invoices.Add(invoice);
+                await _context.SaveChangesAsync();
+            }
+
+            // 🔹 Create related InvoiceLine
+            var invoiceLine = new InvoiceLine
+            {
+                InvoiceId = invoice.InvoiceId,
+                TaskLineId = taskLine.TaskLineId,
+                InventoryId = taskLine.InventoryId,
+                Description = taskLine.Description,
+                Quantity = taskLine.Quantity,
+                UnitPrice = taskLine.UnitPrice,
+                LineTotal = taskLine.LineTotal
+            };
+
+            _context.InvoiceLines.Add(invoiceLine);
+
+            invoice.TotalAmount = invoice.InvoiceLines.Sum(il => il.LineTotal) + taskLine.LineTotal;
+            _context.Entry(invoice).State = EntityState.Modified;
+
+            await _context.SaveChangesAsync();
+
+            // Reload TaskLine with relationships
             var createdTaskLine = await _context.TaskLines
                 .Include(tl => tl.Employee)
                 .Include(tl => tl.Inventory)
                 .FirstOrDefaultAsync(tl => tl.TaskLineId == taskLine.TaskLineId);
 
-            return CreatedAtAction(nameof(GetTaskLine),new { id = taskLine.TaskLineId },createdTaskLine.Adapt<TaskLineDto>());
+            return CreatedAtAction(
+                nameof(GetTaskLine),
+                new { id = taskLine.TaskLineId },
+                createdTaskLine.Adapt<TaskLineDto>());
         }
 
-        
+
 
         // PUT: api/TaskLines/5
         [HttpPut("{id}")]
