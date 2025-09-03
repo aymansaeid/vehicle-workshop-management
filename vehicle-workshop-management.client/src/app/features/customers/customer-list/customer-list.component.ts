@@ -285,7 +285,6 @@ export class CustomerListComponent {
       return;
     }
 
-    // Fixed: Include customerId in payload and use correct endpoint structure
     const payload = {
       customerId: this.currentCar.customerId,
       make: this.currentCar.make,
@@ -293,7 +292,8 @@ export class CustomerListComponent {
       year: this.currentCar.year,
       color: this.currentCar.color
     };
-    this.apiService.put(`CustomerCars/${this.currentCar.carId}`, 0, payload).subscribe({
+
+    this.apiService.put("CustomerCars", this.currentCar.carId, payload).subscribe({
       next: () => {
         notify('Car updated successfully', 'success', 2000);
         this.isEditCarPopupOpened = false;

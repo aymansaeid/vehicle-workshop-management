@@ -1,190 +1,190 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+  import { Injectable } from '@angular/core';
+  import { HttpClient, HttpParams } from '@angular/common/http';
+  import { Observable } from 'rxjs';
 
-const API_URL = 'https://localhost:7188/api';
+  const API_URL = 'https://localhost:7188/api';
 
-@Injectable({
-  providedIn: 'root'
-})
-export class ApiService {
-  constructor(private http: HttpClient) { }
+  @Injectable({
+    providedIn: 'root'
+  })
+  export class ApiService {
+    constructor(private http: HttpClient) { }
 
-  // Authentication
-  login(username: string, password: string): Observable<any> {
-    return this.http.post(`${API_URL}/Employees/Login`, { username, password });
-  }
-
-  register(employee: any): Observable<any> {
-    return this.http.post(`${API_URL}/Employees/Register`, employee);
-  }
-
-  // Generic CRUD operations
-  get(endpoint: string): Observable<any> {
-    return this.http.get(`${API_URL}/${endpoint}`);
-  }
-
-  post(endpoint: string, data: any): Observable<any> {
-    return this.http.post(`${API_URL}/${endpoint}`, data);
-  }
-
-  put(endpoint: string, id: number, data: any): Observable<any> {
-    return this.http.put(`${API_URL}/${endpoint}/${id}`, data);
-  }
-
-  delete(endpoint: string, id?: number): Observable<any> {
-    if (id !== undefined) {
-      return this.http.delete(`${API_URL}/${endpoint}/${id}`);
+    // Authentication
+    login(username: string, password: string): Observable<any> {
+      return this.http.post(`${API_URL}/Employees/Login`, { username, password });
     }
-    return this.http.delete(`${API_URL}/${endpoint}`);
-  }
 
-  patch(endpoint: string, id: number, data: any): Observable<any> {
-    return this.http.patch(`${API_URL}/${endpoint}/${id}`, data);
-  }
+    register(employee: any): Observable<any> {
+      return this.http.post(`${API_URL}/Employees/Register`, employee);
+    }
 
-  // Inventory-specific methods
-  getInventories(): Observable<any> {
-    return this.http.get(`${API_URL}/Inventories`);
-  }
+    // Generic CRUD operations
+    get(endpoint: string): Observable<any> {
+      return this.http.get(`${API_URL}/${endpoint}`);
+    }
 
-  getInventory(inventoryId: number): Observable<any> {
-    return this.http.get(`${API_URL}/Inventories/${inventoryId}`);
-  }
+    post(endpoint: string, data: any): Observable<any> {
+      return this.http.post(`${API_URL}/${endpoint}`, data);
+    }
 
-  createInventory(inventory: any): Observable<any> {
-    return this.http.post(`${API_URL}/Inventories`, inventory);
-  }
+    put(endpoint: string, id: number, data: any): Observable<any> {
+      return this.http.put(`${API_URL}/${endpoint}/${id}`, data);
+    }
 
-  updateInventory(inventoryId: number, inventory: any): Observable<any> {
-    return this.http.put(`${API_URL}/Inventories/${inventoryId}`, inventory);
-  }
+    delete(endpoint: string, id?: number): Observable<any> {
+      if (id !== undefined) {
+        return this.http.delete(`${API_URL}/${endpoint}/${id}`);
+      }
+      return this.http.delete(`${API_URL}/${endpoint}`);
+    }
 
-  deleteInventory(inventoryId: number): Observable<any> {
-    return this.http.delete(`${API_URL}/Inventories/${inventoryId}`);
-  }
+    patch(endpoint: string, id: number, data: any): Observable<any> {
+      return this.http.patch(`${API_URL}/${endpoint}/${id}`, data);
+    }
 
-  // Inventory Groups methods
-  getInventoryGroups(): Observable<any> {
-    return this.http.get(`${API_URL}/InventoryGroups`);
-  }
+    // Inventory-specific methods
+    getInventories(): Observable<any> {
+      return this.http.get(`${API_URL}/Inventories`);
+    }
 
-  getInventoryGroup(groupId: number): Observable<any> {
-    return this.http.get(`${API_URL}/InventoryGroups/${groupId}`);
-  }
+    getInventory(inventoryId: number): Observable<any> {
+      return this.http.get(`${API_URL}/Inventories/${inventoryId}`);
+    }
 
-  createInventoryGroup(group: any): Observable<any> {
-    return this.http.post(`${API_URL}/InventoryGroups`, group);
-  }
+    createInventory(inventory: any): Observable<any> {
+      return this.http.post(`${API_URL}/Inventories`, inventory);
+    }
 
-  updateInventoryGroup(groupId: number, group: any): Observable<any> {
-    return this.http.put(`${API_URL}/InventoryGroups/${groupId}`, group);
-  }
+    updateInventory(inventoryId: number, inventory: any): Observable<any> {
+      return this.http.put(`${API_URL}/Inventories/${inventoryId}`, inventory);
+    }
 
-  deleteInventoryGroup(groupId: number): Observable<any> {
-    return this.http.delete(`${API_URL}/InventoryGroups/${groupId}`);
-  }
+    deleteInventory(inventoryId: number): Observable<any> {
+      return this.http.delete(`${API_URL}/Inventories/${inventoryId}`);
+    }
 
-  // Inventory-Group Assignment methods
-  assignInventoryToGroup(inventoryId: number, groupId: number): Observable<any> {
-    return this.http.post(`${API_URL}/Inventories/AssignToGroup`, { inventoryId, groupId });
-  }
+    // Inventory Groups methods
+    getInventoryGroups(): Observable<any> {
+      return this.http.get(`${API_URL}/InventoryGroups`);
+    }
 
-  removeInventoryFromGroup(inventoryId: number, groupId: number): Observable<any> {
-    return this.http.delete(`${API_URL}/Inventories/${inventoryId}/Groups/${groupId}`);
-  }
+    getInventoryGroup(groupId: number): Observable<any> {
+      return this.http.get(`${API_URL}/InventoryGroups/${groupId}`);
+    }
 
-  getInventoryGroupsById(inventoryId: number): Observable<any> {
-    return this.http.get(`${API_URL}/Inventories/${inventoryId}/Groups`);
-  }
+    createInventoryGroup(group: any): Observable<any> {
+      return this.http.post(`${API_URL}/InventoryGroups`, group);
+    }
 
-  getGroupInventories(groupId: number): Observable<any> {
-    return this.http.get(`${API_URL}/InventoryGroups/${groupId}/Inventories`);
-  }
+    updateInventoryGroup(groupId: number, group: any): Observable<any> {
+      return this.http.put(`${API_URL}/InventoryGroups/${groupId}`, group);
+    }
 
-  // Task-specific methods
-  getTasks(): Observable<any> {
-    return this.http.get(`${API_URL}/Tasks`);
-  }
+    deleteInventoryGroup(groupId: number): Observable<any> {
+      return this.http.delete(`${API_URL}/InventoryGroups/${groupId}`);
+    }
 
-  getTask(taskId: number): Observable<any> {
-    return this.http.get(`${API_URL}/Tasks/${taskId}`);
-  }
+    // Inventory-Group Assignment methods
+    assignInventoryToGroup(inventoryId: number, groupId: number): Observable<any> {
+      return this.http.post(`${API_URL}/Inventories/AssignToGroup`, { inventoryId, groupId });
+    }
 
-  createTask(task: any): Observable<any> {
-    return this.http.post(`${API_URL}/Tasks`, task);
-  }
+    removeInventoryFromGroup(inventoryId: number, groupId: number): Observable<any> {
+      return this.http.delete(`${API_URL}/Inventories/${inventoryId}/Groups/${groupId}`);
+    }
 
-  updateTask(taskId: number, task: any): Observable<any> {
-    return this.http.put(`${API_URL}/Tasks/${taskId}`, task);
-  }
+    getInventoryGroupsById(inventoryId: number): Observable<any> {
+      return this.http.get(`${API_URL}/Inventories/${inventoryId}/Groups`);
+    }
 
-  deleteTask(taskId: number): Observable<any> {
-    return this.http.delete(`${API_URL}/Tasks/${taskId}`);
-  }
+    getGroupInventories(groupId: number): Observable<any> {
+      return this.http.get(`${API_URL}/InventoryGroups/${groupId}/Inventories`);
+    }
 
-  assignTaskToProject(taskId: number, projectId: number) {
-    return this.http.put(
-      `https://localhost:7188/api/Tasks/${taskId}/assign-to-project`,
-      { ProjectId: projectId }
-    );
-  }
-  assignTaskToEmployee(taskId: number, employeeId: number): Observable<any> {
-    return this.http.post(`${API_URL}/Tasks/AssignTaskToEmployee`, { taskId, employeeId });
-  }
+    // Task-specific methods
+    getTasks(): Observable<any> {
+      return this.http.get(`${API_URL}/Tasks`);
+    }
 
-  updateTaskStatus(taskId: number, status: string): Observable<any> {
-    return this.http.patch(`${API_URL}/Tasks/${taskId}/status`, { status });
-  }
+    getTask(taskId: number): Observable<any> {
+      return this.http.get(`${API_URL}/Tasks/${taskId}`);
+    }
 
-  getTasksByProject(projectId: number): Observable<any> {
-    return this.http.get(`${API_URL}/Tasks/byProject/${projectId}`);
-  }
+    createTask(task: any): Observable<any> {
+      return this.http.post(`${API_URL}/Tasks`, task);
+    }
 
-  getTasksByStatus(status: string): Observable<any> {
-    const params = new HttpParams().set('status', status);
-    return this.http.get(`${API_URL}/Tasks/byStatus`, { params });
-  }
+    updateTask(taskId: number, task: any): Observable<any> {
+      return this.http.put(`${API_URL}/Tasks/${taskId}`, task);
+    }
 
-  // TaskLines-specific methods
-  getTaskLines(): Observable<any> {
-    return this.http.get(`${API_URL}/TaskLines`);
-  }
+    deleteTask(taskId: number): Observable<any> {
+      return this.http.delete(`${API_URL}/Tasks/${taskId}`);
+    }
 
-  getTaskLine(taskLineId: number): Observable<any> {
-    return this.http.get(`${API_URL}/TaskLines/${taskLineId}`);
-  }
+    assignTaskToProject(taskId: number, projectId: number) {
+      return this.http.put(
+        `https://localhost:7188/api/Tasks/${taskId}/assign-to-project`,
+        { ProjectId: projectId }
+      );
+    }
+    assignTaskToEmployee(taskId: number, employeeId: number): Observable<any> {
+      return this.http.post(`${API_URL}/Tasks/AssignTaskToEmployee`, { taskId, employeeId });
+    }
 
-  createTaskLine(taskId: number, taskLine: any): Observable<any> {
-    return this.http.post(`${API_URL}/TaskLines/tasks/${taskId}/Tasklines`, taskLine);
-  }
+    updateTaskStatus(taskId: number, status: string): Observable<any> {
+      return this.http.patch(`${API_URL}/Tasks/${taskId}/status`, { status });
+    }
 
-  updateTaskLine(taskLineId: number, taskLine: any): Observable<any> {
-    return this.http.put(`${API_URL}/TaskLines/${taskLineId}`, taskLine);
-  }
+    getTasksByProject(projectId: number): Observable<any> {
+      return this.http.get(`${API_URL}/Tasks/byProject/${projectId}`);
+    }
 
-  deleteTaskLine(taskLineId: number): Observable<any> {
-    return this.http.delete(`${API_URL}/TaskLines/${taskLineId}`);
-  }
+    getTasksByStatus(status: string): Observable<any> {
+      const params = new HttpParams().set('status', status);
+      return this.http.get(`${API_URL}/Tasks/byStatus`, { params });
+    }
 
-  getTaskLinesByTask(taskId: number): Observable<any> {
-    return this.http.get(`${API_URL}/TaskLines/ByTask/${taskId}`);
-  }
+    // TaskLines-specific methods
+    getTaskLines(): Observable<any> {
+      return this.http.get(`${API_URL}/TaskLines`);
+    }
 
-  // Other entity methods
-  getProjects(): Observable<any> {
-    return this.http.get(`${API_URL}/Projects`);
-  }
+    getTaskLine(taskLineId: number): Observable<any> {
+      return this.http.get(`${API_URL}/TaskLines/${taskLineId}`);
+    }
 
-  getEmployees(): Observable<any> {
-    return this.http.get(`${API_URL}/Employees`);
-  }
+    createTaskLine(taskId: number, taskLine: any): Observable<any> {
+      return this.http.post(`${API_URL}/TaskLines/tasks/${taskId}/Tasklines`, taskLine);
+    }
 
-  getCustomers(): Observable<any> {
-    return this.http.get(`${API_URL}/Customers`);
-  }
+    updateTaskLine(taskLineId: number, taskLine: any): Observable<any> {
+      return this.http.put(`${API_URL}/TaskLines/${taskLineId}`, taskLine);
+    }
 
-  getCars(): Observable<any> {
-    return this.http.get(`${API_URL}/Cars`);
+    deleteTaskLine(taskLineId: number): Observable<any> {
+      return this.http.delete(`${API_URL}/TaskLines/${taskLineId}`);
+    }
+
+    getTaskLinesByTask(taskId: number): Observable<any> {
+      return this.http.get(`${API_URL}/TaskLines/ByTask/${taskId}`);
+    }
+
+    // Other entity methods
+    getProjects(): Observable<any> {
+      return this.http.get(`${API_URL}/Projects`);
+    }
+
+    getEmployees(): Observable<any> {
+      return this.http.get(`${API_URL}/Employees`);
+    }
+
+    getCustomers(): Observable<any> {
+      return this.http.get(`${API_URL}/Customers`);
+    }
+
+    getCars(): Observable<any> {
+      return this.http.get(`${API_URL}/Cars`);
+    }
   }
-}

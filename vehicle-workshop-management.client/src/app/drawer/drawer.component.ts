@@ -28,7 +28,7 @@ export class DrawerComponent {
     { id: 2, text: 'Customers', path: '/customers', icon: 'user' },
     { id: 3, text: 'Inventory', path: '/Inventory', icon: 'box' },
     { id: 4, text: 'Invoices', path: '/Invoices', icon: 'money' },
-    { id: 5, text: 'Tasks', path: '/Tasks', icon: 'tasks' },
+    { id: 5, text: 'Tasks', path: '/Tasks', icon: 'todo' },
     { id: 6, text: 'Projects', path: '/Projects', icon: 'folder' },
     { id: 7, text: 'Employees', path: '/Employees', icon: 'group' }
   ];

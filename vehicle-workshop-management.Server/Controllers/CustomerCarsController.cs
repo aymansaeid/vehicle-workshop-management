@@ -77,11 +77,11 @@ namespace vehicle_workshop_management.Server.Controllers
 
 
         // PUT: api/CustomerCars/5
-        [HttpPut("/api/customers/{customerId}/cars/{carId}")]
-        public async Task<IActionResult> UpdateCustomerCar(int customerId,int carId,[FromBody] UpdateCustomerCarDto updateDto)
+        [HttpPut("/api/CustomerCars/{carId}")]
+        public async Task<IActionResult> UpdateCustomerCar(int carId,[FromBody] UpdateCustomerCarDto updateDto)
         {
             var car = await _context.CustomerCars
-                .FirstOrDefaultAsync(c => c.CarId == carId && c.CustomerId == customerId);
+                .FirstOrDefaultAsync(c => c.CarId == carId);
 
             if (car == null) return NotFound();
 
