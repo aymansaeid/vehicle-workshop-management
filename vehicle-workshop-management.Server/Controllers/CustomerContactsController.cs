@@ -63,7 +63,7 @@ namespace vehicle_workshop_management.Server.Controllers
         [HttpPost("customers/{customerId}/contacts")]
         public async Task<ActionResult<CustomerContactDto>> PostCustomerContact(
       int customerId,
-      [FromBody] CustomerContactDto contactDto)
+      [FromBody] CreateCustomerContactDto contactDto)
         {
             // Verify customer exists
             var customerExists = await _context.Customers.AnyAsync(c => c.CustomerId == customerId);
