@@ -64,33 +64,7 @@ namespace vehicle_workshop_management.Server.Controllers
                 resultDto);
         }
 
-        // PUT: api/Customers/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutCustomer(int id, CustomerDto customerDto)
-        {
-            if (id != customerDto.CustomerId)
-                return BadRequest();
-
-            var existingCustomer = await _context.CustomerContacts.FindAsync(id);
-            if (existingCustomer == null)
-                return NotFound();
-
-            customerDto.Adapt(existingCustomer);
-            _context.Entry(existingCustomer).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CustomerExists(id))
-                    return NotFound();
-                throw;
-            }
-
-            return NoContent();
-        }
+       
 
         // DELETE: api/Customers/5
         [HttpDelete("{id}")]
@@ -105,7 +79,39 @@ namespace vehicle_workshop_management.Server.Controllers
 
             return NoContent();
         }
+        // PUT: api/Customers/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutCustomer(int id, UpdateCustomerDto updateDto)
+        {
+            var customer = await _context.Customers.FindAsync(id);
 
+            if (customer == null)
+            {
+                return NotFound();
+            }
+
+            updateDto.Adapt(customer);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!CustomerExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            // Return updated customer as DTO
+            var resultDto = customer.Adapt<CustomerDto>();
+            return Ok(resultDto);
+        }
         private bool CustomerExists(int id)
         {
             return _context.Customers.Any(e => e.CustomerId == id);
