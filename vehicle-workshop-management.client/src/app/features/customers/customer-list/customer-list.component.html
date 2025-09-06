@@ -15,17 +15,23 @@
              [showInfo]="true"></dxo-pager>
   <dxo-filter-row [visible]="true"></dxo-filter-row>
   <dxi-column dataField="name" caption="Name"></dxi-column>
+  <dxi-column dataField="address" caption="Address"></dxi-column>
   <dxi-column dataField="phone" caption="Phone" [customizeText]="customizePhoneCell"></dxi-column>
   <dxi-column dataField="email" caption="Email"></dxi-column>
   <dxi-column dataField="type" caption="Type" [cellTemplate]="'typeCellTemplate'"></dxi-column>
   <dxi-column dataField="status" caption="Status" [cellTemplate]="'statusCellTemplate'"></dxi-column>
   <dxi-column dataField="createdAt" caption="Created Date" dataType="date" [customizeText]="formatDate"></dxi-column>
+
+  <!-- Type template -->
   <div *dxTemplate="let cell of 'typeCellTemplate'">
     <i [class]="'dx-icon-' + getTypeIcon(cell.value)"></i> {{ cell.value }}
   </div>
+
+  <!-- Status template -->
   <div *dxTemplate="let cell of 'statusCellTemplate'">
     <span [class]="getStatusClass(cell.value)">{{ cell.value }}</span>
   </div>
+
   <dxo-toolbar>
     <dxi-item location="before">
       <dx-button icon="plus" text="Add Customer" (onClick)="addCustomer()"></dx-button>
@@ -52,6 +58,10 @@
     <div class="form-group">
       <label>Name</label>
       <dx-text-box [(value)]="currentCustomer.name"></dx-text-box>
+    </div>
+    <div class="form-group">
+      <label>Address</label>
+      <dx-text-box [(value)]="currentCustomer.address"></dx-text-box>
     </div>
     <div class="form-group">
       <label>Phone</label>
@@ -81,7 +91,8 @@
           [visible]="isCarsPopupOpened"
           (onHiding)="onCloseCarsPopup()"
           [width]="'80%'"
-          [height]="'80%'">
+          [height]="'80%'"
+          [showCloseButton]="true">
   <div *dxTemplate="let data of 'content'">
     <dx-data-grid #carsDataGrid
                   [dataSource]="carsDataSource"
@@ -140,7 +151,8 @@
           [visible]="isContactsPopupOpened"
           (onHiding)="onCloseContactsPopup()"
           [width]="'80%'"
-          [height]="'80%'">
+          [height]="'80%'"
+          [showCloseButton]="true">
   <div *dxTemplate="let data of 'content'">
     <dx-data-grid #contactsDataGrid
                   [dataSource]="contactsDataSource"
@@ -164,7 +176,6 @@
 </dx-popup>
 
 <!-- Contact Add/Edit Popup -->
-<!-- FIXED: Removed fields that don't exist in the API model -->
 <dx-popup [title]="contactPopupTitle"
           [visible]="isAddContactPopupOpened || isEditContactPopupOpened"
           (onHiding)="onCancelContactEdit()"
@@ -189,4 +200,3 @@
     </div>
   </div>
 </dx-popup>
-

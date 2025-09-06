@@ -62,21 +62,21 @@ namespace vehicle_workshop_management.Server.Controllers
         // POST: api/CustomerContacts
         [HttpPost("customers/{customerId}/contacts")]
         public async Task<ActionResult<CustomerContactDto>> PostCustomerContact(
-      int customerId,
-      [FromBody] CreateCustomerContactDto contactDto)
+            int customerId,
+            [FromBody] CreateCustomerContactDto contactDto)
         {
-            // Verify customer exists
             var customerExists = await _context.Customers.AnyAsync(c => c.CustomerId == customerId);
             if (!customerExists)
             {
                 return BadRequest("Invalid CustomerId");
             }
-            var customerEntity = contactDto.Adapt<CustomerContact>();
 
+            var customerEntity = contactDto.Adapt<CustomerContact>();
+            customerEntity.CustomerId = customerId; 
 
             _context.CustomerContacts.Add(customerEntity);
             await _context.SaveChangesAsync();
-            
+
             var resultDto = customerEntity.Adapt<CustomerContactDto>();
             return CreatedAtAction(nameof(GetCustomerContact), new { id = customerEntity.ContactId }, resultDto);
         }
