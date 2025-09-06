@@ -28,9 +28,18 @@
       return this.http.post(`${API_URL}/${endpoint}`, data);
     }
 
-    put(endpoint: string, id: number, data: any): Observable<any> {
-      return this.http.put(`${API_URL}/${endpoint}/${id}`, data);
+    put(endpoint: string, data: any): Observable<any>;
+    put(endpoint: string, id: number, data: any): Observable<any>;
+    put(endpoint: string, idOrData: number | any, data?: any): Observable<any> {
+      if (typeof idOrData === 'number') {
+        // usage: put("CustomerCars", 5, payload)
+        return this.http.put(`${API_URL}/${endpoint}/${idOrData}`, data);
+      } else {
+        // usage: put(`Customers/5`, payload)
+        return this.http.put(`${API_URL}/${endpoint}`, idOrData);
+      }
     }
+
 
     delete(endpoint: string, id?: number): Observable<any> {
       if (id !== undefined) {

@@ -18,6 +18,7 @@ type FilterCustomerType = 'Company' | 'Individual' | 'All';
 interface Customer {
   customerId: number;
   name: string;
+  address: string;
   phone: string;
   email: string;
   type: 'Company' | 'Individual';
@@ -45,12 +46,12 @@ interface CustomerContact {
 interface CustomerForm {
   customerId?: number;
   name: string;
+  address: string;   
   phone: string;
   email: string;
   type: 'Company' | 'Individual';
   status: 'Active' | 'Inactive';
 }
-
 interface CarForm {
   carId?: number;
   customerId: number;
@@ -156,9 +157,15 @@ export class CustomerListComponent {
 
   constructor(private apiService: ApiService) { }
 
-  // Utility method for initializing customer form data
   getInitialCustomerState(): CustomerForm {
-    return { name: '', phone: '', email: '', type: 'Company', status: 'Active' };
+    return {
+      name: '',
+      address: '',  
+      phone: '',
+      email: '',
+      type: 'Company',
+      status: 'Active'
+    };
   }
   getInitialCarState(customerId = 0): CarForm {
     return { customerId, make: '', model: '', year: new Date().getFullYear().toString(), color: '' };
@@ -199,8 +206,16 @@ export class CustomerListComponent {
       return;
     }
 
-    // Fixed: Use the correct endpoint structure
-    this.apiService.put(`Customers/${this.currentCustomer.customerId}`, 0, this.currentCustomer).subscribe({
+    const payload = {
+      name: this.currentCustomer.name,
+      address: this.currentCustomer.address,
+      phone: this.currentCustomer.phone,
+      email: this.currentCustomer.email,
+      type: this.currentCustomer.type,
+      status: this.currentCustomer.status
+    };
+
+    this.apiService.put(`Customers/${this.currentCustomer.customerId}`, payload).subscribe({
       next: () => {
         notify('Customer updated successfully', 'success', 2000);
         this.isEditCustomerPopupOpened = false;
@@ -348,14 +363,16 @@ export class CustomerListComponent {
   }
 
   onSaveNewContact() {
-    // Fixed: Include customerId in payload (based on API structure, contacts might need customerId)
     const payload = {
-      customerId: this.currentCustomerForContacts!.customerId,
       name: this.currentContact.name,
       phone: this.currentContact.phone,
       email: this.currentContact.email
     };
-    this.apiService.post(`CustomerContacts/customers/${this.currentCustomerForContacts!.customerId}/contacts`, payload).subscribe({
+
+    this.apiService.post(
+      `CustomerContacts/customers/${this.currentCustomerForContacts!.customerId}/contacts`,
+      payload
+    ).subscribe({
       next: () => {
         notify('Contact saved successfully', 'success', 2000);
         this.isAddContactPopupOpened = false;
@@ -371,14 +388,17 @@ export class CustomerListComponent {
       return;
     }
 
-    // Fixed: Include customerId in payload and use correct endpoint structure  
     const payload = {
-      customerId: this.currentContact.customerId,
+      contactId: this.currentContact.contactId,
       name: this.currentContact.name,
       phone: this.currentContact.phone,
       email: this.currentContact.email
     };
-    this.apiService.put(`CustomerContacts/${this.currentContact.contactId}`, 0, payload).subscribe({
+
+    this.apiService.put(
+      `CustomerContacts/${this.currentContact.contactId}`,
+      payload
+    ).subscribe({
       next: () => {
         notify('Contact updated successfully', 'success', 2000);
         this.isEditContactPopupOpened = false;
@@ -387,6 +407,7 @@ export class CustomerListComponent {
       error: (error) => notify(`Error updating contact: ${error.message}`, 'error', 2000)
     });
   }
+
 
   onCancelContactEdit() {
     this.isAddContactPopupOpened = false;
