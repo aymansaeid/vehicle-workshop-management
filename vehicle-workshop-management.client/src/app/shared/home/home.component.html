@@ -1,1 +1,239 @@
-<p>this is the main page </p>
+<div class="dashboard-container">
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-overlay">
+    <div class="loading-spinner"></div>
+    <p>Loading dashboard data...</p>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="error-banner">
+    <span>{{ errorMessage }}</span>
+    <button (click)="loadDashboardData()" class="retry-btn">Retry</button>
+  </div>
+
+  <!-- Header -->
+  <div class="dashboard-header">
+    <h1>Dashboard Overview</h1>
+    <div class="header-actions">
+      <button (click)="refreshData()" class="refresh-btn">
+        <span class="icon">↻</span> Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div *ngIf="stats" class="stats-grid">
+    <!-- Customers Card -->
+    <div class="stat-card">
+      <div class="stat-icon customers">👥</div>
+      <div class="stat-content">
+        <h3>Customers</h3>
+        <div class="stat-value">{{ formatNumber(stats.totalCustomers) }}</div>
+        <div class="stat-detail">Active: {{ formatNumber(stats.activeCustomers) }}</div>
+      </div>
+    </div>
+
+    <!-- Employees Card -->
+    <div class="stat-card">
+      <div class="stat-icon employees">👨‍💼</div>
+      <div class="stat-content">
+        <h3>Employees</h3>
+        <div class="stat-value">{{ formatNumber(stats.totalEmployees) }}</div>
+        <div class="stat-detail">Present Today: {{ formatNumber(stats.employeesAttendedToday) }}</div>
+      </div>
+    </div>
+
+    <!-- Projects Card -->
+    <div class="stat-card">
+      <div class="stat-icon projects">📋</div>
+      <div class="stat-content">
+        <h3>Projects</h3>
+        <div class="stat-value">{{ formatNumber(stats.totalProjects) }}</div>
+        <div class="stat-detail">Active: {{ formatNumber(stats.activeProjects) }}</div>
+      </div>
+    </div>
+
+    <!-- Tasks Card -->
+    <div class="stat-card">
+      <div class="stat-icon tasks">✅</div>
+      <div class="stat-content">
+        <h3>Tasks</h3>
+        <div class="stat-value">{{ formatNumber(stats.totalTasks) }}</div>
+        <div class="stat-detail">
+          Unfinished: {{ formatNumber(stats.unfinishedTasks) }},
+          Overdue: {{ formatNumber(stats.overdueTasks) }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Inventory Card -->
+    <div class="stat-card">
+      <div class="stat-icon inventory">📦</div>
+      <div class="stat-content">
+        <h3>Inventory</h3>
+        <div class="stat-value">{{ formatNumber(stats.totalInventoryItems) }}</div>
+        <div class="stat-detail">Available: {{ formatNumber(stats.availableInventoryItems) }}</div>
+      </div>
+    </div>
+
+    <!-- Financial Card -->
+    <div class="stat-card">
+      <div class="stat-icon financial">💰</div>
+      <div class="stat-content">
+        <h3>Financial</h3>
+        <div class="stat-value">{{ formatCurrency(stats.totalRevenue) }}</div>
+        <div class="stat-detail">
+          Invoices: {{ formatNumber(stats.totalInvoices) }},
+          Paid: {{ formatNumber(stats.paidInvoices) }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Financial Summary -->
+  <div *ngIf="financialSummary" class="financial-section">
+    <h2>Financial Summary</h2>
+    <div class="financial-cards">
+      <div class="financial-card">
+        <h4>This Month Revenue</h4>
+        <div class="amount">{{ formatCurrency(financialSummary.thisMonthRevenue) }}</div>
+        <div class="change-indicator {{ getRevenueChangeClass() }}">
+          {{ getRevenueChangeIcon() }} {{ getRevenueChangePercent() }} from last month
+        </div>
+      </div>
+
+      <div class="financial-card">
+        <h4>Outstanding Amount</h4>
+        <div class="amount">{{ formatCurrency(financialSummary.totalOutstanding) }}</div>
+        <div class="sub-text">Overdue: {{ formatCurrency(financialSummary.overdueAmount) }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Section -->
+  <div *ngIf="stats" class="charts-section">
+    <div class="chart-container">
+      <h3>Invoice Status</h3>
+      <dx-pie-chart [dataSource]="invoiceStatusData"
+                    palette="Bright"
+                    title="Invoice Distribution">
+        <dxi-series argumentField="status" valueField="count"></dxi-series>
+        <dxo-legend [visible]="true" verticalAlignment="bottom" horizontalAlignment="center"></dxo-legend>
+      </dx-pie-chart>
+    </div>
+
+    <div class="chart-container">
+      <h3>Revenue Comparison</h3>
+      <dx-chart [dataSource]="revenueComparisonData"
+                palette="Soft Pastel">
+        <dxi-series argumentField="period" valueField="amount" type="bar"></dxi-series>
+        <dxo-title text="Revenue Overview"></dxo-title>
+      </dx-chart>
+    </div>
+
+    <div class="chart-container">
+      <h3>Task Status</h3>
+      <dx-pie-chart [dataSource]="taskStatusData"
+                    palette="Harmony Light"
+                    title="Task Distribution">
+        <dxi-series argumentField="status" valueField="count"></dxi-series>
+        <dxo-legend [visible]="true" verticalAlignment="bottom" horizontalAlignment="center"></dxo-legend>
+      </dx-pie-chart>
+    </div>
+  </div>
+
+  <!-- Overdue Tasks Section -->
+  <div class="data-section" *ngIf="overdueTasks.length > 0">
+    <h2>Overdue Tasks ({{ overdueTasks.length }})</h2>
+    <dx-data-grid [dataSource]="overdueTasks"
+                  [showBorders]="true"
+                  height="300px">
+      <dxo-paging [pageSize]="10"></dxo-paging>
+      <dxi-column dataField="name" caption="Task Name"></dxi-column>
+      <dxi-column dataField="description" caption="Description" [width]="200"></dxi-column>
+      <dxi-column dataField="endTime" caption="Due Date" dataType="date" format="shortDate"></dxi-column>
+      <dxi-column dataField="daysOverdue" caption="Days Overdue" [cellTemplate]="'overdueTaskTemplate'"></dxi-column>
+      <dxi-column dataField="status" caption="Status"></dxi-column>
+
+      <div *dxTemplate="let data of 'overdueTaskTemplate'">
+        <span class="overdue-badge">{{ data.value }}</span>
+      </div>
+    </dx-data-grid>
+  </div>
+
+  <!-- Unpaid Invoices Section -->
+  <div class="data-section" *ngIf="unpaidInvoices.length > 0">
+    <h2>Unpaid Invoices ({{ unpaidInvoices.length }})</h2>
+    <dx-data-grid [dataSource]="unpaidInvoices"
+                  [showBorders]="true"
+                  height="300px">
+      <dxo-paging [pageSize]="10"></dxo-paging>
+      <dxi-column dataField="invoiceID" caption="Invoice #"></dxi-column>
+      <dxi-column dataField="dateIssued" caption="Issued Date" dataType="date" format="shortDate"></dxi-column>
+      <dxi-column dataField="dueDate" caption="Due Date" dataType="date" format="shortDate"></dxi-column>
+      <dxi-column dataField="totalAmount" caption="Amount" dataType="number" format="currency"></dxi-column>
+      <dxi-column dataField="daysOverdue" caption="Days Overdue" [cellTemplate]="'overdueInvoiceTemplate'"></dxi-column>
+      <dxi-column dataField="status" caption="Status"></dxi-column>
+
+      <div *dxTemplate="let data of 'overdueInvoiceTemplate'">
+        <span *ngIf="data.value > 0" class="overdue-badge">{{ data.value }}</span>
+        <span *ngIf="data.value <= 0">-</span>
+      </div>
+    </dx-data-grid>
+  </div>
+
+  <!-- Recent Activity Section -->
+  <div *ngIf="recentActivity" class="activity-section">
+    <h2>Recent Activity (Last 7 Days)</h2>
+    <div class="activity-cards">
+      <div class="activity-card">
+        <div class="activity-icon">👥</div>
+        <div class="activity-content">
+          <div class="activity-value">{{ recentActivity.newCustomersThisWeek }}</div>
+          <div class="activity-label">New Customers</div>
+        </div>
+      </div>
+
+      <div class="activity-card">
+        <div class="activity-icon">✅</div>
+        <div class="activity-content">
+          <div class="activity-value">{{ recentActivity.completedTasksThisWeek }}</div>
+          <div class="activity-label">Completed Tasks</div>
+        </div>
+      </div>
+
+      <div class="activity-card">
+        <div class="activity-icon">🧾</div>
+        <div class="activity-content">
+          <div class="activity-value">{{ recentActivity.invoicesIssuedThisWeek }}</div>
+          <div class="activity-label">Invoices Issued</div>
+        </div>
+      </div>
+
+      <div class="activity-card">
+        <div class="activity-icon">💰</div>
+        <div class="activity-content">
+          <div class="activity-value">{{ formatCurrency(recentActivity.revenueThisWeek) }}</div>
+          <div class="activity-label">Weekly Revenue</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Employee Performance Section -->
+  <div class="data-section" *ngIf="employeePerformance.length > 0">
+    <h2>Employee Performance</h2>
+    <dx-data-grid [dataSource]="employeePerformance"
+                  [showBorders]="true"
+                  height="400px">
+      <dxo-paging [pageSize]="10"></dxo-paging>
+      <dxo-filter-row [visible]="true"></dxo-filter-row>
+      <dxi-column dataField="name" caption="Employee Name"></dxi-column>
+      <dxi-column dataField="type" caption="Type"></dxi-column>
+      <dxi-column dataField="tasksCompletedThisMonth" caption="Tasks Completed" [sortOrder]="'desc'"></dxi-column>
+      <dxi-column dataField="lastLoginDate" caption="Last Login" dataType="date" format="shortDate"></dxi-column>
+      <dxi-column dataField="lastPresentDate" caption="Last Present" dataType="date" format="shortDate"></dxi-column>
+      <dxi-column dataField="status" caption="Status"></dxi-column>
+    </dx-data-grid>
+  </div>
+</div>
