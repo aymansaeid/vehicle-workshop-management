@@ -64,19 +64,24 @@ namespace vehicle_workshop_management.Server.Controllers
                 resultDto);
         }
 
-       
 
-        // DELETE: api/Customers/5
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCustomer(int id)
         {
-            var customer = await _context.Customers.FindAsync(id);
+            var customer = await _context.Customers
+                .Include(c => c.CustomerCars)
+                .Include(c => c.CustomerContacts)
+                .FirstOrDefaultAsync(c => c.CustomerId == id);
+
             if (customer == null)
                 return NotFound();
 
+            _context.CustomerCars.RemoveRange(customer.CustomerCars);
+            _context.CustomerContacts.RemoveRange(customer.CustomerContacts);
             _context.Customers.Remove(customer);
-            await _context.SaveChangesAsync();
 
+            await _context.SaveChangesAsync();
             return NoContent();
         }
         // PUT: api/Customers/5
